@@ -93,11 +93,35 @@ with never existed. Every suite-kit skill that opens by reading that file was
 therefore inoperable in both repos. The notes below describe what is actually on
 disk.
 
+### kollektiv (this repo)
+
+kollektiv is itself an adopter, not just the source of the plugin. Its
+`.claude/suite.json` has `linear.team: "KOL"` and
+`roadmap: "docs/roadmap.md"`, and its `.claude/settings.json` enables
+`suite-kit@kollektiv` from the local marketplace plus `oh-my-claudecode@omc` —
+it omits `kollektiv` from `extraKnownMarketplaces` since this repo already is
+that marketplace and declaring it as a remote `github` source would register it
+twice. It has no `tokens`, `minecraft`, `health.invariants`, or
+`health.generated` block: it authors [`design/tokens.json`](../design/tokens.json)
+as raw data rather than styled application code, so the `tokens.role`/`enforce`
+machinery that guards literal hex and px in product code doesn't apply to it; it
+emits no Minecraft commands and generates nothing, so nothing was invented to
+fill those two slots either.
+
+The Linear workspace backing all three repos was recreated from scratch on
+2026-08-04 as `Kollektiv-MC` (team `KOL`), replacing the old `KonnektMC`
+workspace, which is abandoned rather than migrated. Old `KON-*` references in
+Konnekt's merged PRs and `agent_docs/LINEAR.md` now point at nothing, since the
+new workspace renumbers `KON` from 1.
+
 ### Kommands
 
-`.claude/settings.json`, `.claude/suite.json`, `tokens.source.json`, the
-`.gitignore` lines, and the switch of task tracking from GitHub Issues to Linear
-`KMD` are in place.
+`.claude/settings.json`, `.claude/suite.json`, `tokens.source.json`, and the
+`.gitignore` lines are in place. The switch of task tracking from GitHub Issues
+to Linear `KMD` is not: `KMD` is declared in `.claude/suite.json` as the intended
+team key, but the team itself does not exist yet in the `Kollektiv-MC` workspace
+(tracked as `KOL-7`) — declaring a key and provisioning the team are different
+steps, and only the first is done.
 
 `health.commands` is present but every entry is currently unrunnable — the repo is
 pre-scaffold, with `docs/` and `.claude/` and no `package.json`. That is expected,

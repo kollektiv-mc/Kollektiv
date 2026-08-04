@@ -1,7 +1,7 @@
 {
   "suite": "kollektiv",
   "linear": {
-    "workspace": "KonnektMC"
+    "workspace": "Kollektiv-MC"
   },
   "tokens": {
     "source": "design/tokens.json",

@@ -143,21 +143,37 @@ workspace, which is abandoned rather than migrated. Old `KON-*` references in
 Konnekt's merged PRs and `agent_docs/LINEAR.md` now point at nothing, since the
 new workspace renumbers `KON` from 1.
 
-### Kommands
+### Kommands — not adopted, and blocked on a real decision
 
-`.claude/settings.json`, `.claude/suite.json`, `tokens.source.json`, and the
-`.gitignore` lines are in place. The switch of task tracking from GitHub Issues
-to Linear `KMD` is not: `KMD` is declared in `.claude/suite.json` as the intended
-team key, but the team itself does not exist yet in the `Kollektiv-MC` workspace
-(tracked as `KOL-7`) — declaring a key and provisioning the team are different
-steps, and only the first is done.
+The previous revision of this note (inherited from an earlier PR, never verified
+against the actual repo) claimed `.claude/settings.json`, `.claude/suite.json`,
+`tokens.source.json`, and the `.gitignore` lines were all in place, with only the
+Linear `KMD` switch pending. **None of that was true except the last part.**
+Checked directly against the repo: no `.claude/suite.json` exists at all;
+`.claude/settings.json` exists but declares only `permissions`, no
+`extraKnownMarketplaces`/`enabledPlugins` — suite-kit was never actually declared
+here. `tokens.source.json` didn't exist until this session ran
+`scripts/sync-tokens.sh` against it directly.
 
-`health.commands` is present but every entry is currently unrunnable — the repo is
-pre-scaffold, with `docs/` and `.claude/` and no `package.json`. That is expected,
-and `/health-check` already reports an unrunnable check as `skipped` with a reason
-rather than as passing. `tokens.generate` names `pnpm gen:tokens`, which likewise
-does not exist yet; `docs/design-tokens.md` specifies its contract for whoever
-scaffolds the app.
+More than a missing file, this is a real conflict, not just an outstanding step.
+Kommands' own `CLAUDE.md` states plainly: *"Task tracking is **GitHub Issues**. Do
+not add a `TODO.md`."* — and its `docs/roadmap.md` says the same:
+*"Individual tasks live in GitHub Issues — this file does not track work items."*
+That directly contradicts `suite.repos.json`'s `linearTeam: "KMD"` and every prior
+claim on this page about a Kommands→Linear migration. `CLAUDE.md` also says:
+*"If reality diverges from the documented design mid-task, stop and surface it
+rather than improvising a workaround"* — so no `.claude/suite.json` with
+`linear.team: "KMD"` was added here. Adding one would silently pick a side in a
+decision that's actually still open: either Kommands migrates task tracking to
+Linear for real (and its own `CLAUDE.md`/`docs/roadmap.md` get updated to say so),
+or kollektiv's suite-wide Linear assumption gets corrected to exclude it, keeping
+Kommands on GitHub Issues. `suite.repos.json`'s `linearTeam: "KMD"` reflects an
+assumption, not a decision — resolve that first, then adopt for real.
+
+What this session actually did: vendored `tokens.source.json` (a safe, additive
+step — the pipeline it feeds is documented in `docs/design-tokens.md` regardless
+of the Linear question, and the repo is pre-scaffold so there's no generator yet
+to run against it). Nothing else was touched.
 
 `.claude/rules/*.md` stay where they are. They are path-scoped and auto-inject when
 a matching file is edited — a plugin skill does not do that, so the plugin does not

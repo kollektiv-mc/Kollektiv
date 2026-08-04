@@ -8,8 +8,23 @@
 # Idempotent and non-destructive, like bootstrap.sh: a product that is not cloned
 # is reported and skipped, and nothing here deletes. Re-running with no upstream
 # change writes nothing and reports every product as unchanged.
+#
+#   --check   Report drift and exit non-zero without writing anything.
+#
+# --check exists because a product cannot detect its own staleness: its generator
+# reads the vendored copy, so a stale copy still regenerates a clean diff. Only a
+# checkout that has both sides can compare them. See design/README.md.
 
 set -euo pipefail
+
+check_only=0
+
+for arg in "$@"; do
+  case "$arg" in
+    --check) check_only=1 ;;
+    *) echo "usage: ${BASH_SOURCE[0]##*/} [--check]" >&2; exit 2 ;;
+  esac
+done
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 manifest="$root/suite.repos.json"
@@ -52,6 +67,17 @@ while IFS=$'\t' read -r name role; do
     continue
   fi
 
+  if [ "$check_only" -eq 1 ]; then
+    if [ -f "$dest" ]; then
+      echo "! $name has drifted from design/tokens.json" >&2
+    else
+      echo "! $name has no $vendored_name" >&2
+    fi
+    status=1
+    changed=1
+    continue
+  fi
+
   cp "$source_file" "$dest"
   echo "+ $name updated $vendored_name — regenerate its tokens and commit both"
   changed=1
@@ -64,7 +90,18 @@ with open(sys.argv[1]) as f:
         print(r["name"], role or "", sep="\t")
 ' "$manifest")
 
-if [ "$changed" -eq 0 ]; then
+if [ "$check_only" -eq 1 ]; then
+  # Only a clean run over a complete workspace can claim no drift. A product that
+  # was never compared is not a product that matches — saying so would be the same
+  # collapse of "did not run" into "passed" that the health skill exists to prevent.
+  if [ "$changed" -ne 0 ]; then
+    echo "run scripts/sync-tokens.sh to update, then regenerate tokens in each product" >&2
+  elif [ "$status" -ne 0 ]; then
+    echo "no drift among the products present, but the workspace is incomplete" >&2
+  else
+    echo "no drift"
+  fi
+elif [ "$changed" -eq 0 ]; then
   echo "nothing to do"
 fi
 

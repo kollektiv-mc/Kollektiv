@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Token drift is introduced by commits to the *product* repos, which this
+    # repo never sees. Without a scheduled run it would go unnoticed until the
+    # next change here, which could be months.
+    - cron: '17 6 * * *'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install check-jsonschema
+
+      - name: Script syntax
+        run: for f in scripts/*.sh; do bash -n "$f" || exit 1; done
+
+      - name: Manifest JSON validity
+        run: |
+          for f in suite.repos.json \
+                   .claude-plugin/marketplace.json \
+                   plugins/suite-kit/.claude-plugin/plugin.json \
+                   .claude/suite.json \
+                   design/tokens.json; do
+            python3 -m json.tool "$f" > /dev/null || exit 1
+          done
+
+      - name: suite-kit version match
+        run: |
+          python3 -c "
+          import json
+          a = json.load(open('.claude-plugin/marketplace.json'))['plugins'][0]['version']
+          b = json.load(open('plugins/suite-kit/.claude-plugin/plugin.json'))['version']
+          raise SystemExit(0 if a == b else f'marketplace {a} != plugin {b}')
+          "
+
+      - name: Schema validation
+        run: ./scripts/validate-schemas.sh
+
+  token-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install check-jsonschema
+
+      # Clones the products as siblings, per suite.repos.json. They are public,
+      # so no credentials are involved.
+      - name: Bootstrap the workspace
+        run: ./scripts/bootstrap.sh
+
+      # A product cannot detect its own staleness — its generator reads the
+      # vendored copy, so a stale copy still regenerates a clean diff. This is
+      # the only place both sides exist at once. See design/README.md.
+      - name: Token drift
+        run: ./scripts/sync-tokens.sh --check
+
+      # The products are cloned here anyway, so validate their manifests against
+      # the schema while we have them.
+      #
+      # Runs even when the drift check above failed. Drift and a malformed
+      # manifest are independent findings, and finding one is not a reason to
+      # leave the other undiscovered — the rule health/SKILL.md already states.
+      # Without this the step is skipped on every red run, so it never executes
+      # at all on exactly the runs worth reading.
+      #
+      # --require-products because bootstrap.sh ran: a product still missing here
+      # means that failed, and validating "every product present" would pass over
+      # a set that was never checked.
+      - name: Product manifest validation
+        if: ${{ !cancelled() }}
+        run: ./scripts/validate-schemas.sh --require-products

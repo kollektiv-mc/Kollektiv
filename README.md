@@ -15,10 +15,12 @@ own builds, CI, or releases — each product keeps its own.
 ## Why this exists
 
 The two products share a design language, a domain, and a set of working rules,
-and until now each of those was written down twice. Kommands' `docs/design-tokens.md`
-restated Konnekt's entire palette by hand — that palette now lives in
-[`design/tokens.json`](design/tokens.json) and each product generates from it. Both
-repos carry their own health-check prose. Both are exposed to the same failure mode:
+and each of those was written down twice. Kommands' `docs/design-tokens.md`
+restated Konnekt's entire palette by hand. That palette now lives in
+[`design/tokens.json`](design/tokens.json); Kommands stops restating it and
+generates from the vendored copy when its adoption lands, on
+`kommands@claude/adopt-suite-kit`. Both repos carry their own health-check prose.
+Both are exposed to the same failure mode:
 Minecraft syntax changes between versions in ways that produce commands which look
 correct and silently do nothing, and model training data on that syntax is
 frequently stale.
@@ -39,17 +41,24 @@ it and are not tracked here.
 
 ```
 kollektiv/
-├── .omc-workspace          marks the tree as one Oh-My-ClaudeCode workspace
-├── suite.repos.json        the product manifest
-├── scripts/bootstrap.sh    clones missing products
-├── scripts/sync-tokens.sh  vendors design/tokens.json into each product
-├── .claude-plugin/         marketplace manifest
-├── design/                 the shared design-token source
-├── plugins/suite-kit/      the shared plugin
-├── .claude/                this repo's own suite-kit + OMC adoption
-├── docs/roadmap.md         this repo's own roadmap, reconciled via linear-sync
-├── Konnekt/                cloned, untracked
-└── Kommands/               cloned, untracked
+├── suite.repos.json            the product manifest
+├── CLAUDE.md                   what an agent landing here needs to know
+├── scripts/bootstrap.sh        clones missing products
+├── scripts/sync-tokens.sh      vendors design/tokens.json into each product
+│                               (--check reports drift and writes nothing)
+├── scripts/validate-schemas.sh validates every manifest against its schema
+├── .github/workflows/ci.yml    hub checks + scheduled token-drift detection
+├── .claude-plugin/             marketplace manifest
+├── design/tokens.json          the shared design-token source
+├── design/tokens.schema.json   its schema
+├── design/suite.schema.json    schema for each repo's .claude/suite.json
+├── plugins/suite-kit/          the shared plugin
+├── .claude/                    this repo's own suite-kit + superpowers adoption
+├── docs/adopting.md            how a repo adopts suite-kit
+├── docs/conventions.md         cross-repo rules: tracking, PRs, permissions
+├── docs/roadmap.md             this repo's own roadmap, reconciled via linear-sync
+├── Konnekt/                    cloned, untracked
+└── Kommands/                   cloned, untracked
 ```
 
 ## Getting started
@@ -102,42 +111,44 @@ Deliberately **no hooks**. Konnekt already binds `graphify hook-guard` to
 `PreToolUse` on `Bash`, `Read`, and `Glob`; stacking more matchers on top is the
 fastest way to make both feel broken.
 
-## Oh-My-ClaudeCode
+## superpowers
 
-[OMC](https://ohmyclaudecode.com/) is declared alongside suite-kit for multi-agent
-orchestration. Two limits are worth knowing before depending on it:
+[`obra/superpowers`](https://github.com/obra/superpowers) is declared alongside
+suite-kit in every repo in the suite. It replaces Oh-My-ClaudeCode, which this repo
+no longer uses or documents — OMC's workspace-sharing feature (`.omc-workspace`) is
+gone along with it; the sibling-clone layout `bootstrap.sh` produces stands on its
+own and never depended on it.
 
-- **`/team` is local-only.** It spawns workers through tmux, with optional external
-  provider CLIs for cross-model work. Claude Code on the web has neither, so cloud
-  sessions get OMC's skills and agents but not team mode. Named stage profiles
-  additionally want Linux `flock`.
-- **Context is not free.** OMC contributes a large number of agents and skills,
-  paid on every turn in every session. Check the **Context cost** figure in the
-  `/plugin` detail view before leaving it enabled repo-wide rather than reaching
-  for it per-session.
-
-Its `.omc-workspace` support is the part that fits this repo best: a token change
-in Konnekt that must land in Kommands becomes one session instead of two.
+Declaring a marketplace runs third-party code with your privileges — that is a trust
+decision made per repo, same as any `extraKnownMarketplaces` entry.
 
 ---
 
 ## Tracking
 
-Linear, workspace `Kollektiv-MC`. Three teams: `KOL` for this repo — suite
-conventions, suite-kit, OMC adoption — and one per product, `KON` and `KMD`, so
-cycles and boards stay per-product. A suite-wide initiative, `Kollektiv Suite`,
-spans all three.
+Tracking is a **per-repo choice**, and suite-kit does not require a single tracker.
+See [`docs/conventions.md`](docs/conventions.md).
 
-This repo adopts its own plugin: `.claude/suite.json` points `linear.team` at
-`KOL` and `roadmap` at [`docs/roadmap.md`](docs/roadmap.md), so
-`/suite-kit:linear-sync` reconciles this repo the same way it does Konnekt and
-Kommands.
+| Repo | Tracked in |
+|---|---|
+| Kollektiv | Linear, team `KOL` |
+| Konnekt | Linear, team `KON` — *key declared, team not yet provisioned* |
+| Kommands | GitHub Issues |
 
-Linear's MCP exposes no `create_team` or `create_initiative`; both are hand-made
-in the Linear UI. Projects are then attached to an initiative that already
-exists via `save_project(addInitiatives: [...])`.
+**What exists in Linear today:** one workspace, `Kollektiv-MC`, holding one team
+(`KOL`) and one project (`Workspace & Tooling`). There are no other teams and no
+initiatives. Creating the `KON` team and a suite-wide initiative are open items in
+[`docs/roadmap.md`](docs/roadmap.md) — declaring a team key in a manifest and
+provisioning the team are different steps, and only the first is done.
 
-The workspace was recreated from scratch on 2026-08-04 (previously
-`KonnektMC`); old `KON-*` issue references in Konnekt's merged PRs and
-`agent_docs/LINEAR.md` point at IDs that no longer exist, since the new
-workspace renumbers from `KON-1`.
+This repo adopts its own plugin: `.claude/suite.json` points `linear.team` at `KOL`
+and `roadmap` at `docs/roadmap.md`, so `/suite-kit:linear-sync` reconciles this repo
+the same way it does Konnekt.
+
+Linear's MCP exposes no `create_team` or `create_initiative`; both are hand-made in
+the Linear UI. Projects are then attached to an initiative that already exists via
+`save_project(addInitiatives: [...])`.
+
+The workspace was recreated from scratch on 2026-08-04 (previously `KonnektMC`); old
+`KON-*` issue references in Konnekt's merged PRs point at IDs that no longer exist,
+since the new workspace renumbers from `KON-1`.

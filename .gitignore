@@ -4,7 +4,6 @@ Kommands/
 
 # Agent tooling: shared config is committed, personal and runtime state is not.
 .claude/settings.local.json
-.claude/.omc/
 
 # OS
 .DS_Store

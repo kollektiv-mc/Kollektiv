@@ -9,7 +9,7 @@
       "name": "suite-kit",
       "source": "./plugins/suite-kit",
       "description": "Shared conventions for the Minecraft tool suite: health checks driven by a per-repo manifest, Minecraft syntax verification, design-token discipline, and Linear roadmap reconciliation.",
-      "version": "0.1.0"
+      "version": "0.2.0"
     }
   ]
 }

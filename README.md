@@ -42,6 +42,8 @@ kollektiv/
 ├── scripts/bootstrap.sh    clones missing products
 ├── .claude-plugin/         marketplace manifest
 ├── plugins/suite-kit/      the shared plugin
+├── .claude/                this repo's own suite-kit + OMC adoption
+├── docs/roadmap.md         this repo's own roadmap, reconciled via linear-sync
 ├── Konnekt/                cloned, untracked
 └── Kommands/               cloned, untracked
 ```
@@ -102,9 +104,21 @@ in Konnekt that must land in Kommands becomes one session instead of two.
 
 ## Tracking
 
-Linear, workspace `KonnektMC`. One team per product — `KON`, `KMD` — so cycles and
-boards stay per-product, with suite-wide initiatives spanning both.
+Linear, workspace `Kollektiv-MC`. Three teams: `KOL` for this repo — suite
+conventions, suite-kit, OMC adoption — and one per product, `KON` and `KMD`, so
+cycles and boards stay per-product. A suite-wide initiative, `Kollektiv Suite`,
+spans all three.
 
-Linear's MCP exposes no `create_initiative`; projects can only be attached to an
-initiative that already exists. Create suite initiatives by hand in the Linear UI,
-then attach via `save_project(addInitiatives: [...])`.
+This repo adopts its own plugin: `.claude/suite.json` points `linear.team` at
+`KOL` and `roadmap` at [`docs/roadmap.md`](docs/roadmap.md), so
+`/suite-kit:linear-sync` reconciles this repo the same way it does Konnekt and
+Kommands.
+
+Linear's MCP exposes no `create_team` or `create_initiative`; both are hand-made
+in the Linear UI. Projects are then attached to an initiative that already
+exists via `save_project(addInitiatives: [...])`.
+
+The workspace was recreated from scratch on 2026-08-04 (previously
+`KonnektMC`); old `KON-*` issue references in Konnekt's merged PRs and
+`agent_docs/LINEAR.md` point at IDs that no longer exist, since the new
+workspace renumbers from `KON-1`.

@@ -72,11 +72,31 @@ Personal permission allowlists and OMC's session state are not shared.
 
 ## Per-repo notes
 
+### kollektiv (this repo)
+
+kollektiv is itself an adopter, not just the source of the plugin. Its
+`.claude/suite.json` has `linear.team: "KOL"` and
+`roadmap: "docs/roadmap.md"`, and its `.claude/settings.json` enables
+`suite-kit@kollektiv` from the local marketplace plus `oh-my-claudecode@omc` —
+it omits `kollektiv` from `extraKnownMarketplaces` since this repo already is
+that marketplace and declaring it as a remote `github` source would register it
+twice. It has no `tokens`, `minecraft`, `health.invariants`, or
+`health.generated` block: this repo has no design tokens, emits no Minecraft
+commands, and generates nothing, so nothing was invented to fill those slots.
+
+The Linear workspace backing all three repos was recreated from scratch on
+2026-08-04 as `Kollektiv-MC` (team `KOL`), replacing the old `KonnektMC`
+workspace, which is abandoned rather than migrated. Old `KON-*` references in
+Konnekt's merged PRs and `agent_docs/LINEAR.md` now point at nothing, since the
+new workspace renumbers `KON` from 1.
+
 ### Kommands
 
-Done. `.claude/suite.json`, `docs/suite.md`, the `.gitignore` lines, and the switch
-of task tracking from GitHub Issues to Linear `KMD` are in place. The settings
-block above is the remaining step.
+`.claude/suite.json`, `docs/suite.md`, and the `.gitignore` lines are in place.
+Two things are still pending, not done: the settings block above, and the
+switch of task tracking from GitHub Issues to Linear `KMD` — the `KMD` team is
+being created in the new `Kollektiv-MC` workspace, and did not exist in either
+workspace before now.
 
 `.claude/rules/*.md` stay where they are. They are path-scoped and auto-inject when
 a matching file is edited — a plugin skill does not do that, so the plugin does not

@@ -1,0 +1,24 @@
+{
+  "product": "kollektiv",
+  "kind": "workspace-root",
+  "linear": {
+    "team": "KOL"
+  },
+  "roadmap": "docs/roadmap.md",
+  "health": {
+    "commands": [
+      {
+        "name": "bootstrap.sh syntax",
+        "run": "bash -n scripts/bootstrap.sh"
+      },
+      {
+        "name": "manifest JSON validity",
+        "run": "for f in suite.repos.json .claude-plugin/marketplace.json plugins/suite-kit/.claude-plugin/plugin.json .claude/suite.json; do python3 -m json.tool \"$f\" > /dev/null || exit 1; done"
+      },
+      {
+        "name": "suite-kit version match",
+        "run": "python3 -c \"import json; a=json.load(open('.claude-plugin/marketplace.json'))['plugins'][0]['version']; b=json.load(open('plugins/suite-kit/.claude-plugin/plugin.json'))['version']; exit(0 if a==b else 1)\""
+      }
+    ]
+  }
+}

@@ -51,18 +51,26 @@ That is the job working, not a bug to suppress.
       settings block, and vendored tokens, so adopting a fourth repo is a
       command rather than a careful read of `docs/adopting.md`
 
-## OMC adoption
+## superpowers adoption
 
-- [ ] Decide whether Kommands should run OMC at all. It declares `suite-kit` plus
-      **`superpowers@superpowers`**, not `omc` — so `docs/adopting.md` § 1, which
-      names `omc`, does not describe it. Either add `omc` there or record
-      third-party plugin choice as per-repo and stop implying a suite default
-- [ ] Run `claude plugin install` for `oh-my-claudecode@omc` on each machine and
+OMC (Oh-My-ClaudeCode) has been dropped suite-wide, along with its
+`.omc-workspace` multi-repo session sharing — deleted from this repo along with
+every reference to it. `superpowers` (`obra/superpowers`) is now the one
+third-party plugin declared alongside `suite-kit`, everywhere.
+
+- [x] Declare `superpowers` in this repo's `.claude/settings.json`, replacing `omc`
+- [x] Declare `superpowers` in Konnekt's `.claude/settings.json`, replacing `omc`
+      — on `konnekt@claude/suite-kit-enforcement`, not yet merged
+- [x] Kommands already declared `superpowers` rather than `omc` — the rest of the
+      suite has now matched it, not the other way around
+- [ ] Run `claude plugin install` for `superpowers@superpowers` on each machine and
       cloud path that needs it, and record where it has been run
-- [ ] Observe a session of OMC's agents against Konnekt's `graphify hook-guard`
-      before enabling OMC repo-wide there
+- [ ] Observe a session of superpowers' agents against Konnekt's
+      `graphify hook-guard` before relying on it there beyond what
+      `.claude/settings.json` already declares
 
 ## Workspace validation
 
-- [ ] Clone Konnekt and Kommands via `scripts/bootstrap.sh` and confirm
-      `.omc-workspace` produces one shared session instead of one per product
+- [ ] Clone Konnekt and Kommands via `scripts/bootstrap.sh` and confirm the
+      sibling layout works standalone — no longer tied to OMC's workspace
+      feature, which this repo no longer uses

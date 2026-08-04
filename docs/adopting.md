@@ -14,11 +14,11 @@ In the repo's committed `.claude/settings.json`:
 {
   "extraKnownMarketplaces": {
     "kollektiv": { "source": { "source": "github", "repo": "kollektiv-mc/Kollektiv" } },
-    "omc": { "source": { "source": "github", "repo": "Yeachan-Heo/oh-my-claudecode" } }
+    "superpowers": { "source": { "source": "github", "repo": "obra/superpowers" } }
   },
   "enabledPlugins": {
     "suite-kit@kollektiv": true,
-    "oh-my-claudecode@omc": true
+    "superpowers@superpowers": true
   }
 }
 ```
@@ -92,11 +92,10 @@ without a `kollektiv` checkout beside it.
 
 ```gitignore
 .claude/settings.local.json
-.claude/.omc/
 ```
 
 Shared config is committed so every clone and cloud agent inherits the same setup.
-Personal permission allowlists and OMC's session state are not shared.
+Personal permission allowlists are not shared.
 
 ---
 
@@ -113,7 +112,7 @@ disk.
 kollektiv is itself an adopter, not just the source of the plugin. Its
 `.claude/suite.json` has `linear.team: "KOL"` and
 `roadmap: "docs/roadmap.md"`, and its `.claude/settings.json` enables
-`suite-kit@kollektiv` from the local marketplace plus `oh-my-claudecode@omc` —
+`suite-kit@kollektiv` from the local marketplace plus `superpowers@superpowers` —
 it omits `kollektiv` from `extraKnownMarketplaces` since this repo already is
 that marketplace and declaring it as a remote `github` source would register it
 twice. It has no `tokens`, `minecraft`, `health.invariants`, or
@@ -142,11 +141,10 @@ manifest but not yet provisioned; see `docs/roadmap.md`.
 `.claude/settings.json`, `.claude/suite.json`, `tokens.source.json`, and the
 `.gitignore` lines land together on that branch.
 
-Its settings block declares `suite-kit@kollektiv` and
-**`superpowers@superpowers`** — not `omc`, which step 1 above names. Whether
-that is a deviation to correct or third-party plugin choice being per-repo is
-an open question in `roadmap.md`; step 1 currently overstates `omc` as a suite
-default.
+Its settings block declares `suite-kit@kollektiv` and `superpowers@superpowers`.
+This was ahead of the rest of the suite rather than a deviation from it: OMC has
+since been dropped everywhere, and step 1 above now names `superpowers` for
+everyone.
 
 **Kommands is tracked in GitHub Issues, not Linear.** Its manifest declares
 `tracking: "github-issues"` and carries no `linear` block. `/suite-kit:linear-sync`
@@ -203,11 +201,13 @@ nothing was invented to fill the slot.
 The settings block was merged into the existing `.claude/settings.json` without
 disturbing its `hooks` section — Konnekt binds `graphify hook-guard` to
 `PreToolUse` on `Bash`, `Read`, and `Glob`; suite-kit ships no hooks specifically so
-it cannot collide with those.
+it cannot collide with those. It declares `superpowers@superpowers`, not OMC, which
+this repo — and the whole suite — no longer uses.
 
-> **Partly unmerged.** The command deletion, the CI check, and the permissions
-> block below are on `konnekt@claude/suite-kit-enforcement`. The
-> `.claude/suite.json`, settings block, and vendored tokens are on `main`.
+> **Partly unmerged.** The command deletion, the CI check, the permissions
+> block, and the OMC → superpowers swap below are on
+> `konnekt@claude/suite-kit-enforcement`. The `.claude/suite.json` and vendored
+> tokens are on `main`.
 
 Its `.claude/commands/linear-sync.md` was **deleted** on adoption. It duplicated
 `/suite-kit:linear-sync` and had already gone stale, targeting the `KonnektMC`
@@ -219,6 +219,7 @@ structure stays in `agent_docs/LINEAR.md` where it belongs.
 Its CI runs the `gen:tokens` clean-diff check that `health.generated` describes, so
 that invariant no longer depends on an agent choosing to run a skill.
 
-Expect friction between OMC's agents and the graphify guards: the guards nudge away
-from raw reads and greps, and OMC's agents read and grep constantly. Worth a
-session of observation before enabling OMC repo-wide there.
+Watch for friction between superpowers' agents and the graphify guards before
+enabling it repo-wide beyond what `.claude/settings.json` already declares — the
+guards nudge away from raw reads and greps, and an agent framework that reads and
+greps constantly is worth a session of observation regardless of which one it is.

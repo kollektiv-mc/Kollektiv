@@ -39,7 +39,6 @@ it and are not tracked here.
 
 ```
 kollektiv/
-├── .omc-workspace              marks the tree as one Oh-My-ClaudeCode workspace
 ├── suite.repos.json            the product manifest
 ├── CLAUDE.md                   what an agent landing here needs to know
 ├── scripts/bootstrap.sh        clones missing products
@@ -52,7 +51,7 @@ kollektiv/
 ├── design/tokens.schema.json   its schema
 ├── design/suite.schema.json    schema for each repo's .claude/suite.json
 ├── plugins/suite-kit/          the shared plugin
-├── .claude/                    this repo's own suite-kit + OMC adoption
+├── .claude/                    this repo's own suite-kit + superpowers adoption
 ├── docs/adopting.md            how a repo adopts suite-kit
 ├── docs/conventions.md         cross-repo rules: tracking, PRs, permissions
 ├── docs/roadmap.md             this repo's own roadmap, reconciled via linear-sync
@@ -110,22 +109,16 @@ Deliberately **no hooks**. Konnekt already binds `graphify hook-guard` to
 `PreToolUse` on `Bash`, `Read`, and `Glob`; stacking more matchers on top is the
 fastest way to make both feel broken.
 
-## Oh-My-ClaudeCode
+## superpowers
 
-[OMC](https://ohmyclaudecode.com/) is declared alongside suite-kit for multi-agent
-orchestration. Two limits are worth knowing before depending on it:
+[`obra/superpowers`](https://github.com/obra/superpowers) is declared alongside
+suite-kit in every repo in the suite. It replaces Oh-My-ClaudeCode, which this repo
+no longer uses or documents — OMC's workspace-sharing feature (`.omc-workspace`) is
+gone along with it; the sibling-clone layout `bootstrap.sh` produces stands on its
+own and never depended on it.
 
-- **`/team` is local-only.** It spawns workers through tmux, with optional external
-  provider CLIs for cross-model work. Claude Code on the web has neither, so cloud
-  sessions get OMC's skills and agents but not team mode. Named stage profiles
-  additionally want Linux `flock`.
-- **Context is not free.** OMC contributes a large number of agents and skills,
-  paid on every turn in every session. Check the **Context cost** figure in the
-  `/plugin` detail view before leaving it enabled repo-wide rather than reaching
-  for it per-session.
-
-Its `.omc-workspace` support is the part that fits this repo best: a token change
-in Konnekt that must land in Kommands becomes one session instead of two.
+Declaring a marketplace runs third-party code with your privileges — that is a trust
+decision made per repo, same as any `extraKnownMarketplaces` entry.
 
 ---
 

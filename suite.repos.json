@@ -3,22 +3,32 @@
   "linear": {
     "workspace": "Kollektiv-MC"
   },
+  "tokens": {
+    "source": "design/tokens.json",
+    "vendoredAs": "tokens.source.json"
+  },
   "repos": [
     {
       "name": "Konnekt",
-      "url": "https://github.com/sandrogekeler/Konnekt.git",
+      "url": "https://github.com/kollektiv-mc/Konnekt.git",
       "kind": "wails-desktop",
       "linearTeam": "KON",
       "roadmap": "agent_docs/ROADMAP.md",
-      "tokens": "source"
+      "tokens": {
+        "role": "consumer",
+        "generate": "pnpm gen:tokens"
+      }
     },
     {
       "name": "Kommands",
-      "url": "https://github.com/sandrogekeler/Kommands.git",
+      "url": "https://github.com/kollektiv-mc/Kommands.git",
       "kind": "vite-web",
       "linearTeam": "KMD",
       "roadmap": "docs/roadmap.md",
-      "tokens": "consumer"
+      "tokens": {
+        "role": "consumer",
+        "generate": "pnpm gen:tokens"
+      }
     }
   ]
 }

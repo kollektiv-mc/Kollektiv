@@ -4,8 +4,8 @@ The umbrella for a small suite of Minecraft tools:
 
 | Product | What it is | Stack |
 |---|---|---|
-| [Konnekt](https://github.com/sandrogekeler/Konnekt) | Desktop dashboard for Minecraft servers | Wails v2 · Go · React 19 |
-| [Kommands](https://github.com/sandrogekeler/Kommands) | Command generator for Java Edition | Vite · React 19 |
+| [Konnekt](https://github.com/kollektiv-mc/Konnekt) | Desktop dashboard for Minecraft servers | Wails v2 · Go · React 19 |
+| [Kommands](https://github.com/kollektiv-mc/Kommands) | Command generator for Java Edition | Vite · React 19 |
 
 This repo owns **conventions, domain knowledge, and agent tooling**. It does not
 own builds, CI, or releases — each product keeps its own.
@@ -16,10 +16,12 @@ own builds, CI, or releases — each product keeps its own.
 
 The two products share a design language, a domain, and a set of working rules,
 and until now each of those was written down twice. Kommands' `docs/design-tokens.md`
-restates Konnekt's entire palette by hand. Both repos carry their own health-check
-prose. Both are exposed to the same failure mode: Minecraft syntax changes between
-versions in ways that produce commands which look correct and silently do nothing,
-and model training data on that syntax is frequently stale.
+restated Konnekt's entire palette by hand — that palette now lives in
+[`design/tokens.json`](design/tokens.json) and each product generates from it. Both
+repos carry their own health-check prose. Both are exposed to the same failure mode:
+Minecraft syntax changes between versions in ways that produce commands which look
+correct and silently do nothing, and model training data on that syntax is
+frequently stale.
 
 Written twice, those rules drift. Held here as a plugin, they do not.
 
@@ -40,7 +42,9 @@ kollektiv/
 ├── .omc-workspace          marks the tree as one Oh-My-ClaudeCode workspace
 ├── suite.repos.json        the product manifest
 ├── scripts/bootstrap.sh    clones missing products
+├── scripts/sync-tokens.sh  vendors design/tokens.json into each product
 ├── .claude-plugin/         marketplace manifest
+├── design/                 the shared design-token source
 ├── plugins/suite-kit/      the shared plugin
 ├── .claude/                this repo's own suite-kit + OMC adoption
 ├── docs/roadmap.md         this repo's own roadmap, reconciled via linear-sync
@@ -51,13 +55,28 @@ kollektiv/
 ## Getting started
 
 ```sh
-git clone https://github.com/sandrogekeler/kollektiv
-cd kollektiv
+git clone https://github.com/kollektiv-mc/Kollektiv
+cd Kollektiv
 ./scripts/bootstrap.sh
+./scripts/sync-tokens.sh
 ```
 
-`bootstrap.sh` is idempotent and never deletes: a product directory that already
-contains a working clone is left alone.
+Both scripts are idempotent and never delete: a product directory that already
+contains a working clone is left alone, and a vendored token file that already
+matches the source is not rewritten.
+
+---
+
+## Design tokens
+
+`design/tokens.json` is the suite's single source of truth for design values —
+tech-neutral JSON, semantic name to value, no CSS syntax baked in. Both products
+are **consumers**: `sync-tokens.sh` vendors the file into each clone as
+`tokens.source.json`, and each product's own generator transforms it into whatever
+its stack needs.
+
+Nothing both produces and consumes the token set, which is what makes regenerating
+safe. See [`design/README.md`](design/README.md).
 
 ---
 

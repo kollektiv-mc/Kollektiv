@@ -1,9 +1,7 @@
 {
   "product": "kollektiv",
   "kind": "workspace-root",
-  "linear": {
-    "team": "KOL"
-  },
+  "tracking": "github-issues",
   "roadmap": "docs/roadmap.md",
   "health": {
     "commands": [
@@ -13,7 +11,7 @@
       },
       {
         "name": "manifest JSON validity",
-        "run": "for f in suite.repos.json .claude-plugin/marketplace.json plugins/suite-kit/.claude-plugin/plugin.json .claude/suite.json; do python3 -m json.tool \"$f\" > /dev/null || exit 1; done"
+        "run": "for f in suite.repos.json .claude-plugin/marketplace.json plugins/suite-kit/.claude-plugin/plugin.json .claude/suite.json design/labels.json; do python3 -m json.tool \"$f\" > /dev/null || exit 1; done"
       },
       {
         "name": "suite-kit version match",

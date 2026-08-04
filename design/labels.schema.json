@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kollektiv-mc/Kollektiv/design/labels.schema.json",
+  "title": "Kollektiv label taxonomy",
+  "description": "The suite's single source of truth for issue labels, on both sides of the sync: GitHub labels applied by scripts/sync-labels.sh, and their Linear counterparts created by hand or by /suite-kit:suite-sync. Never add a label directly in a repo or in Linear — add it here and propagate it, for the same reason design/tokens.json is not edited from a product.",
+  "type": "object",
+  "required": ["version", "github", "linear"],
+  "additionalProperties": false,
+
+  "$defs": {
+    "githubLabel": {
+      "type": "object",
+      "required": ["name", "color", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(:[a-z0-9]+(-[a-z0-9]+)*)?$",
+          "description": "Lowercase, optionally 'category:value'. No spaces — GitHub label names are free text but the suite's own vocabulary is not."
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{6}$",
+          "description": "Lowercase six-digit hex, no leading '#' — the shape the GitHub labels API expects."
+        },
+        "description": { "type": "string", "minLength": 1, "maxLength": 100 }
+      }
+    },
+
+    "linearLabel": {
+      "type": "object",
+      "required": ["name", "color", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "Six-digit hex with leading '#' — the shape Linear's own labels already use."
+        },
+        "description": { "type": "string", "minLength": 1 }
+      }
+    }
+  },
+
+  "properties": {
+    "$schema": { "type": "string" },
+
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Bump only on a breaking shape change."
+    },
+
+    "github": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/githubLabel" },
+      "description": "The label set scripts/sync-labels.sh applies to every repo in suite.repos.json plus this one. Flat and repo-agnostic — the same fifteen labels exist everywhere, so an issue's meaning does not depend on which repo it lives in."
+    },
+
+    "linear": {
+      "type": "object",
+      "required": ["repo", "type", "area", "flags"],
+      "additionalProperties": false,
+      "description": "Linear labels created once per workspace, not per team. 'repo' exists only here — GitHub issues don't need to say which repo they're in.",
+      "properties": {
+        "repo": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/linearLabel" },
+          "description": "One per repo in suite.repos.json plus kollektiv itself, so a cross-team Linear view can still filter to one repo."
+        },
+        "type": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/linearLabel" },
+          "description": "Mirrors github[].name entries prefixed 'type:', plus any label the workspace already had before this taxonomy (e.g. Improvement) that is kept as a legacy alias rather than deleted."
+        },
+        "area": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/linearLabel" },
+          "description": "Mirrors github[].name entries prefixed 'area:', same colors, so the two sides read as one system."
+        },
+        "flags": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/linearLabel" },
+          "description": "Labels with no GitHub equivalent, or whose meaning is Linear-side only (e.g. source:github marking a routine-created issue)."
+        }
+      }
+    }
+  }
+}

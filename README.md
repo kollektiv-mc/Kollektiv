@@ -51,12 +51,17 @@ kollektiv/
 ├── .claude-plugin/             marketplace manifest
 ├── design/tokens.json          the shared design-token source
 ├── design/tokens.schema.json   its schema
+├── design/labels.json          the shared GitHub/Linear label taxonomy
+├── design/labels.schema.json   its schema
 ├── design/suite.schema.json    schema for each repo's .claude/suite.json
+├── scripts/sync-labels.sh      applies design/labels.json's GitHub side via gh
+│                               (--check reports drift and writes nothing)
 ├── plugins/suite-kit/          the shared plugin
 ├── .claude/                    this repo's own suite-kit + superpowers adoption
 ├── docs/adopting.md            how a repo adopts suite-kit
 ├── docs/conventions.md         cross-repo rules: tracking, PRs, permissions
-├── docs/roadmap.md             this repo's own roadmap, reconciled via linear-sync
+├── docs/linear.md              the Linear structure /suite-kit:suite-sync mirrors into
+├── docs/roadmap.md             this repo's own roadmap — direction, not work items
 ├── Konnekt/                    cloned, untracked
 └── Kommands/                   cloned, untracked
 ```
@@ -99,7 +104,7 @@ rules both products share.
 | `/suite-kit:health` | Run a product's checks and invariants, report a table |
 | `/suite-kit:mc-syntax` | Verify Minecraft syntax against pinned data before writing it |
 | `/suite-kit:design-tokens` | The no-literal-hex, no-literal-px rule |
-| `/suite-kit:linear-sync` | Reconcile a roadmap against Linear |
+| `/suite-kit:suite-sync` | Mirror each repo's GitHub Issues into Linear |
 | `@mc-reviewer` | Review a diff for version-trait and hardcoded-value violations |
 
 The skills are generic. Everything product-specific — the actual commands, the
@@ -126,29 +131,17 @@ decision made per repo, same as any `extraKnownMarketplaces` entry.
 
 ## Tracking
 
-Tracking is a **per-repo choice**, and suite-kit does not require a single tracker.
-See [`docs/conventions.md`](docs/conventions.md).
+**GitHub Issues is the one source of truth for work items across the suite** —
+every repo declares `tracking: "github-issues"`. Linear is a downstream
+mirror, kept current by `/suite-kit:suite-sync` on a schedule. See
+[`docs/conventions.md`](docs/conventions.md) and
+[`docs/linear.md`](docs/linear.md) for the full model: teams, projects,
+milestones, and the label taxonomy shared by both sides.
 
-| Repo | Tracked in |
-|---|---|
-| Kollektiv | Linear, team `KOL` |
-| Konnekt | Linear, team `KON` — *key declared, team not yet provisioned* |
-| Kommands | GitHub Issues |
+The Linear workspace (`Kollektiv-MC`, since renamed `Kollektiv`) holds two
+teams — `Kollektiv` and `Apps` — under one `Kollektiv Suite` initiative.
+Linear's MCP exposes no `create_team`; teams are hand-made in the Linear UI.
 
-**What exists in Linear today:** one workspace, `Kollektiv-MC`, holding one team
-(`KOL`) and one project (`Workspace & Tooling`). There are no other teams and no
-initiatives. Creating the `KON` team and a suite-wide initiative are open items in
-[`docs/roadmap.md`](docs/roadmap.md) — declaring a team key in a manifest and
-provisioning the team are different steps, and only the first is done.
-
-This repo adopts its own plugin: `.claude/suite.json` points `linear.team` at `KOL`
-and `roadmap` at `docs/roadmap.md`, so `/suite-kit:linear-sync` reconciles this repo
-the same way it does Konnekt.
-
-Linear's MCP exposes no `create_team` or `create_initiative`; both are hand-made in
-the Linear UI. Projects are then attached to an initiative that already exists via
-`save_project(addInitiatives: [...])`.
-
-The workspace was recreated from scratch on 2026-08-04 (previously `KonnektMC`); old
-`KON-*` issue references in Konnekt's merged PRs point at IDs that no longer exist,
-since the new workspace renumbers from `KON-1`.
+The workspace was recreated from scratch on 2026-08-04 (previously
+`KonnektMC`); old `KON-*` issue references in Konnekt's merged PRs point at
+IDs that no longer exist in the replacement workspace.

@@ -3,6 +3,7 @@
 # Validate this repo's JSON against its schemas.
 #
 #   design/tokens.json        against  design/tokens.schema.json
+#   design/labels.json        against  design/labels.schema.json
 #   .claude/suite.json        against  design/suite.schema.json
 #   <product>/.claude/suite.json  ditto, for every product that is cloned
 #
@@ -53,6 +54,7 @@ validate() {
 }
 
 validate "$root/design/tokens.json" "$root/design/tokens.schema.json" "design/tokens.json"
+validate "$root/design/labels.json" "$root/design/labels.schema.json" "design/labels.json"
 validate "$root/.claude/suite.json" "$root/design/suite.schema.json" ".claude/suite.json"
 
 # Products are cloned as siblings and are not tracked here, so validate whichever

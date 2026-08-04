@@ -132,7 +132,7 @@
       "type": "object",
       "required": ["team"],
       "additionalProperties": false,
-      "description": "Present when this repo is tracked in Linear. Exactly one of 'linear' or 'tracking' must be set — tracking is a per-repo choice, and a repo that declares neither would leave /suite-kit:linear-sync guessing a team key.",
+      "description": "Present when this repo is tracked in Linear directly, bypassing the GitHub-Issues mirror. Exactly one of 'linear' or 'tracking' must be set — tracking is a per-repo choice, and a repo that declares neither would leave /suite-kit:suite-sync guessing where its issues live.",
       "properties": {
         "team": {
           "type": "string",
@@ -144,12 +144,12 @@
 
     "tracking": {
       "enum": ["github-issues"],
-      "description": "Present when this repo is tracked outside Linear. Kommands uses GitHub Issues. /suite-kit:linear-sync reports this and stops rather than erroring."
+      "description": "Present when this repo's issues live on GitHub, which /suite-kit:suite-sync then mirrors into Linear. Every repo in the suite uses this today — GitHub Issues is the one source of truth for work items across the suite."
     },
 
     "roadmap": {
       "allOf": [{ "$ref": "#/$defs/repoRelativePath" }],
-      "description": "The roadmap /suite-kit:linear-sync reconciles against. Issues created from it carry a 'Source: <roadmap> § <section>' line; matching is on that line, never on titles."
+      "description": "Direction and sequencing only — not a work-item list. Work items live in GitHub Issues; /suite-kit:suite-sync mirrors them into Linear, matching on a 'Source: <owner>/<repo>#<number>' line in each Linear issue's description, never on titles."
     },
 
     "tokens": {

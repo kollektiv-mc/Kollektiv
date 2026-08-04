@@ -1,0 +1,55 @@
+{
+  "$schema": "./labels.schema.json",
+  "version": 1,
+
+  "github": [
+    { "name": "type:feature", "color": "bb87fc", "description": "New capability, not yet shipped." },
+    { "name": "type:bug", "color": "eb5757", "description": "Existing behavior is wrong." },
+    { "name": "type:chore", "color": "8792a2", "description": "Maintenance work with no user-facing behavior change." },
+    { "name": "type:docs", "color": "0b84a5", "description": "Documentation only." },
+
+    { "name": "area:tokens", "color": "d4c5f9", "description": "design/tokens.json and its vendored consumers." },
+    { "name": "area:ci", "color": "c5e8b7", "description": "CI, health checks, schema and drift validation." },
+    { "name": "area:agents", "color": "f9e2ae", "description": "suite-kit skills, agents, and Claude Code configuration." },
+    { "name": "area:ui", "color": "aed9e0", "description": "User-facing interface work." },
+    { "name": "area:schema", "color": "e0aed9", "description": "A data schema or a generated-data pipeline." },
+    { "name": "area:release", "color": "f5b7b1", "description": "Build, packaging, or release process." },
+
+    { "name": "p0", "color": "b60205", "description": "Drop everything." },
+    { "name": "p1", "color": "d93f0b", "description": "High priority, next up." },
+    { "name": "p2", "color": "fbca04", "description": "Medium priority, normal queue." },
+    { "name": "p3", "color": "c2e0c6", "description": "Low priority, nice to have." },
+
+    { "name": "blocked", "color": "5319e7", "description": "Cannot proceed until a stated dependency clears." }
+  ],
+
+  "linear": {
+    "repo": [
+      { "name": "repo:kollektiv", "color": "#8792A2", "description": "Umbrella repo: conventions, tokens, suite-kit, CI." },
+      { "name": "repo:konnekt", "color": "#4ADE80", "description": "Konnekt — matches its own accent color." },
+      { "name": "repo:kommands", "color": "#4EA7FC", "description": "Kommands." }
+    ],
+
+    "type": [
+      { "name": "Feature", "color": "#BB87FC", "description": "New capability, not yet shipped. Mirrors GitHub type:feature." },
+      { "name": "Bug", "color": "#EB5757", "description": "Existing behavior is wrong. Mirrors GitHub type:bug." },
+      { "name": "Chore", "color": "#8792A2", "description": "Maintenance work with no user-facing behavior change. Mirrors GitHub type:chore." },
+      { "name": "Docs", "color": "#0B84A5", "description": "Documentation only. Mirrors GitHub type:docs." },
+      { "name": "Improvement", "color": "#4EA7FC", "description": "Predates this taxonomy; kept as the Linear-side alias for GitHub's default 'enhancement' label, which /suite-kit:suite-sync maps here rather than to Feature." }
+    ],
+
+    "area": [
+      { "name": "area:tokens", "color": "#D4C5F9", "description": "design/tokens.json and its vendored consumers." },
+      { "name": "area:ci", "color": "#C5E8B7", "description": "CI, health checks, schema and drift validation." },
+      { "name": "area:agents", "color": "#F9E2AE", "description": "suite-kit skills, agents, and Claude Code configuration." },
+      { "name": "area:ui", "color": "#AED9E0", "description": "User-facing interface work." },
+      { "name": "area:schema", "color": "#E0AED9", "description": "A data schema or a generated-data pipeline." },
+      { "name": "area:release", "color": "#F5B7B1", "description": "Build, packaging, or release process." }
+    ],
+
+    "flags": [
+      { "name": "blocked", "color": "#5319E7", "description": "Cannot proceed until a stated dependency clears. Mirrors GitHub blocked." },
+      { "name": "source:github", "color": "#94A3B8", "description": "Created or last updated by /suite-kit:suite-sync from a GitHub issue. Absence means the issue predates the routine or was created by hand in Linear." }
+    ]
+  }
+}

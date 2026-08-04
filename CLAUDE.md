@@ -13,13 +13,17 @@ change here that requires a product to rebuild is a change in the wrong place.
 |---|---|
 | `design/tokens.json` | The suite's single source of truth for design values |
 | `design/tokens.schema.json` | Its schema |
+| `design/labels.json` | The suite's single source of truth for the GitHub/Linear label taxonomy |
+| `design/labels.schema.json` | Its schema |
 | `design/suite.schema.json` | Schema for the per-repo `.claude/suite.json` |
 | `plugins/suite-kit/` | The shared Claude Code plugin |
 | `scripts/bootstrap.sh` | Clones the products as siblings |
 | `scripts/sync-tokens.sh` | Vendors `design/tokens.json` into each product (`--check` to detect drift) |
+| `scripts/sync-labels.sh` | Applies `design/labels.json`'s GitHub side via `gh` (`--check` to detect drift) |
 | `scripts/validate-schemas.sh` | Validates every manifest against its schema |
 | `docs/adopting.md` | How a repo adopts suite-kit |
 | `docs/conventions.md` | Cross-repo rules: tracking, PR magic words, permissions |
+| `docs/linear.md` | The Linear structure `/suite-kit:suite-sync` mirrors GitHub Issues into |
 | `design/README.md` | Why the token set is shaped the way it is |
 
 This repo is the **workspace root**. `Konnekt/` and `Kommands/` are cloned beneath it

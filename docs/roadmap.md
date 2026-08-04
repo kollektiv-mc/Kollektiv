@@ -1,76 +1,64 @@
 # Roadmap
 
-Reconciled against Linear team `KOL`, project `Workspace & Tooling`, by
-`/suite-kit:linear-sync`. Each item's Linear issue carries a
-`Source: docs/roadmap.md § <section>` line — match on that, not on titles.
+Direction and sequencing. Individual tasks live in
+[GitHub Issues](https://github.com/kollektiv-mc/Kollektiv/issues) — this file
+does not track work items, and there is no `TODO.md`.
+
+`/suite-kit:suite-sync` mirrors GitHub Issues across this repo, Konnekt, and
+Kommands into Linear. The Linear structure itself — teams, projects,
+milestones, labels — is documented in `docs/linear.md`, not here.
+
+---
 
 ## Linear substrate
 
-- [ ] Rename team `Kollektiv-MC` to `Kollektiv`, keep key `KOL`
-- [ ] Create team `Konnekt`, key `KON` — the key is already declared in
-      `Konnekt/.claude/suite.json`, but the team does not exist, so
-      `/suite-kit:linear-sync` cannot run there yet
-- [ ] Create initiative `Kollektiv Suite` and attach `Workspace & Tooling`
+The workspace is live: team `Kollektiv` (renamed from `Kollektiv-MC`) and team
+`Apps`, both provisioned by hand in the Linear UI (teams have no create API).
+The `Kollektiv Suite` initiative groups every project across both teams.
 
-No `KMD` team: Kommands is tracked in GitHub Issues, which is a per-repo choice
-suite-kit supports rather than a gap. See `docs/conventions.md`.
+There is no `KON` or `KMD` team — the suite settled on two teams total, with
+per-app separation handled by Linear projects (one per app, under team `Apps`)
+and a `repo:*` label rather than a third team. See `docs/linear.md`.
 
 ## Enforcement
 
-- [x] Add CI to this repo — script syntax, manifest validity, suite-kit version
-      match, schema validation
-- [x] Detect vendored-token drift (`scripts/sync-tokens.sh --check`, plus a
-      scheduled CI job), replacing the incorrect claim that each product's own
-      health check caught it
-- [x] Add `design/suite.schema.json` and validate every manifest against it
-- [~] Run Konnekt's `gen:tokens` clean-diff check in its CI rather than only in
-      `/suite-kit:health` — on `konnekt@claude/suite-kit-enforcement`, not yet
-      merged
-- [ ] Add CI to Kommands once it is scaffolded — it has no `package.json` yet, so
-      its `health.commands` are legitimately unrunnable
-- [ ] Enforce the `docs/conventions.md` permissions block automatically rather
-      than by review
+CI here checks script syntax, manifest and schema validity, suite-kit version
+match, and vendored-token drift (`scripts/sync-tokens.sh --check`, run on a
+schedule since drift detection needs every product cloned beside this one).
 
-**The `token-drift` CI job here is red until Kommands' adoption merges.** Its
-`main` has no `tokens.source.json`, so the check correctly reports it as missing.
-That is the job working, not a bug to suppress.
+Konnekt's `gen:tokens` clean-diff check now runs in its own CI
+(`.github/workflows/ci.yml`), not just `/suite-kit:health`.
+
+Still open: enforcing the `docs/conventions.md` permissions block
+mechanically rather than by review. Kommands can't get CI yet — it has no
+`package.json` until its own scaffolding work lands.
 
 ## Suite conventions
 
-- [x] Hoist the reusable parts of Konnekt's `agent_docs/LINEAR.md` — the
-      magic-word PR convention and the `Source: <roadmap> § <section>` mapping
-      rule — into `docs/conventions.md`, leaving Konnekt's own project and
-      milestone structure where it is
-- [x] Add `CLAUDE.md` to this repo, so its conventions reach an agent session
-      instead of sitting in files nothing auto-loads
-- [~] Delete the two per-repo commands the plugin replaced
-      (`Konnekt/.claude/commands/linear-sync.md`,
-      `Kommands/.claude/commands/health-check.md`) — both deletions are on
-      unmerged branches
-- [ ] Write `scripts/adopt.sh` to scaffold a new repo's `.claude/suite.json`,
-      settings block, and vendored tokens, so adopting a fourth repo is a
-      command rather than a careful read of `docs/adopting.md`
+The reusable parts of Konnekt's old `agent_docs/LINEAR.md` — the PR
+magic-word convention and, historically, the roadmap-section mapping rule —
+were hoisted into `docs/conventions.md`, and `CLAUDE.md` was added here so
+these conventions reach an agent session automatically. The per-repo
+`linear-sync` and `health-check` commands the plugin replaced have been
+deleted from both products.
+
+Still open: `scripts/adopt.sh`, to scaffold a new repo's `.claude/suite.json`,
+settings block, and vendored tokens in one command instead of a careful read
+of `docs/adopting.md`.
 
 ## superpowers adoption
 
-OMC (Oh-My-ClaudeCode) has been dropped suite-wide, along with its
-`.omc-workspace` multi-repo session sharing — deleted from this repo along with
-every reference to it. `superpowers` (`obra/superpowers`) is now the one
-third-party plugin declared alongside `suite-kit`, everywhere.
+OMC (Oh-My-ClaudeCode) is dropped suite-wide, along with its `.omc-workspace`
+multi-repo session sharing. `superpowers` (`obra/superpowers`) is the one
+third-party plugin declared alongside `suite-kit` in all three repos.
 
-- [x] Declare `superpowers` in this repo's `.claude/settings.json`, replacing `omc`
-- [x] Declare `superpowers` in Konnekt's `.claude/settings.json`, replacing `omc`
-      — on `konnekt@claude/suite-kit-enforcement`, not yet merged
-- [x] Kommands already declared `superpowers` rather than `omc` — the rest of the
-      suite has now matched it, not the other way around
-- [ ] Run `claude plugin install` for `superpowers@superpowers` on each machine and
-      cloud path that needs it, and record where it has been run
-- [ ] Observe a session of superpowers' agents against Konnekt's
-      `graphify hook-guard` before relying on it there beyond what
-      `.claude/settings.json` already declares
+Still open: recording every machine and cloud path `superpowers@superpowers`
+has actually been installed on, and observing a session of its agents against
+Konnekt's `graphify hook-guard` before relying on it there beyond what
+`.claude/settings.json` already declares.
 
 ## Workspace validation
 
-- [ ] Clone Konnekt and Kommands via `scripts/bootstrap.sh` and confirm the
-      sibling layout works standalone — no longer tied to OMC's workspace
-      feature, which this repo no longer uses
+Still open: cloning Konnekt and Kommands via `scripts/bootstrap.sh` and
+confirming the sibling layout works standalone, with nothing depending on
+OMC's workspace feature.

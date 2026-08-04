@@ -4,8 +4,13 @@ description: Apply the suite's design-token rule when writing or editing UI — 
 
 # Design tokens
 
-Read `.claude/suite.json` → `tokens` for this repo's `role` (`source` or
-`consumer`), `enforce` level, and the `paths` the rule covers.
+Read `.claude/suite.json` → `tokens` for this repo's `role`, `enforce` level, and
+the `paths` the rule covers.
+
+If that file is missing, say so and stop. Do not guess an enforce level or invent
+the covered paths — a rule applied to the wrong paths is worse than no rule,
+because it reports clean. The fix is to add `.claude/suite.json`; see
+`kollektiv/docs/adopting.md`.
 
 ---
 
@@ -39,12 +44,25 @@ radius — precisely because those are the ones that get inlined.
 approximate with a nearby token; approximating is worse than inlining, because it
 looks correct in review. Adding a token is a normal, expected change.
 
-## Roles
+## Where a new token goes
 
-- **`source`** — this repo defines the token set. A new token starts here.
-- **`consumer`** — this repo derives its tokens. Add the token upstream first, then
-  regenerate. Hand-editing generated token output is silently reverted on the next
-  regeneration, and the underlying gap survives.
+The source is `kollektiv/design/tokens.json`. Every product repo is a
+**`consumer`** — it vendors that file as `tokens.source.json` and generates its own
+token output from it. No product repo defines the set, so none of them is the place
+to add a value.
+
+Adding a token is three steps, in order:
+
+1. Add it to `kollektiv/design/tokens.json`, named by role, not appearance.
+2. `./scripts/sync-tokens.sh` from the kollektiv root — refreshes the vendored copy
+   in each cloned product.
+3. In this repo, run the generator named by `tokens.generate` and commit the
+   regenerated output alongside the updated `tokens.source.json`.
+
+Editing generated token output directly is silently reverted on the next
+regeneration, and the gap that prompted the edit survives. Editing
+`tokens.source.json` directly is the same mistake one step earlier: the next
+`sync-tokens.sh` overwrites it, and the other product never sees the value.
 
 ## Enforce levels
 

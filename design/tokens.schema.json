@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kollektiv-mc/Kollektiv/design/tokens.schema.json",
+  "title": "Kollektiv design tokens",
+  "description": "Tech-neutral design token source for the Kollektiv suite. Values carry no CSS syntax: colours are {hex, alpha}, easings are four numbers, font stacks are arrays, and scalar groups declare their unit once. Each product transforms this into whatever its stack needs.",
+  "type": "object",
+  "required": ["version", "color", "type", "space", "radius", "border", "motion"],
+  "additionalProperties": false,
+
+  "$defs": {
+    "colorValue": {
+      "type": "object",
+      "description": "A colour with optional alpha. No CSS function syntax.",
+      "required": ["hex"],
+      "additionalProperties": false,
+      "properties": {
+        "hex": {
+          "type": "string",
+          "pattern": "^#[0-9a-f]{6}$",
+          "description": "Lowercase six-digit hex. Shorthand and eight-digit forms are rejected so alpha has exactly one home."
+        },
+        "alpha": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 1,
+          "description": "Omit for a fully opaque colour. 0 and 1 are excluded: a fully transparent token is not a design decision, and 1 is the default."
+        }
+      }
+    },
+
+    "themedColor": {
+      "type": "object",
+      "required": ["dark", "light"],
+      "additionalProperties": false,
+      "properties": {
+        "dark": { "$ref": "#/$defs/colorValue" },
+        "light": {
+          "oneOf": [{ "$ref": "#/$defs/colorValue" }, { "type": "null" }],
+          "description": "null means the token inherits its dark value; generators emit no light override for it."
+        },
+        "userConfigurable": {
+          "type": "boolean",
+          "description": "The value is a default the user may override at runtime. Generators must not treat it as fixed."
+        }
+      }
+    },
+
+    "colorGroup": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+      "additionalProperties": { "$ref": "#/$defs/themedColor" }
+    },
+
+    "scalarScale": {
+      "type": "object",
+      "required": ["unit", "scale"],
+      "additionalProperties": false,
+      "properties": {
+        "unit": {
+          "enum": ["px", "ms"],
+          "description": "Declared once for the whole group; individual values are bare numbers."
+        },
+        "scale": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+          "additionalProperties": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+
+    "fontStack": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Ordered family names. An entry of the form \"@name\" substitutes that family's stack — the only reference syntax in this file.",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+
+  "properties": {
+    "$schema": { "type": "string" },
+
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Schema revision. Bump only on a breaking shape change, so a consumer can refuse a source it cannot read."
+    },
+
+    "color": {
+      "type": "object",
+      "required": ["surface", "border", "text", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "surface": { "$ref": "#/$defs/colorGroup" },
+        "border": { "$ref": "#/$defs/colorGroup" },
+        "text": { "$ref": "#/$defs/colorGroup" },
+        "status": {
+          "allOf": [{ "$ref": "#/$defs/colorGroup" }],
+          "description": "Roles a consumer is expected to expose as separable colour components as well as a composed value, so alpha can be varied from one token."
+        }
+      }
+    },
+
+    "type": {
+      "type": "object",
+      "required": ["family", "size", "weight"],
+      "additionalProperties": false,
+      "properties": {
+        "family": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "pattern": "^[a-z][a-z0-9]*$" },
+          "additionalProperties": { "$ref": "#/$defs/fontStack" }
+        },
+        "size": { "$ref": "#/$defs/scalarScale" },
+        "weight": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "pattern": "^[a-z][a-z0-9]*$" },
+          "additionalProperties": { "type": "integer", "minimum": 1, "maximum": 1000 }
+        }
+      }
+    },
+
+    "space": { "$ref": "#/$defs/scalarScale" },
+    "radius": { "$ref": "#/$defs/scalarScale" },
+    "border": { "$ref": "#/$defs/scalarScale" },
+
+    "motion": {
+      "type": "object",
+      "required": ["duration", "easing"],
+      "additionalProperties": false,
+      "properties": {
+        "duration": { "$ref": "#/$defs/scalarScale" },
+        "easing": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "pattern": "^[a-z][a-z0-9]*$" },
+          "additionalProperties": {
+            "type": "array",
+            "description": "Cubic bezier control points [x1, y1, x2, y2] as bare numbers, not a cubic-bezier() call.",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": { "type": "number" }
+          }
+        }
+      }
+    }
+  }
+}

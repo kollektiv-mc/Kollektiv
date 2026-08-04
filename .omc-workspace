@@ -1,0 +1,3 @@
+# Marks this directory as the root of an Oh-My-ClaudeCode multi-repo workspace,
+# so the products cloned beneath it share state instead of each keeping its own.
+# See README.md.

@@ -1,0 +1,10 @@
+{
+  "name": "suite-kit",
+  "description": "Shared conventions for the Minecraft tool suite: health checks driven by a per-repo manifest, Minecraft syntax verification, design-token discipline, and Linear roadmap reconciliation.",
+  "version": "0.1.0",
+  "author": {
+    "name": "sandrogekeler"
+  },
+  "homepage": "https://github.com/sandrogekeler/kollektiv",
+  "repository": "https://github.com/sandrogekeler/kollektiv"
+}

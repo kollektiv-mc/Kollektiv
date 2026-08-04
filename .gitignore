@@ -1,0 +1,10 @@
+# Products, cloned by scripts/bootstrap.sh — each is its own repository.
+Konnekt/
+Kommands/
+
+# Agent tooling: shared config is committed, personal and runtime state is not.
+.claude/settings.local.json
+.claude/.omc/
+
+# OS
+.DS_Store

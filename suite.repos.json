@@ -1,0 +1,24 @@
+{
+  "suite": "kollektiv",
+  "linear": {
+    "workspace": "KonnektMC"
+  },
+  "repos": [
+    {
+      "name": "Konnekt",
+      "url": "https://github.com/sandrogekeler/Konnekt.git",
+      "kind": "wails-desktop",
+      "linearTeam": "KON",
+      "roadmap": "agent_docs/ROADMAP.md",
+      "tokens": "source"
+    },
+    {
+      "name": "Kommands",
+      "url": "https://github.com/sandrogekeler/Kommands.git",
+      "kind": "vite-web",
+      "linearTeam": "KMD",
+      "roadmap": "docs/roadmap.md",
+      "tokens": "consumer"
+    }
+  ]
+}

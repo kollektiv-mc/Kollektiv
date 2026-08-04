@@ -1,8 +1,8 @@
 # Adopting suite-kit in a product repo
 
-Four things go into each product repo: a settings block, a `.claude/suite.json`, a
-vendored `tokens.source.json`, and two `.gitignore` lines. Nothing else about the
-repo changes.
+Five things go into each product repo: a settings block, a permissions block, a
+`.claude/suite.json`, a vendored `tokens.source.json`, and two `.gitignore` lines.
+Nothing else about the repo changes.
 
 ---
 
@@ -33,16 +33,31 @@ applies on every path that loads plugins, including cloud sessions.
 Both marketplaces run third-party code with your privileges. Enabling them is a
 trust decision — make it deliberately, per repo.
 
-## 2. Add `.claude/suite.json`
+## 2. Add the permissions block
+
+Merge the block from [`conventions.md`](conventions.md) § Required permissions block
+into the same `.claude/settings.json`, without disturbing anything already there. The
+`deny` and `ask` entries are the suite-wide floor; `allow` is per-repo.
+
+This matters most for unattended agents and scheduled routines, which have nobody
+watching to decline a prompt.
+
+## 3. Add `.claude/suite.json`
 
 This is the file every suite-kit skill reads. Product-specific facts live here,
 next to the code they constrain, rather than inside the plugin.
+
+Its schema is [`design/suite.schema.json`](../design/suite.schema.json), and
+`scripts/validate-schemas.sh` checks every manifest in the workspace against it. Point
+`$schema` at it for editor completion. A malformed manifest otherwise fails late,
+inside a skill, as confusing prose.
 
 | Field | Meaning |
 |---|---|
 | `product` | Display name |
 | `kind` | Stack shape, e.g. `wails-desktop`, `vite-web` |
 | `linear.team` | Team key for `/suite-kit:linear-sync` |
+| `tracking` | `github-issues`, for a repo not tracked in Linear. Exactly one of `linear` or `tracking` is required — see [`conventions.md`](conventions.md) |
 | `roadmap` | Path to the roadmap that skill reconciles against |
 | `tokens.role` | Always `consumer` for a product repo — the token set is defined in kollektiv's `design/tokens.json`, not in any product |
 | `tokens.source` | The repo the token values come from — `kollektiv` |
@@ -62,7 +77,7 @@ next to the code they constrain, rather than inside the plugin.
 The `diagnosis` and `reference` fields are not decoration. An invariant without a
 stated reason gets deleted the first time it is inconvenient.
 
-## 3. Vendor the token source
+## 4. Vendor the token source
 
 ```sh
 ./scripts/sync-tokens.sh          # from the kollektiv root
@@ -73,7 +88,7 @@ along with whatever `tokens.generate` produces from it. Both files are inputs a
 build reads, so both are committed — a product must build from a standalone clone,
 without a `kollektiv` checkout beside it.
 
-## 4. Ignore the runtime state
+## 5. Ignore the runtime state
 
 ```gitignore
 .claude/settings.local.json
@@ -108,27 +123,38 @@ machinery that guards literal hex and px in product code doesn't apply to it; it
 emits no Minecraft commands and generates nothing, so nothing was invented to
 fill those two slots either.
 
-The Linear workspace backing all three repos was recreated from scratch on
-2026-08-04 as `Kollektiv-MC` (team `KOL`), replacing the old `KonnektMC`
-workspace, which is abandoned rather than migrated. Old `KON-*` references in
-Konnekt's merged PRs and `agent_docs/LINEAR.md` now point at nothing, since the
-new workspace renumbers `KON` from 1.
+The Linear workspace was recreated from scratch on 2026-08-04 as `Kollektiv-MC`
+(team `KOL`), replacing the old `KonnektMC` workspace, which is abandoned rather
+than migrated. Old `KON-*` references in Konnekt's merged PRs now point at nothing,
+since the new workspace renumbers `KON` from 1.
+
+It holds one team and one project today. The `KON` team is declared in Konnekt's
+manifest but not yet provisioned; see `docs/roadmap.md`.
 
 ### Kommands
 
 `.claude/settings.json`, `.claude/suite.json`, `tokens.source.json`, and the
-`.gitignore` lines are in place. The switch of task tracking from GitHub Issues
-to Linear `KMD` is not: `KMD` is declared in `.claude/suite.json` as the intended
-team key, but the team itself does not exist yet in the `Kollektiv-MC` workspace
-(tracked as `KOL-7`) — declaring a key and provisioning the team are different
-steps, and only the first is done.
+`.gitignore` lines are in place.
+
+**Kommands is tracked in GitHub Issues, not Linear.** Its manifest declares
+`tracking: "github-issues"` and carries no `linear` block. `/suite-kit:linear-sync`
+reports that and stops. An earlier revision of this page described a switch to a
+Linear `KMD` team; that switch was never made and is no longer planned — see
+[`conventions.md`](conventions.md) § Tracking is a per-repo choice.
+
+Its `.claude/commands/health-check.md` was **deleted** on adoption. It reimplemented
+`/suite-kit:health` with the invariant greps hardcoded inline; those greps now live in
+`health.invariants` where the plugin can read them. Two definitions of the same checks
+is the drift this repo exists to prevent, and shipping the plugin while leaving the
+copy in place would have been the clearest possible example of it.
 
 `health.commands` is present but every entry is currently unrunnable — the repo is
 pre-scaffold, with `docs/` and `.claude/` and no `package.json`. That is expected,
-and `/health-check` already reports an unrunnable check as `skipped` with a reason
+and `/suite-kit:health` reports an unrunnable check as `skipped` with a reason
 rather than as passing. `tokens.generate` names `pnpm gen:tokens`, which likewise
 does not exist yet; `docs/design-tokens.md` specifies its contract for whoever
-scaffolds the app.
+scaffolds the app. The repo has no CI beyond the Claude workflows for the same
+reason; adding it is a scaffold-time task.
 
 `.claude/rules/*.md` stay where they are. They are path-scoped and auto-inject when
 a matching file is edited — a plugin skill does not do that, so the plugin does not
@@ -167,9 +193,15 @@ disturbing its `hooks` section — Konnekt binds `graphify hook-guard` to
 `PreToolUse` on `Bash`, `Read`, and `Glob`; suite-kit ships no hooks specifically so
 it cannot collide with those.
 
-**Still outstanding:** move the reusable parts of `agent_docs/LINEAR.md` — the
-magic-word PR convention and the `Source: <roadmap> § <section>` mapping rule — up
-into this repo, leaving Konnekt's own project and milestone structure where it is.
+Its `.claude/commands/linear-sync.md` was **deleted** on adoption. It duplicated
+`/suite-kit:linear-sync` and had already gone stale, targeting the `KonnektMC`
+workspace that was deleted on 2026-08-04 — running it did nothing useful. The
+reusable parts of `agent_docs/LINEAR.md` now live in
+[`conventions.md`](conventions.md); Konnekt's own project, milestone, and label
+structure stays in `agent_docs/LINEAR.md` where it belongs.
+
+Its CI runs the `gen:tokens` clean-diff check that `health.generated` describes, so
+that invariant no longer depends on an agent choosing to run a skill.
 
 Expect friction between OMC's agents and the graphify guards: the guards nudge away
 from raw reads and greps, and OMC's agents read and grep constantly. Worth a

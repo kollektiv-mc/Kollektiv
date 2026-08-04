@@ -86,5 +86,26 @@ standalone clone — requiring a `kollektiv` checkout to produce a binary would
 break it.
 
 The vendored copy is a pinned input, the same shape as Kommands pinning mcmeta
-tags for its command data. Drift between a vendored copy and this file is caught
-by each product's health check, which regenerates and expects a clean diff.
+tags for its command data.
+
+## How drift is caught
+
+**A product cannot detect its own staleness.** Its generator reads the vendored
+`tokens.source.json`, so a copy that is months behind this file still regenerates
+byte-identical output and reports a clean diff. The product's `health.generated`
+check catches a *hand-edited generated file* — a different bug, and not this one.
+
+Drift is caught by the only checkout that holds both sides:
+
+```sh
+./scripts/sync-tokens.sh --check     # reports drift, writes nothing, exits non-zero
+```
+
+The hub's `token-drift` CI job clones every product from `suite.repos.json` and runs
+exactly that. It also runs on a daily schedule, because drift is introduced by commits
+to the *product* repos, which this repo never sees — without the schedule it would go
+unnoticed until the next change here.
+
+A product missing `tokens.source.json` entirely is reported the same way, as is a
+workspace where some product could not be cloned. The check never reports "no drift"
+for a product it did not actually compare.

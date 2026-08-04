@@ -6,7 +6,17 @@ disable-model-invocation: true
 # Linear sync
 
 Read `.claude/suite.json` → `linear.team` and `roadmap` for this repo's Linear team
-key and roadmap path.
+key and roadmap path. If that file is missing, say so and stop.
+
+**Tracking is a per-repo choice.** A manifest declares exactly one of `linear` or
+`tracking`. If it declares `tracking` instead of `linear` — Kommands uses
+`github-issues` — report that this repo is tracked elsewhere and stop. That is a
+correct outcome, not an error, and it is not a reason to guess a team key from the
+repo name.
+
+A `linear.team` key that names a team which does not exist in the workspace is a
+different case: report the team as unprovisioned and stop, rather than creating
+issues somewhere else. Declaring a key and provisioning the team are separate steps.
 
 This is one prompt shared by manual runs and any scheduled reconcile, so that the
 reconcile logic has exactly one definition.

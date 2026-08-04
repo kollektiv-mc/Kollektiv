@@ -8,8 +8,8 @@
   "health": {
     "commands": [
       {
-        "name": "bootstrap.sh syntax",
-        "run": "bash -n scripts/bootstrap.sh"
+        "name": "script syntax",
+        "run": "for f in scripts/*.sh; do bash -n \"$f\" || exit 1; done"
       },
       {
         "name": "manifest JSON validity",
@@ -18,6 +18,14 @@
       {
         "name": "suite-kit version match",
         "run": "python3 -c \"import json; a=json.load(open('.claude-plugin/marketplace.json'))['plugins'][0]['version']; b=json.load(open('plugins/suite-kit/.claude-plugin/plugin.json'))['version']; exit(0 if a==b else 1)\""
+      },
+      {
+        "name": "schema validation",
+        "run": "./scripts/validate-schemas.sh"
+      },
+      {
+        "name": "token drift",
+        "run": "./scripts/sync-tokens.sh --check"
       }
     ]
   }

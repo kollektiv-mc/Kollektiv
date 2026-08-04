@@ -39,17 +39,25 @@ it and are not tracked here.
 
 ```
 kollektiv/
-├── .omc-workspace          marks the tree as one Oh-My-ClaudeCode workspace
-├── suite.repos.json        the product manifest
-├── scripts/bootstrap.sh    clones missing products
-├── scripts/sync-tokens.sh  vendors design/tokens.json into each product
-├── .claude-plugin/         marketplace manifest
-├── design/                 the shared design-token source
-├── plugins/suite-kit/      the shared plugin
-├── .claude/                this repo's own suite-kit + OMC adoption
-├── docs/roadmap.md         this repo's own roadmap, reconciled via linear-sync
-├── Konnekt/                cloned, untracked
-└── Kommands/               cloned, untracked
+├── .omc-workspace              marks the tree as one Oh-My-ClaudeCode workspace
+├── suite.repos.json            the product manifest
+├── CLAUDE.md                   what an agent landing here needs to know
+├── scripts/bootstrap.sh        clones missing products
+├── scripts/sync-tokens.sh      vendors design/tokens.json into each product
+│                               (--check reports drift and writes nothing)
+├── scripts/validate-schemas.sh validates every manifest against its schema
+├── .github/workflows/ci.yml    hub checks + scheduled token-drift detection
+├── .claude-plugin/             marketplace manifest
+├── design/tokens.json          the shared design-token source
+├── design/tokens.schema.json   its schema
+├── design/suite.schema.json    schema for each repo's .claude/suite.json
+├── plugins/suite-kit/          the shared plugin
+├── .claude/                    this repo's own suite-kit + OMC adoption
+├── docs/adopting.md            how a repo adopts suite-kit
+├── docs/conventions.md         cross-repo rules: tracking, PRs, permissions
+├── docs/roadmap.md             this repo's own roadmap, reconciled via linear-sync
+├── Konnekt/                    cloned, untracked
+└── Kommands/                   cloned, untracked
 ```
 
 ## Getting started
@@ -123,21 +131,29 @@ in Konnekt that must land in Kommands becomes one session instead of two.
 
 ## Tracking
 
-Linear, workspace `Kollektiv-MC`. Three teams: `KOL` for this repo — suite
-conventions, suite-kit, OMC adoption — and one per product, `KON` and `KMD`, so
-cycles and boards stay per-product. A suite-wide initiative, `Kollektiv Suite`,
-spans all three.
+Tracking is a **per-repo choice**, and suite-kit does not require a single tracker.
+See [`docs/conventions.md`](docs/conventions.md).
 
-This repo adopts its own plugin: `.claude/suite.json` points `linear.team` at
-`KOL` and `roadmap` at [`docs/roadmap.md`](docs/roadmap.md), so
-`/suite-kit:linear-sync` reconciles this repo the same way it does Konnekt and
-Kommands.
+| Repo | Tracked in |
+|---|---|
+| Kollektiv | Linear, team `KOL` |
+| Konnekt | Linear, team `KON` — *key declared, team not yet provisioned* |
+| Kommands | GitHub Issues |
 
-Linear's MCP exposes no `create_team` or `create_initiative`; both are hand-made
-in the Linear UI. Projects are then attached to an initiative that already
-exists via `save_project(addInitiatives: [...])`.
+**What exists in Linear today:** one workspace, `Kollektiv-MC`, holding one team
+(`KOL`) and one project (`Workspace & Tooling`). There are no other teams and no
+initiatives. Creating the `KON` team and a suite-wide initiative are open items in
+[`docs/roadmap.md`](docs/roadmap.md) — declaring a team key in a manifest and
+provisioning the team are different steps, and only the first is done.
 
-The workspace was recreated from scratch on 2026-08-04 (previously
-`KonnektMC`); old `KON-*` issue references in Konnekt's merged PRs and
-`agent_docs/LINEAR.md` point at IDs that no longer exist, since the new
-workspace renumbers from `KON-1`.
+This repo adopts its own plugin: `.claude/suite.json` points `linear.team` at `KOL`
+and `roadmap` at `docs/roadmap.md`, so `/suite-kit:linear-sync` reconciles this repo
+the same way it does Konnekt.
+
+Linear's MCP exposes no `create_team` or `create_initiative`; both are hand-made in
+the Linear UI. Projects are then attached to an initiative that already exists via
+`save_project(addInitiatives: [...])`.
+
+The workspace was recreated from scratch on 2026-08-04 (previously `KonnektMC`); old
+`KON-*` issue references in Konnekt's merged PRs point at IDs that no longer exist,
+since the new workspace renumbers from `KON-1`.

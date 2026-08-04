@@ -56,7 +56,7 @@ kollektiv/
 ├── .claude/                    this repo's own suite-kit + superpowers adoption
 ├── docs/adopting.md            how a repo adopts suite-kit
 ├── docs/conventions.md         cross-repo rules: tracking, PRs, permissions
-├── docs/roadmap.md             this repo's own roadmap, reconciled via linear-sync
+├── docs/roadmap.md             this repo's own roadmap
 ├── Konnekt/                    cloned, untracked
 └── Kommands/                   cloned, untracked
 ```
@@ -97,13 +97,14 @@ rules both products share.
 | Skill | Purpose |
 |---|---|
 | `/suite-kit:health` | Run a product's checks and invariants, report a table |
+| `/suite-kit:health-sweep` | Run those checks across every repo and file findings as issues |
 | `/suite-kit:mc-syntax` | Verify Minecraft syntax against pinned data before writing it |
 | `/suite-kit:design-tokens` | The no-literal-hex, no-literal-px rule |
 | `/suite-kit:linear-sync` | Reconcile a roadmap against Linear |
 | `@mc-reviewer` | Review a diff for version-trait and hardcoded-value violations |
 
 The skills are generic. Everything product-specific — the actual commands, the
-actual grep invariants, the Linear team key — lives in that product's
+actual grep invariants, where the repo is tracked — lives in that product's
 `.claude/suite.json`, next to the code it constrains. See
 [`docs/adopting.md`](docs/adopting.md).
 
@@ -126,29 +127,30 @@ decision made per repo, same as any `extraKnownMarketplaces` entry.
 
 ## Tracking
 
-Tracking is a **per-repo choice**, and suite-kit does not require a single tracker.
-See [`docs/conventions.md`](docs/conventions.md).
+Every repo tracks its work in **GitHub Issues, in the repo the work is about**, and
+declares it as `"tracking": "github-issues"`. See
+[`docs/conventions.md`](docs/conventions.md).
 
-| Repo | Tracked in |
-|---|---|
-| Kollektiv | Linear, team `KOL` |
-| Konnekt | Linear, team `KON` — *key declared, team not yet provisioned* |
-| Kommands | GitHub Issues |
-
-**What exists in Linear today:** one workspace, `Kollektiv-MC`, holding one team
-(`KOL`) and one project (`Workspace & Tooling`). There are no other teams and no
-initiatives. Creating the `KON` team and a suite-wide initiative are open items in
-[`docs/roadmap.md`](docs/roadmap.md) — declaring a team key in a manifest and
-provisioning the team are different steps, and only the first is done.
-
-This repo adopts its own plugin: `.claude/suite.json` points `linear.team` at `KOL`
-and `roadmap` at `docs/roadmap.md`, so `/suite-kit:linear-sync` reconciles this repo
-the same way it does Konnekt.
+**What exists in Linear today:** one workspace, `Kollektiv-MC`, holding one team and
+one project (`Workspace & Tooling`). Nothing writes to it. The plan is a GitHub→Linear
+sync and a two-team shape — `Kollektiv` for what spans the suite, `Apps` for the
+individual products — both open items in [`docs/roadmap.md`](docs/roadmap.md). The
+workspace is on the free plan, which caps it at two teams, so per-repo teams (`KON`,
+`KMD`) are not planned.
 
 Linear's MCP exposes no `create_team` or `create_initiative`; both are hand-made in
 the Linear UI. Projects are then attached to an initiative that already exists via
 `save_project(addInitiatives: [...])`.
 
 The workspace was recreated from scratch on 2026-08-04 (previously `KonnektMC`); old
-`KON-*` issue references in Konnekt's merged PRs point at IDs that no longer exist,
-since the new workspace renumbers from `KON-1`.
+`KON-*` issue references in Konnekt's merged PRs point at IDs that no longer exist.
+
+## Scheduled health
+
+`/suite-kit:health-sweep` runs every Monday as a cloud Routine. It clones every repo in
+`suite.repos.json`, runs each one's `/suite-kit:health`, checks vendored-token drift,
+reviews the week's commits, and files findings as GitHub issues labelled `health-check`
+in the repo they belong to. It never commits, pushes, or opens pull requests.
+
+Its issues carry a `Health-Check-Key:` line so the next week's run comments on an open
+issue rather than filing a duplicate.

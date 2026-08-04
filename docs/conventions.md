@@ -9,27 +9,29 @@ and reviewed.
 
 ---
 
-## Tracking is a per-repo choice
+## Issues live in GitHub
 
-There is no suite-wide tracker, and suite-kit does not require one.
+Every repo in the suite tracks its work in **GitHub Issues, in the repo the work is
+about**. Each declares it the same way:
 
-| Repo | Tracked in | Declared as |
-|---|---|---|
-| Kollektiv | Linear, team `KOL` | `linear.team: "KOL"` |
-| Konnekt | Linear, team `KON` | `linear.team: "KON"` |
-| Kommands | GitHub Issues | `tracking: "github-issues"` |
+```json
+"tracking": "github-issues"
+```
 
 `.claude/suite.json` must declare exactly one of `linear` or `tracking` —
-`design/suite.schema.json` enforces it. Declaring neither would leave
-`/suite-kit:linear-sync` guessing a team key, which is the failure mode every skill in
-this plugin is written to avoid.
+`design/suite.schema.json` enforces it. No repo declares `linear` today. The branch
+remains in the schema for the planned GitHub→Linear sync, which is an open item in
+`docs/roadmap.md` and does not exist yet.
 
 `/suite-kit:linear-sync` in a repo with `tracking` set reports that the repo is tracked
-elsewhere and stops. That is a correct outcome, not an error.
+elsewhere and stops. That is a correct outcome, not an error — and it is currently the
+outcome everywhere.
 
-**A declared team key is not a provisioned team.** `KON` is declared in Konnekt's
-manifest and does not yet exist in the `Kollektiv-MC` workspace. Declaring and
-provisioning are separate steps; see `docs/roadmap.md`.
+**What exists in Linear today:** one workspace, `Kollektiv-MC`, holding one team and one
+project (`Workspace & Tooling`). The free plan caps the workspace at two teams, so the
+planned shape is `Kollektiv` for what spans the suite and `Apps` for building and
+maintaining the individual products — not one team per repo. No `KON` or `KMD` team is
+planned. Nothing writes to Linear until the sync lands.
 
 ## Issue ↔ roadmap mapping
 
@@ -42,18 +44,35 @@ Source: <roadmap path> § <section>
 **Match on that line, never on titles.** Titles get edited on both sides and drift
 apart; matching on them produces duplicates that then need untangling by hand.
 
+## Issues filed by the health sweep
+
+`/suite-kit:health-sweep` runs weekly across every repo and files what it finds. Its
+issues carry a stable fingerprint line in the body:
+
+```
+Health-Check-Key: <repo>/<check-id>
+```
+
+Same rule as above — **match on that line, never on titles.** The sweep re-runs every
+week and re-finds the same problems; the key is what makes a second run comment on an
+open issue instead of opening its twin.
+
+`<check-id>` is derived from what the finding is, never from the week it was found.
+Everything the sweep files is labelled `health-check`.
+
+The sweep never closes an issue. A finding that stops reproducing gets a comment saying
+so, because "it was fixed" and "the check stopped running" look identical from the
+outside, and only one of them is good news.
+
 ## PR magic words
 
-For Linear-tracked repos, magic words in the PR title or description drive the native
-GitHub integration and move issues automatically on open and merge:
-
 ```
-Fixes KON-12      Closes KOL-9      Part of KON-28
+Fixes #12      Closes #9      Part of #28
 ```
 
-That layer needs no maintenance. `/suite-kit:linear-sync` exists for what it cannot
-see — items scoped on the roadmap but never branched, and issues whose roadmap section
-has since been rewritten.
+GitHub's own closing keywords, resolving against issues in the same repo. Nothing here
+is Linear-tracked, so Linear's `KON-12`-style magic words do not apply — an issue
+reference of that shape in a PR is a leftover, not an instruction to the integration.
 
 ## Required permissions block
 
@@ -102,5 +121,7 @@ alongside it. suite-kit ships no hooks specifically so it cannot collide with th
   (Workspace → Initiatives → New). Projects can then be attached to one that already
   exists via `save_project(addInitiatives: [...])`.
 - **No cycle creation.** Team-settings toggle only.
+- **Two teams, total.** The workspace is on the free plan. A skill that would need a
+  third team needs a different design, not a new team.
 
 Do not write a skill step that assumes any of these exist.

@@ -1,19 +1,40 @@
 # Roadmap
 
-Reconciled against Linear team `KOL`, project `Workspace & Tooling`, by
-`/suite-kit:linear-sync`. Each item's Linear issue carries a
-`Source: docs/roadmap.md § <section>` line — match on that, not on titles.
+This repo's own issues live in GitHub, like every other repo in the suite. Each
+issue created from a line here carries a `Source: docs/roadmap.md § <section>` line —
+match on that, not on titles.
 
 ## Linear substrate
 
-- [ ] Rename team `Kollektiv-MC` to `Kollektiv`, keep key `KOL`
-- [ ] Create team `Konnekt`, key `KON` — the key is already declared in
-      `Konnekt/.claude/suite.json`, but the team does not exist, so
-      `/suite-kit:linear-sync` cannot run there yet
+Everything is tracked in GitHub Issues today. Linear is a destination for a future
+sync, not a tracker anything writes to now. The workspace is on the free plan, which
+caps it at two teams.
+
+- [ ] Stand up the two-team model: `Kollektiv` for what spans the suite, `Apps` for
+      building and maintaining the individual products. Per-repo teams (`KON`, `KMD`)
+      are no longer planned
+- [ ] Build the GitHub→Linear sync, so issues filed in each repo surface in Linear
+      without anything writing to Linear directly
+- [ ] Decide what becomes of `/suite-kit:linear-sync` — with every repo declaring
+      `tracking`, it stops everywhere, correctly and uselessly. It is either the seed
+      of the sync above or a deletion
+- [ ] Drop the stale `linearTeam` keys from `suite.repos.json` (`KON`, `KMD`). That
+      file has no schema and `validate-schemas.sh` does not check it, so nothing
+      catches them
 - [ ] Create initiative `Kollektiv Suite` and attach `Workspace & Tooling`
 
-No `KMD` team: Kommands is tracked in GitHub Issues, which is a per-repo choice
-suite-kit supports rather than a gap. See `docs/conventions.md`.
+## Scheduled checks
+
+- [x] Add `/suite-kit:health-sweep` — the suite-wide counterpart to
+      `/suite-kit:health`, including the token-drift check the single-repo skill
+      deliberately omits
+- [x] Schedule it as a weekly cloud Routine, Mondays, filing findings as
+      deduplicated GitHub issues in the repo each finding belongs to
+- [ ] Shift the Routine's cron by an hour twice a year, or move it off UTC — Routine
+      cron is evaluated in UTC and does not follow DST, so a schedule set for 09:00
+      Berlin fires at 08:00 Berlin from late October to late March
+- [ ] Confirm the sweep's second consecutive run opens zero new issues. Dedup is the
+      whole design, and only a real second run proves it
 
 ## Enforcement
 
@@ -64,7 +85,9 @@ third-party plugin declared alongside `suite-kit`, everywhere.
 - [x] Kommands already declared `superpowers` rather than `omc` — the rest of the
       suite has now matched it, not the other way around
 - [ ] Run `claude plugin install` for `superpowers@superpowers` on each machine and
-      cloud path that needs it, and record where it has been run
+      cloud path that needs it, and record where it has been run — the weekly sweep
+      attempts this install itself and reports its deeper review as skipped if it
+      still cannot load the plugin
 - [ ] Observe a session of superpowers' agents against Konnekt's
       `graphify hook-guard` before relying on it there beyond what
       `.claude/settings.json` already declares

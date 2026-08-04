@@ -132,7 +132,7 @@
       "type": "object",
       "required": ["team"],
       "additionalProperties": false,
-      "description": "Present when this repo is tracked in Linear. Exactly one of 'linear' or 'tracking' must be set — tracking is a per-repo choice, and a repo that declares neither would leave /suite-kit:linear-sync guessing a team key.",
+      "description": "Present when this repo is tracked in Linear. No repo in the suite declares this today — tracking settled on GitHub Issues everywhere; the branch is kept for the planned GitHub-to-Linear sync. Exactly one of 'linear' or 'tracking' must be set: a repo that declares neither would leave /suite-kit:linear-sync guessing a team key.",
       "properties": {
         "team": {
           "type": "string",
@@ -144,7 +144,7 @@
 
     "tracking": {
       "enum": ["github-issues"],
-      "description": "Present when this repo is tracked outside Linear. Kommands uses GitHub Issues. /suite-kit:linear-sync reports this and stops rather than erroring."
+      "description": "Present when this repo is tracked outside Linear. Every repo in the suite declares this. /suite-kit:linear-sync reports it and stops rather than erroring."
     },
 
     "roadmap": {

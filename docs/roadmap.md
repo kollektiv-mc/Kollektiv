@@ -21,6 +21,9 @@ caps it at two teams.
 - [ ] Drop the stale `linearTeam` keys from `suite.repos.json` (`KON`, `KMD`). That
       file has no schema and `validate-schemas.sh` does not check it, so nothing
       catches them
+- [ ] Switch `Konnekt/.claude/suite.json` from `linear.team: "KON"` to
+      `tracking: "github-issues"`. It is the last manifest declaring a `linear` block,
+      against a team that was never provisioned. The change lands in Konnekt
 - [ ] Create initiative `Kollektiv Suite` and attach `Workspace & Tooling`
 
 ## Scheduled checks

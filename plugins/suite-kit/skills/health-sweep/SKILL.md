@@ -12,9 +12,21 @@ Run this from the workspace root (`kollektiv`). It is the scheduled counterpart 
 `/suite-kit:health`, not a replacement for it — step 3 below runs that skill in each
 repo rather than reimplementing its logic.
 
-**This sweep never changes code.** It files issues and reports. It does not commit,
-push, open pull requests, or fix what it finds. A finding that looks trivial is still
-a finding, not an invitation.
+**This sweep never changes code.** Its entire output is issues and a report.
+
+It does not fix, refactor, implement, scaffold, or build anything — not the trivial
+one-line fix, not the thing it is certain about, not "while I was in there". It does
+not commit, push, open pull requests, or leave a branch behind. A finding that looks
+easy is still a finding, not an invitation.
+
+Two steps below do write to disk, and both are local and expected: cloning the
+products, and running a product's `regenerate` command to check its generated files
+are in sync. **Leave both uncommitted.** A dirty working tree in a cloned product is
+the check having run, not work in progress.
+
+The reason for the rule is what the sweep is: an unattended weekly run with nobody
+reviewing its diff. Anything it changed would land unreviewed, and the value of a
+check nobody trusts is zero. The issue is the deliverable.
 
 ---
 
@@ -74,7 +86,8 @@ Use the **`superpowers`** skills for this — systematic code review, not a skim
 **If `superpowers` is not installed on this machine, try installing it once:**
 `claude plugin install superpowers@superpowers`. It is declared in every repo's
 `.claude/settings.json`, but declaring is not installing, and a cloud session starts
-from a fresh container.
+from a fresh container. This is the one thing the sweep installs, it is session-local,
+and it changes no repo.
 
 If it is still unavailable after that, run everything else and report the deeper
 review as **skipped, with the reason**. Do not substitute an unstructured read and
@@ -115,10 +128,42 @@ check may have stopped running — and this sweep cannot tell those apart.
 
 Label everything it files `health-check`. Create the label if the repo lacks it.
 
-A new issue's body carries: the key line, the affected files with line numbers, the
-diagnosis, and the `reference` document. For an invariant, use the `diagnosis` and
-`reference` from that entry in `.claude/suite.json` verbatim — they were written to
-explain the specific silent failure behind the rule, and paraphrasing loses that.
+### What an issue says
+
+**One problem per issue, described thoroughly and briefly.** Those pull against each
+other, and the resolution is to cut explanation, never evidence. A reader must be able
+to confirm the problem themselves without opening a session.
+
+Title: the problem, specifically. `gen:tokens output is stale in Konnekt`, not
+`Health check findings`.
+
+Body, in this order and nothing else:
+
+```
+Health-Check-Key: <repo>/<check-id>
+
+<One or two sentences: what is wrong.>
+
+**Where** — <file:line>, <file:line>  (all of them; a truncated list is a bug report
+that cannot be reproduced)
+
+**Why it matters** — <the failure this causes, in one or two sentences.>
+
+**Found by** — <the check name> · <reference doc>
+```
+
+For an invariant, use the `diagnosis` and `reference` from that entry in
+`.claude/suite.json` **verbatim** for those last two fields. They were written to name
+the specific silent failure behind the rule, and paraphrasing loses exactly the part
+that made the rule worth having.
+
+**Do not propose the fix.** No patch, no diff, no "just change X to Y", no
+implementation sketch. Diagnosis is this sweep's job and the whole of it; deciding what
+to do about it is the reader's, and an unreviewed suggestion from an unattended run is
+worth less than the space it takes up. State the problem and stop.
+
+Paste an error only when it is the evidence — the failing assertion, the drift the
+script printed — and only the relevant lines of it. Never a full log.
 
 **If no GitHub issue tooling is available in the session**, do not drop the findings
 and do not treat the sweep as complete. Put every finding, in full and with its key

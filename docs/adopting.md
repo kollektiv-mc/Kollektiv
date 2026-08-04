@@ -56,8 +56,8 @@ inside a skill, as confusing prose.
 |---|---|
 | `product` | Display name |
 | `kind` | Stack shape, e.g. `wails-desktop`, `vite-web` |
-| `linear.team` | Team key for `/suite-kit:linear-sync` |
-| `tracking` | `github-issues`, for a repo not tracked in Linear. Exactly one of `linear` or `tracking` is required — see [`conventions.md`](conventions.md) |
+| `tracking` | `github-issues` — what every repo in the suite declares today |
+| `linear.team` | Team key for `/suite-kit:linear-sync`. Exactly one of `linear` or `tracking` is required; no repo declares `linear` now — see [`conventions.md`](conventions.md) |
 | `roadmap` | Path to the roadmap that skill reconciles against |
 | `tokens.role` | Always `consumer` for a product repo — the token set is defined in kollektiv's `design/tokens.json`, not in any product |
 | `tokens.source` | The repo the token values come from — `kollektiv` |
@@ -110,7 +110,7 @@ disk.
 ### kollektiv (this repo)
 
 kollektiv is itself an adopter, not just the source of the plugin. Its
-`.claude/suite.json` has `linear.team: "KOL"` and
+`.claude/suite.json` has `tracking: "github-issues"` and
 `roadmap: "docs/roadmap.md"`, and its `.claude/settings.json` enables
 `suite-kit@kollektiv` from the local marketplace plus `superpowers@superpowers` —
 it omits `kollektiv` from `extraKnownMarketplaces` since this repo already is
@@ -122,13 +122,13 @@ machinery that guards literal hex and px in product code doesn't apply to it; it
 emits no Minecraft commands and generates nothing, so nothing was invented to
 fill those two slots either.
 
-The Linear workspace was recreated from scratch on 2026-08-04 as `Kollektiv-MC`
-(team `KOL`), replacing the old `KonnektMC` workspace, which is abandoned rather
-than migrated. Old `KON-*` references in Konnekt's merged PRs now point at nothing,
-since the new workspace renumbers `KON` from 1.
+It declared `linear.team: "KOL"` until tracking settled on GitHub Issues for the
+whole suite. Nothing writes to Linear today; a GitHub→Linear sync and a two-team
+workspace shape are open items in `docs/roadmap.md`.
 
-It holds one team and one project today. The `KON` team is declared in Konnekt's
-manifest but not yet provisioned; see `docs/roadmap.md`.
+The Linear workspace was recreated from scratch on 2026-08-04 as `Kollektiv-MC`,
+replacing the old `KonnektMC` workspace, which is abandoned rather than migrated.
+Old `KON-*` references in Konnekt's merged PRs now point at nothing.
 
 ### Kommands
 
@@ -150,7 +150,8 @@ everyone.
 `tracking: "github-issues"` and carries no `linear` block. `/suite-kit:linear-sync`
 reports that and stops. An earlier revision of this page described a switch to a
 Linear `KMD` team; that switch was never made and is no longer planned — see
-[`conventions.md`](conventions.md) § Tracking is a per-repo choice.
+[`conventions.md`](conventions.md) § Issues live in GitHub. It was first to declare
+this and the rest of the suite has since matched it.
 
 Its `.claude/commands/health-check.md` was **deleted** on adoption. It reimplemented
 `/suite-kit:health` with the invariant greps hardcoded inline; those greps now live in
@@ -174,7 +175,11 @@ overlap is deliberate: the rule fires on edit, the skill on request.
 ### Konnekt
 
 `.claude/suite.json` uses `kind: "wails-desktop"`, `linear.team: "KON"`,
-`roadmap: "agent_docs/ROADMAP.md"`, and `tokens.enforce: "migrating"` — the repo is
+`roadmap: "agent_docs/ROADMAP.md"`, and `tokens.enforce: "migrating"`. The `linear`
+block is a leftover: the `KON` team was never provisioned and is no longer planned,
+and the suite now tracks everything in GitHub Issues. Switching it to
+`tracking: "github-issues"` is an open item in `docs/roadmap.md` — it is a change to
+Konnekt's own manifest, so it lands there, not here. The repo is
 mid-migration from an inline-styles-everywhere convention, per
 `agent_docs/HEALTH_CHECKLIST.md` Milestone 2. As of that migration's start the
 covered paths hold 176 hex literals across 33 files and 323 arbitrary-px values

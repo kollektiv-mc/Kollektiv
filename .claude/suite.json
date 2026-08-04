@@ -22,10 +22,6 @@
       {
         "name": "schema validation",
         "run": "./scripts/validate-schemas.sh"
-      },
-      {
-        "name": "token drift",
-        "run": "./scripts/sync-tokens.sh --check"
       }
     ]
   }

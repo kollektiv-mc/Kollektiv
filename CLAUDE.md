@@ -55,10 +55,16 @@ to `PreToolUse`; stacking more matchers is the fastest way to make both feel bro
 ## Before calling a task done
 
 Run `/suite-kit:health`. It reads `.claude/suite.json` and runs every check, including
-schema validation and token-drift detection.
+schema validation.
 
 A check that could not run is **skipped**, never passing. Most of the value of the
 health check is the gap between "I ran the checks" and "the checks passed".
+
+**Token drift is deliberately not one of those checks.** `/suite-kit:health` reports on
+one repo; drift detection needs every product cloned beside this one, which CI's
+`token-drift` job guarantees with `bootstrap.sh` and a bare clone does not. Including it
+here would fail on a clean checkout. Run `./scripts/sync-tokens.sh --check` yourself when
+you have a full workspace.
 
 ## Writing docs in this repo
 

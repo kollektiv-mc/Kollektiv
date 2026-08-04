@@ -75,5 +75,16 @@ jobs:
 
       # The products are cloned here anyway, so validate their manifests against
       # the schema while we have them.
+      #
+      # Runs even when the drift check above failed. Drift and a malformed
+      # manifest are independent findings, and finding one is not a reason to
+      # leave the other undiscovered — the rule health/SKILL.md already states.
+      # Without this the step is skipped on every red run, so it never executes
+      # at all on exactly the runs worth reading.
+      #
+      # --require-products because bootstrap.sh ran: a product still missing here
+      # means that failed, and validating "every product present" would pass over
+      # a set that was never checked.
       - name: Product manifest validation
-        run: ./scripts/validate-schemas.sh
+        if: ${{ !cancelled() }}
+        run: ./scripts/validate-schemas.sh --require-products

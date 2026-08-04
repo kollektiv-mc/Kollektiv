@@ -6,11 +6,29 @@
 #   .claude/suite.json        against  design/suite.schema.json
 #   <product>/.claude/suite.json  ditto, for every product that is cloned
 #
+#   --require-products   Treat an absent or unadopted product as a failure
+#                        instead of a skip.
+#
 # A missing validator is a failure, not a skip. plugins/suite-kit/skills/health
 # forbids reporting a skipped check as passing, and a validator that exits 0 when
 # it is not installed is exactly that: a check that always passes and never runs.
+#
+# The same reasoning drives --require-products. Skipping an uncloned product is
+# right in a bare checkout, where the products are not expected. It is wrong
+# straight after scripts/bootstrap.sh, where a product that is still missing means
+# the bootstrap failed — and "validated every product" would then be a pass over
+# a set that was never checked. CI uses the flag; a bare run does not.
 
 set -euo pipefail
+
+require_products=0
+
+for arg in "$@"; do
+  case "$arg" in
+    --require-products) require_products=1 ;;
+    *) echo "usage: ${BASH_SOURCE[0]##*/} [--require-products]" >&2; exit 2 ;;
+  esac
+done
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 manifest="$root/suite.repos.json"
@@ -45,6 +63,9 @@ if [ -f "$manifest" ] && command -v python3 >/dev/null 2>&1; then
     suite="$root/$name/.claude/suite.json"
     if [ -f "$suite" ]; then
       validate "$suite" "$root/design/suite.schema.json" "$name/.claude/suite.json"
+    elif [ "$require_products" -eq 1 ]; then
+      echo "! $name has no .claude/suite.json — not cloned, or not adopted" >&2
+      status=1
     else
       echo "? $name not cloned or not adopted — skipped"
     fi

@@ -15,10 +15,12 @@ own builds, CI, or releases — each product keeps its own.
 ## Why this exists
 
 The two products share a design language, a domain, and a set of working rules,
-and until now each of those was written down twice. Kommands' `docs/design-tokens.md`
-restated Konnekt's entire palette by hand — that palette now lives in
-[`design/tokens.json`](design/tokens.json) and each product generates from it. Both
-repos carry their own health-check prose. Both are exposed to the same failure mode:
+and each of those was written down twice. Kommands' `docs/design-tokens.md`
+restated Konnekt's entire palette by hand. That palette now lives in
+[`design/tokens.json`](design/tokens.json); Kommands stops restating it and
+generates from the vendored copy when its adoption lands, on
+`kommands@claude/adopt-suite-kit`. Both repos carry their own health-check prose.
+Both are exposed to the same failure mode:
 Minecraft syntax changes between versions in ways that produce commands which look
 correct and silently do nothing, and model training data on that syntax is
 frequently stale.

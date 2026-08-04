@@ -15,13 +15,15 @@ own builds, CI, or releases — each product keeps its own.
 ## Why this exists
 
 The two products share a design language, a domain, and a set of working rules,
-and until now each of those was written down twice. Kommands' `docs/design-tokens.md`
-restated Konnekt's entire palette by hand — that palette now lives in
-[`design/tokens.json`](design/tokens.json) and each product generates from it. Both
-repos carry their own health-check prose. Both are exposed to the same failure mode:
-Minecraft syntax changes between versions in ways that produce commands which look
-correct and silently do nothing, and model training data on that syntax is
-frequently stale.
+and each of those used to be written down twice. Kommands' `docs/design-tokens.md`
+restated Konnekt's entire palette by hand; that palette now lives in
+[`design/tokens.json`](design/tokens.json) and each product generates from it, with
+the product docs keeping only the conventions the values cannot express. Each repo
+carried its own health-check prose and its own slash command; both now run
+`/suite-kit:health` against a `.claude/suite.json` that declares what health means
+there. Both products are exposed to the same failure mode: Minecraft syntax changes
+between versions in ways that produce commands which look correct and silently do
+nothing, and model training data on that syntax is frequently stale.
 
 Written twice, those rules drift. Held here as a plugin, they do not.
 
@@ -46,7 +48,7 @@ kollektiv/
 ├── design/                 the shared design-token source
 ├── plugins/suite-kit/      the shared plugin
 ├── .claude/                this repo's own plugin adoption
-├── docs/roadmap.md         this repo's own roadmap, reconciled via linear-sync
+├── docs/roadmap.md         this repo's own roadmap, reconciled via issue-sync
 ├── Konnekt/                cloned, untracked
 └── Kommands/               cloned, untracked
 ```
@@ -89,11 +91,11 @@ rules both products share.
 | `/suite-kit:health` | Run a product's checks and invariants, report a table |
 | `/suite-kit:mc-syntax` | Verify Minecraft syntax against pinned data before writing it |
 | `/suite-kit:design-tokens` | The no-literal-hex, no-literal-px rule |
-| `/suite-kit:linear-sync` | Reconcile a roadmap against Linear |
+| `/suite-kit:issue-sync` | Reconcile a roadmap against the repo's GitHub Issues |
 | `@mc-reviewer` | Review a diff for version-trait and hardcoded-value violations |
 
 The skills are generic. Everything product-specific — the actual commands, the
-actual grep invariants, the Linear team key — lives in that product's
+actual grep invariants, the roadmap path — lives in that product's
 `.claude/suite.json`, next to the code it constrains. See
 [`docs/adopting.md`](docs/adopting.md).
 
@@ -133,21 +135,19 @@ See [`docs/adopting.md`](docs/adopting.md) for the full comparison.
 
 ## Tracking
 
-Linear, workspace `Kollektiv-MC`. Three teams: `KOL` for this repo — suite
-conventions, suite-kit, plugin adoption — and one per product, `KON` and `KMD`, so
-cycles and boards stay per-product. A suite-wide initiative, `Kollektiv Suite`,
-spans all three.
+**GitHub Issues, in each repo.** All three repos declare
+`"tracking": "github-issues"` in their `.claude/suite.json`, and issues live
+beside the code they describe. Roadmaps hold direction and sequencing; individual
+work items are issues.
 
-This repo adopts its own plugin: `.claude/suite.json` points `linear.team` at
-`KOL` and `roadmap` at [`docs/roadmap.md`](docs/roadmap.md), so
-`/suite-kit:linear-sync` reconciles this repo the same way it does Konnekt and
-Kommands.
+`/suite-kit:issue-sync` reconciles the two, matching on a
+`Source: <roadmap path> § <section>` line in the issue body rather than on titles,
+which drift on both sides. A heading referenced by `§` must be unique within its
+roadmap file; the heading level does not matter, so Konnekt's `### Tiles — beta`
+and Kommands' `## Now` both work unchanged.
 
-Linear's MCP exposes no `create_team` or `create_initiative`; both are hand-made
-in the Linear UI. Projects are then attached to an initiative that already
-exists via `save_project(addInitiatives: [...])`.
-
-The workspace was recreated from scratch on 2026-08-04 (previously
-`KonnektMC`); old `KON-*` issue references in Konnekt's merged PRs and
-`agent_docs/LINEAR.md` point at IDs that no longer exist, since the new
-workspace renumbers from `KON-1`.
+**Linear is a downstream mirror**, workspace `Kollektiv-MC`, written only by the
+GitHub → Linear sync routine. Nothing in this repo or either product writes to
+Linear directly — a second writer would race that routine over the same records.
+That is why `suite.repos.json` carries no per-repo Linear team keys: issues are
+addressed by repository, not by team.

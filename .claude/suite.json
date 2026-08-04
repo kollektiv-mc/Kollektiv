@@ -1,9 +1,7 @@
 {
   "product": "kollektiv",
   "kind": "workspace-root",
-  "linear": {
-    "team": "KOL"
-  },
+  "tracking": "github-issues",
   "roadmap": "docs/roadmap.md",
   "health": {
     "commands": [

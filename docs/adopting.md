@@ -47,7 +47,7 @@ next to the code they constrain, rather than inside the plugin.
 |---|---|
 | `product` | Display name |
 | `kind` | Stack shape, e.g. `wails-desktop`, `vite-web` |
-| `linear.team` | Team key for `/suite-kit:linear-sync` |
+| `tracking` | Where work items live. `github-issues` for every repo in this suite — `/suite-kit:issue-sync` stops rather than guessing if it is absent |
 | `roadmap` | Path to the roadmap that skill reconciles against |
 | `tokens.role` | Always `consumer` for a product repo — the token set is defined in kollektiv's `design/tokens.json`, not in any product |
 | `tokens.source` | The repo the token values come from — `kollektiv` |
@@ -122,7 +122,7 @@ disk.
 ### kollektiv (this repo)
 
 kollektiv is itself an adopter, not just the source of the plugin. Its
-`.claude/suite.json` has `linear.team: "KOL"` and
+`.claude/suite.json` has `tracking: "github-issues"` and
 `roadmap: "docs/roadmap.md"`, and its `.claude/settings.json` enables
 `suite-kit@kollektiv` from the local marketplace plus `superpowers@superpowers`
 — see **Plugin selection** above — while omitting `kollektiv` from
@@ -137,43 +137,51 @@ machinery that guards literal hex and px in product code doesn't apply to it; it
 emits no Minecraft commands and generates nothing, so nothing was invented to
 fill those two slots either.
 
-The Linear workspace backing all three repos was recreated from scratch on
-2026-08-04 as `Kollektiv-MC` (team `KOL`), replacing the old `KonnektMC`
-workspace, which is abandoned rather than migrated. Old `KON-*` references in
-Konnekt's merged PRs and `agent_docs/LINEAR.md` now point at nothing, since the
-new workspace renumbers `KON` from 1.
+### Task tracking, suite-wide
 
-### Kommands — not adopted, and blocked on a real decision
+Every repo tracks work in **its own GitHub Issues**, declared as
+`tracking: "github-issues"`. Roadmaps hold direction; issues hold work items;
+`/suite-kit:issue-sync` reconciles the two on the `Source: <roadmap> § <section>`
+line.
 
-The previous revision of this note (inherited from an earlier PR, never verified
-against the actual repo) claimed `.claude/settings.json`, `.claude/suite.json`,
-`tokens.source.json`, and the `.gitignore` lines were all in place, with only the
-Linear `KMD` switch pending. **None of that was true except the last part.**
-Checked directly against the repo: no `.claude/suite.json` exists at all;
-`.claude/settings.json` exists but declares only `permissions`, no
-`extraKnownMarketplaces`/`enabledPlugins` — suite-kit was never actually declared
-here. `tokens.source.json` didn't exist until this session ran
-`scripts/sync-tokens.sh` against it directly.
+Linear (workspace `Kollektiv-MC`) is a **downstream mirror**, written only by the
+GitHub → Linear sync routine. No repo and no skill writes to Linear directly —
+two writers on the same records is the failure this arrangement avoids. That is
+why `suite.repos.json` carries no per-repo Linear team keys.
 
-More than a missing file, this is a real conflict, not just an outstanding step.
-Kommands' own `CLAUDE.md` states plainly: *"Task tracking is **GitHub Issues**. Do
-not add a `TODO.md`."* — and its `docs/roadmap.md` says the same:
-*"Individual tasks live in GitHub Issues — this file does not track work items."*
-That directly contradicts `suite.repos.json`'s `linearTeam: "KMD"` and every prior
-claim on this page about a Kommands→Linear migration. `CLAUDE.md` also says:
-*"If reality diverges from the documented design mid-task, stop and surface it
-rather than improvising a workaround"* — so no `.claude/suite.json` with
-`linear.team: "KMD"` was added here. Adding one would silently pick a side in a
-decision that's actually still open: either Kommands migrates task tracking to
-Linear for real (and its own `CLAUDE.md`/`docs/roadmap.md` get updated to say so),
-or kollektiv's suite-wide Linear assumption gets corrected to exclude it, keeping
-Kommands on GitHub Issues. `suite.repos.json`'s `linearTeam: "KMD"` reflects an
-assumption, not a decision — resolve that first, then adopt for real.
+This replaced an earlier Linear-primary arrangement. Old `KON-*` references in
+Konnekt's merged PRs point at issues in a workspace (`KonnektMC`) that was
+abandoned rather than migrated; treat them as dead links, not as issue numbers to
+chase.
 
-What this session actually did: vendored `tokens.source.json` (a safe, additive
-step — the pipeline it feeds is documented in `docs/design-tokens.md` regardless
-of the Linear question, and the repo is pre-scaffold so there's no generator yet
-to run against it). Nothing else was touched.
+### Kommands
+
+Adopted. `.claude/suite.json`, the settings block, and `tokens.source.json` are all
+in place — verified against the repo, not inherited from a previous revision of
+this page.
+
+An earlier revision claimed all of that was already done while only the Linear
+`KMD` switch was pending. **None of it was true.** There was no `.claude/suite.json`
+at all, so every suite-kit skill stopped at its first step; `.claude/settings.json`
+declared only `permissions`, so suite-kit was never actually enabled here; and
+`tokens.source.json` did not exist until `scripts/sync-tokens.sh` was run against
+the repo. The Linear question turned out to be the real blocker underneath: Kommands'
+own `CLAUDE.md` had always said *"Task tracking is **GitHub Issues**"*, which the
+suite-wide Linear assumption contradicted. That is now resolved suite-wide in
+Kommands' favour — see **Task tracking, suite-wide** above.
+
+`health.commands` is present but every entry is currently unrunnable — the repo is
+pre-scaffold, with `docs/` and `.claude/` and no `package.json`. That is expected,
+and `/suite-kit:health` reports an unrunnable check as `skipped` with a reason
+rather than as passing. `tokens.generate` names `pnpm gen:tokens`, which likewise
+does not exist yet; `docs/design-tokens.md` specifies its contract for whoever
+scaffolds the app.
+
+`health.invariants` carries the three greps that used to live in a local
+`.claude/commands/health-check.md`: no hardcoded game values, no version-number
+comparisons, no literal hex or px. That command was deleted — the checks now live
+in `suite.json` where the plugin can read them, and every doc reference moved from
+`/health-check` to `/suite-kit:health`.
 
 `.claude/rules/*.md` stay where they are. They are path-scoped and auto-inject when
 a matching file is edited — a plugin skill does not do that, so the plugin does not
@@ -182,7 +190,7 @@ overlap is deliberate: the rule fires on edit, the skill on request.
 
 ### Konnekt
 
-`.claude/suite.json` uses `kind: "wails-desktop"`, `linear.team: "KON"`,
+`.claude/suite.json` uses `kind: "wails-desktop"`, `tracking: "github-issues"`,
 `roadmap: "agent_docs/ROADMAP.md"`, and `tokens.enforce: "migrating"` — the repo is
 mid-migration from an inline-styles-everywhere convention, per
 `agent_docs/HEALTH_CHECKLIST.md` Milestone 2. As of that migration's start the
@@ -212,9 +220,14 @@ disturbing its `hooks` section — Konnekt binds `graphify hook-guard` to
 `PreToolUse` on `Bash`, `Read`, and `Glob`; suite-kit ships no hooks specifically so
 it cannot collide with those.
 
-**Still outstanding:** move the reusable parts of `agent_docs/LINEAR.md` — the
-magic-word PR convention and the `Source: <roadmap> § <section>` mapping rule — up
-into this repo, leaving Konnekt's own project and milestone structure where it is.
+`agent_docs/LINEAR.md` and `.claude/commands/linear-sync.md` were **deleted**. The
+command hardcoded `list_issues team=KonnektMC` — a workspace that no longer exists,
+so it failed outright rather than degrading — and the doc described two initiatives
+and five projects in that same dead workspace. The reusable parts (the `Source:`
+mapping rule, the PR-keyword convention) now live once in
+`plugins/suite-kit/skills/issue-sync/SKILL.md`, and Konnekt's task-tracking
+convention is declared in `agent_docs/CLAUDE.md` like Kommands'. Nothing referenced
+either file, so removing them left no dangling links.
 
 Neither `superpowers` nor `context7` ships hooks, so neither collides with
 Konnekt's `graphify hook-guard`. That was the deciding factor against `claude-mem`

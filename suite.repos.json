@@ -1,7 +1,9 @@
 {
   "suite": "kollektiv",
+  "tracking": "github-issues",
   "linear": {
-    "workspace": "Kollektiv-MC"
+    "workspace": "Kollektiv-MC",
+    "role": "downstream mirror, written only by the GitHub → Linear sync routine"
   },
   "tokens": {
     "source": "design/tokens.json",
@@ -12,7 +14,6 @@
       "name": "Konnekt",
       "url": "https://github.com/kollektiv-mc/Konnekt.git",
       "kind": "wails-desktop",
-      "linearTeam": "KON",
       "roadmap": "agent_docs/ROADMAP.md",
       "tokens": {
         "role": "consumer",
@@ -23,7 +24,6 @@
       "name": "Kommands",
       "url": "https://github.com/kollektiv-mc/Kommands.git",
       "kind": "vite-web",
-      "linearTeam": "KMD",
       "roadmap": "docs/roadmap.md",
       "tokens": {
         "role": "consumer",

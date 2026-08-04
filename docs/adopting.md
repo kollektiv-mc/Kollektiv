@@ -133,8 +133,20 @@ manifest but not yet provisioned; see `docs/roadmap.md`.
 
 ### Kommands
 
+> **Not yet on `main`.** All of the below is on
+> `kommands@claude/adopt-suite-kit` and is accurate for that branch only.
+> `main` carries none of the five pieces. This page has twice described
+> Kommands as adopted when it was not; the distinction between "written" and
+> "merged" is the one it keeps losing.
+
 `.claude/settings.json`, `.claude/suite.json`, `tokens.source.json`, and the
-`.gitignore` lines are in place.
+`.gitignore` lines land together on that branch.
+
+Its settings block declares `suite-kit@kollektiv` and
+**`superpowers@superpowers`** — not `omc`, which step 1 above names. Whether
+that is a deviation to correct or third-party plugin choice being per-repo is
+an open question in `roadmap.md`; step 1 currently overstates `omc` as a suite
+default.
 
 **Kommands is tracked in GitHub Issues, not Linear.** Its manifest declares
 `tracking: "github-issues"` and carries no `linear` block. `/suite-kit:linear-sync`
@@ -192,6 +204,10 @@ The settings block was merged into the existing `.claude/settings.json` without
 disturbing its `hooks` section — Konnekt binds `graphify hook-guard` to
 `PreToolUse` on `Bash`, `Read`, and `Glob`; suite-kit ships no hooks specifically so
 it cannot collide with those.
+
+> **Partly unmerged.** The command deletion, the CI check, and the permissions
+> block below are on `konnekt@claude/suite-kit-enforcement`. The
+> `.claude/suite.json`, settings block, and vendored tokens are on `main`.
 
 Its `.claude/commands/linear-sync.md` was **deleted** on adoption. It duplicated
 `/suite-kit:linear-sync` and had already gone stale, targeting the `KonnektMC`

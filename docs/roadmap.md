@@ -23,12 +23,17 @@ suite-kit supports rather than a gap. See `docs/conventions.md`.
       scheduled CI job), replacing the incorrect claim that each product's own
       health check caught it
 - [x] Add `design/suite.schema.json` and validate every manifest against it
-- [x] Run Konnekt's `gen:tokens` clean-diff check in its CI rather than only in
-      `/suite-kit:health`
+- [~] Run Konnekt's `gen:tokens` clean-diff check in its CI rather than only in
+      `/suite-kit:health` — on `konnekt@claude/suite-kit-enforcement`, not yet
+      merged
 - [ ] Add CI to Kommands once it is scaffolded — it has no `package.json` yet, so
       its `health.commands` are legitimately unrunnable
 - [ ] Enforce the `docs/conventions.md` permissions block automatically rather
       than by review
+
+**The `token-drift` CI job here is red until Kommands' adoption merges.** Its
+`main` has no `tokens.source.json`, so the check correctly reports it as missing.
+That is the job working, not a bug to suppress.
 
 ## Suite conventions
 
@@ -38,17 +43,20 @@ suite-kit supports rather than a gap. See `docs/conventions.md`.
       milestone structure where it is
 - [x] Add `CLAUDE.md` to this repo, so its conventions reach an agent session
       instead of sitting in files nothing auto-loads
-- [x] Delete the two per-repo commands the plugin replaced
+- [~] Delete the two per-repo commands the plugin replaced
       (`Konnekt/.claude/commands/linear-sync.md`,
-      `Kommands/.claude/commands/health-check.md`)
+      `Kommands/.claude/commands/health-check.md`) — both deletions are on
+      unmerged branches
 - [ ] Write `scripts/adopt.sh` to scaffold a new repo's `.claude/suite.json`,
       settings block, and vendored tokens, so adopting a fourth repo is a
       command rather than a careful read of `docs/adopting.md`
 
 ## OMC adoption
 
-- [x] Apply the settings block (`docs/adopting.md`) to Kommands, declaring the
-      `omc` marketplace alongside `suite-kit`
+- [ ] Decide whether Kommands should run OMC at all. It declares `suite-kit` plus
+      **`superpowers@superpowers`**, not `omc` — so `docs/adopting.md` § 1, which
+      names `omc`, does not describe it. Either add `omc` there or record
+      third-party plugin choice as per-repo and stop implying a suite default
 - [ ] Run `claude plugin install` for `oh-my-claudecode@omc` on each machine and
       cloud path that needs it, and record where it has been run
 - [ ] Observe a session of OMC's agents against Konnekt's `graphify hook-guard`

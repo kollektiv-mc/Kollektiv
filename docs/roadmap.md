@@ -11,14 +11,23 @@ Reconciled against Linear team `KOL`, project `Workspace & Tooling`, by
 - [ ] Create team `Kommands`, key `KMD`
 - [ ] Create initiative `Kollektiv Suite` and attach `Workspace & Tooling`
 
-## OMC adoption
+## Plugin stack
 
-- [ ] Apply the settings block (`docs/adopting.md`) to Kommands, declaring the
-      `omc` marketplace alongside `suite-kit`
-- [ ] Run `claude plugin install` for `oh-my-claudecode@omc` on each machine and
-      cloud path that needs it, and record where it has been run
-- [ ] Observe a session of OMC's agents against Konnekt's `graphify hook-guard`
-      before enabling OMC repo-wide there
+- [x] Remove OMC — declared but never installed, and its 60 agents/skills would
+      have crowded suite-kit's 4 out of the skill listing budget
+- [x] Adopt `superpowers@superpowers` (~14 skills, no hooks, no agents) as the
+      lighter replacement
+- [x] Decline `claude-mem` — its `hooks.json` binds `PreToolUse` on `Read`,
+      colliding with Konnekt's `graphify hook-guard` on the same event and
+      matcher; see `docs/adopting.md`
+- [ ] Evaluate `context7@claude-plugins-official` for adoption (single MCP
+      server, near-zero context cost) — needs a Custom network allowlist entry
+      for its Upstash host in cloud environments before it's worth enabling
+      repo-wide; not currently in `enabledPlugins`
+- [ ] Apply the settings block (`docs/adopting.md`) to Kommands, declaring
+      `suite-kit` and `superpowers` at minimum
+- [ ] Run `claude plugin install` for `superpowers@superpowers` on each machine
+      and cloud path that needs it, and record where it has been run
 
 ## Suite conventions
 
@@ -30,4 +39,4 @@ Reconciled against Linear team `KOL`, project `Workspace & Tooling`, by
 ## Workspace validation
 
 - [ ] Clone Konnekt and Kommands via `scripts/bootstrap.sh` and confirm
-      `.omc-workspace` produces one shared session instead of one per product
+      `sync-tokens.sh` vendors `design/tokens.json` into both

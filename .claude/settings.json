@@ -1,9 +1,14 @@
 {
-  "extraKnownMarketplaces": {
-    "omc": { "source": { "source": "github", "repo": "Yeachan-Heo/oh-my-claudecode" } }
-  },
   "enabledPlugins": {
     "suite-kit@kollektiv": true,
-    "oh-my-claudecode@omc": true
+    "superpowers@superpowers": true
+  },
+  "extraKnownMarketplaces": {
+    "superpowers": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers"
+      }
+    }
   }
 }

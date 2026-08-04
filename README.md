@@ -39,14 +39,13 @@ it and are not tracked here.
 
 ```
 kollektiv/
-├── .omc-workspace          marks the tree as one Oh-My-ClaudeCode workspace
 ├── suite.repos.json        the product manifest
 ├── scripts/bootstrap.sh    clones missing products
 ├── scripts/sync-tokens.sh  vendors design/tokens.json into each product
 ├── .claude-plugin/         marketplace manifest
 ├── design/                 the shared design-token source
 ├── plugins/suite-kit/      the shared plugin
-├── .claude/                this repo's own suite-kit + OMC adoption
+├── .claude/                this repo's own plugin adoption
 ├── docs/roadmap.md         this repo's own roadmap, reconciled via linear-sync
 ├── Konnekt/                cloned, untracked
 └── Kommands/               cloned, untracked
@@ -102,29 +101,40 @@ Deliberately **no hooks**. Konnekt already binds `graphify hook-guard` to
 `PreToolUse` on `Bash`, `Read`, and `Glob`; stacking more matchers on top is the
 fastest way to make both feel broken.
 
-## Oh-My-ClaudeCode
+## Other plugins
 
-[OMC](https://ohmyclaudecode.com/) is declared alongside suite-kit for multi-agent
-orchestration. Two limits are worth knowing before depending on it:
+Declared alongside suite-kit in `.claude/settings.json`:
 
-- **`/team` is local-only.** It spawns workers through tmux, with optional external
-  provider CLIs for cross-model work. Claude Code on the web has neither, so cloud
-  sessions get OMC's skills and agents but not team mode. Named stage profiles
-  additionally want Linux `flock`.
-- **Context is not free.** OMC contributes a large number of agents and skills,
-  paid on every turn in every session. Check the **Context cost** figure in the
-  `/plugin` detail view before leaving it enabled repo-wide rather than reaching
-  for it per-session.
+| Plugin | What it adds | Cost |
+|---|---|---|
+| [`superpowers`](https://github.com/obra/superpowers) | ~14 skills: TDD, systematic debugging, planning and review workflows | No hooks, no agents |
 
-Its `.omc-workspace` support is the part that fits this repo best: a token change
-in Konnekt that must land in Kommands becomes one session instead of two.
+Replaces **Oh-My-ClaudeCode**, removed after it turned out to be declared but
+never installed: 28 agents and 32 skills — 60 components competing for a skill
+listing budgeted at roughly 1% of the context window, against suite-kit's 4. Before
+adding another plugin here, check its component count and hook footprint against
+that budget, not just what it does.
+
+Two others were evaluated and are **not** currently enabled repo-wide:
+
+- [`context7`](https://github.com/anthropics/claude-plugins-official/tree/main/external_plugins/context7)
+  — version-specific library docs, one MCP server, negligible listing cost. A good
+  candidate; its Upstash calls aren't on Claude Code cloud's Trusted network
+  allowlist by default, so it needs a Custom policy entry for cloud sessions that
+  want it. Left off `enabledPlugins` for now rather than declared-but-unused.
+- `claude-mem` (persistent cross-session memory) was considered and **declined**:
+  its `hooks.json` binds `PreToolUse` on `Read`, colliding with Konnekt's
+  `graphify hook-guard` on the same event and matcher — precisely the stacking
+  this repo's suite-kit avoids by shipping no hooks of its own (see below).
+
+See [`docs/adopting.md`](docs/adopting.md) for the full comparison.
 
 ---
 
 ## Tracking
 
 Linear, workspace `Kollektiv-MC`. Three teams: `KOL` for this repo — suite
-conventions, suite-kit, OMC adoption — and one per product, `KON` and `KMD`, so
+conventions, suite-kit, plugin adoption — and one per product, `KON` and `KMD`, so
 cycles and boards stay per-product. A suite-wide initiative, `Kollektiv Suite`,
 spans all three.
 

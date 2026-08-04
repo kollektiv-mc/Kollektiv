@@ -14,11 +14,13 @@ In the repo's committed `.claude/settings.json`:
 {
   "extraKnownMarketplaces": {
     "kollektiv": { "source": { "source": "github", "repo": "kollektiv-mc/Kollektiv" } },
-    "omc": { "source": { "source": "github", "repo": "Yeachan-Heo/oh-my-claudecode" } }
+    "superpowers": { "source": { "source": "github", "repo": "obra/superpowers" } },
+    "claude-plugins-official": { "source": { "source": "github", "repo": "anthropics/claude-plugins-official" } }
   },
   "enabledPlugins": {
     "suite-kit@kollektiv": true,
-    "oh-my-claudecode@omc": true
+    "superpowers@superpowers": true,
+    "context7@claude-plugins-official": true
   }
 }
 ```
@@ -30,8 +32,11 @@ Declaring is not installing. On first run Claude Code reports the plugin as not
 installed and prints a `claude plugin install` line; run it once per machine. This
 applies on every path that loads plugins, including cloud sessions.
 
-Both marketplaces run third-party code with your privileges. Enabling them is a
-trust decision — make it deliberately, per repo.
+Every marketplace here runs third-party code with your privileges. Enabling one is
+a trust decision — make it deliberately, per repo. See **Plugin selection** below
+for why these and not others. `context7` needs a Custom network allowlist entry for
+cloud sessions (its host isn't in the Trusted default list); include it once that's
+set up, or drop it and keep just `superpowers` if not.
 
 ## 2. Add `.claude/suite.json`
 
@@ -77,11 +82,32 @@ without a `kollektiv` checkout beside it.
 
 ```gitignore
 .claude/settings.local.json
-.claude/.omc/
 ```
 
 Shared config is committed so every clone and cloud agent inherits the same setup.
-Personal permission allowlists and OMC's session state are not shared.
+Personal permission allowlists are not shared.
+
+---
+
+## Plugin selection
+
+Third-party plugins here are chosen against a specific failure mode: the skill
+listing Claude Code shows the model is budgeted at roughly 1% of the context
+window, and when it overflows, descriptions are dropped starting with the skills
+invoked least. A plugin with a large component count can silently crowd
+suite-kit's own skills out of that listing. Only `superpowers` is currently
+enabled suite-wide; `context7` and `claude-mem` were evaluated against the same
+table but neither is enabled here yet.
+
+| Plugin | Components | Hooks | Decision |
+|---|---|---|---|
+| **Oh-My-ClaudeCode** | 28 agents + 32 skills = 60 | none | Removed — declared for weeks, never installed, and would have outweighed suite-kit's 4 skills roughly 15 to 1 |
+| **superpowers** | ~14 skills, 0 agents | none | Adopted — a quarter of OMC's footprint, covers TDD/debugging/planning workflows without agents |
+| **context7** | 0 skills, 1 MCP server | none | Evaluated, not enabled repo-wide — near-zero listing cost, a good candidate, but its Upstash calls need a Custom network allowlist entry in cloud environments since the host isn't on the Trusted default list. Add it per-repo (or per-session) once that's in place, rather than declaring it unused. |
+| **claude-mem** | memory system | `Setup`, `SessionStart`, `UserPromptSubmit`, `PostToolUse`, `PreToolUse` (matcher `Read`), `Stop` | **Declined** — its `PreToolUse`/`Read` binding collides with Konnekt's `graphify hook-guard` on the identical event and matcher, exactly the stacking suite-kit avoids by shipping no hooks at all (`README.md` § suite-kit). It also starts a persistent background worker at session start. |
+
+Before adding another plugin here, check its component count and hook footprint
+against this table, not just what it claims to do.
 
 ---
 
@@ -98,10 +124,13 @@ disk.
 kollektiv is itself an adopter, not just the source of the plugin. Its
 `.claude/suite.json` has `linear.team: "KOL"` and
 `roadmap: "docs/roadmap.md"`, and its `.claude/settings.json` enables
-`suite-kit@kollektiv` from the local marketplace plus `oh-my-claudecode@omc` —
-it omits `kollektiv` from `extraKnownMarketplaces` since this repo already is
-that marketplace and declaring it as a remote `github` source would register it
-twice. It has no `tokens`, `minecraft`, `health.invariants`, or
+`suite-kit@kollektiv` from the local marketplace plus `superpowers@superpowers`
+— see **Plugin selection** above — while omitting `kollektiv` from
+`extraKnownMarketplaces` since this repo already is that marketplace and
+declaring it as a remote `github` source would register it twice. `context7` is
+evaluated favorably in that table but not enabled here yet, pending the cloud
+network allowlist entry its MCP server needs. It has no `tokens`, `minecraft`,
+`health.invariants`, or
 `health.generated` block: it authors [`design/tokens.json`](../design/tokens.json)
 as raw data rather than styled application code, so the `tokens.role`/`enforce`
 machinery that guards literal hex and px in product code doesn't apply to it; it
@@ -171,6 +200,6 @@ it cannot collide with those.
 magic-word PR convention and the `Source: <roadmap> § <section>` mapping rule — up
 into this repo, leaving Konnekt's own project and milestone structure where it is.
 
-Expect friction between OMC's agents and the graphify guards: the guards nudge away
-from raw reads and greps, and OMC's agents read and grep constantly. Worth a
-session of observation before enabling OMC repo-wide there.
+Neither `superpowers` nor `context7` ships hooks, so neither collides with
+Konnekt's `graphify hook-guard`. That was the deciding factor against `claude-mem`
+(see **Plugin selection** above) rather than something to observe after the fact.

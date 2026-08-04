@@ -49,7 +49,7 @@ next to the code they constrain, rather than inside the plugin.
 | `minecraft.targetVersion` | Version the repo emits for |
 | `minecraft.dataSource` | Where pinned registry data comes from |
 | `minecraft.traitMatrix` | Path to the version-trait document |
-| `health.commands` | Ordered `{ name, run }` list |
+| `health.commands` | Ordered `{ name, run, cwd? }` list — `cwd` is relative to the repo root and defaults to it |
 | `health.invariants` | `{ name, grep, paths, exclude, expect, diagnosis, reference }` |
 | `health.generated` | `{ regenerate, expectCleanDiff, requiresNetwork, diagnosis, reference }` |
 
@@ -85,23 +85,26 @@ overlap is deliberate: the rule fires on edit, the skill on request.
 
 ### Konnekt
 
-Not yet applied. Needed:
+Applied. `.claude/suite.json` uses `kind: "wails-desktop"`, `linear.team: "KON"`,
+`roadmap: "agent_docs/ROADMAP.md"`, `tokens.role: "source"` and
+`tokens.enforce: "migrating"` — the repo is mid-migration from an
+inline-styles-everywhere convention, per `agent_docs/HEALTH_CHECKLIST.md`
+Milestone 2. It has no `health.invariants`: Konnekt is a server dashboard, not a
+command generator, so the Minecraft-syntax grep checks Kommands carries don't apply
+here — nothing was invented to fill the slot.
 
-- `.claude/suite.json` with `kind: "wails-desktop"`, `linear.team: "KON"`,
-  `roadmap: "agent_docs/ROADMAP.md"`, `tokens.role: "source"` and
-  `tokens.enforce: "migrating"` — the repo is mid-migration from an
-  inline-styles-everywhere convention, per `agent_docs/HEALTH_CHECKLIST.md`
-  Milestone 2.
-- `health.commands`: `pnpm typecheck`, `pnpm lint`, `pnpm test`,
-  `pnpm check-bundle` from `frontend/`, plus `go vet ./...` and `go test ./...`
-  from the repo root.
-- The settings block, merged into the existing `.claude/settings.json` **without
-  disturbing its `hooks` section**. Konnekt binds `graphify hook-guard` to
-  `PreToolUse` on `Bash`, `Read`, and `Glob`; suite-kit ships no hooks specifically
-  so it cannot collide with those.
-- Move the reusable parts of `agent_docs/LINEAR.md` — the magic-word PR convention
-  and the `Source: <roadmap> § <section>` mapping rule — up into this repo, leaving
-  Konnekt's own project and milestone structure where it is.
+`health.commands` uses `cwd` to mix toolchains in one list — `pnpm typecheck`,
+`pnpm lint`, `pnpm test`, `pnpm check-bundle` with `cwd: "frontend"`, and
+`go vet ./...` / `go test ./...` with no `cwd` (repo root).
+
+The settings block was merged into the existing `.claude/settings.json` without
+disturbing its `hooks` section — Konnekt binds `graphify hook-guard` to
+`PreToolUse` on `Bash`, `Read`, and `Glob`; suite-kit ships no hooks specifically so
+it cannot collide with those.
+
+**Still outstanding:** move the reusable parts of `agent_docs/LINEAR.md` — the
+magic-word PR convention and the `Source: <roadmap> § <section>` mapping rule — up
+into this repo, leaving Konnekt's own project and milestone structure where it is.
 
 Expect friction between OMC's agents and the graphify guards: the guards nudge away
 from raw reads and greps, and OMC's agents read and grep constantly. Worth a

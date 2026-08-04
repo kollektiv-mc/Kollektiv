@@ -18,6 +18,12 @@ finding one is not a reason to leave the other undiscovered.
 
 Run each entry in `health.commands` in order. Record pass or fail per entry.
 
+An entry may set `cwd`, a path relative to the repo root — run that command with
+`cwd` as its working directory instead of the repo root. This is for products
+where different toolchains live at different depths: Konnekt's frontend commands
+run from `frontend/`, its Go commands from the repo root, in the same
+`health.commands` list. An entry with no `cwd` runs from the repo root, as before.
+
 ## 2. Invariants
 
 Each entry in `health.invariants` is a grep that must find nothing. Run it against

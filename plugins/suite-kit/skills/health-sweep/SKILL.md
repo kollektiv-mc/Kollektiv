@@ -23,14 +23,16 @@ a finding, not an invitation.
 Read `suite.repos.json` for the repo list. **Do not hardcode product names** — a
 fourth repo added to that manifest must be swept without editing this skill.
 
-For each repo, attach it to the session with `add_repo` (`access: "push"` — filing
-issues needs credentials, cloning alone does not), clone it beside this repo as
-`<root>/<name>` exactly as `scripts/bootstrap.sh` does, then call
-`register_repo_root` so the product's own `CLAUDE.md`, skills, and settings load.
+Run `./scripts/bootstrap.sh`. It clones each repo in the manifest beside this one as
+`<root>/<name>`, is idempotent, and never touches a directory it did not create. The
+products are public, so this needs no credentials. If `add_repo` is available in the
+session, attach each product with it as well (`access: "push"` — filing issues needs
+credentials, cloning alone does not) and call `register_repo_root` afterwards so the
+product's own `CLAUDE.md`, skills, and settings load.
 
-A repo that cannot be attached or cloned is reported as **skipped, with the tool's
-own reason**, and the sweep continues to the next one. One unreachable product does
-not cancel the other checks.
+A repo that cannot be cloned is reported as **skipped, with the reason**, and the
+sweep continues to the next one. One unreachable product does not cancel the other
+checks.
 
 ## 2. Token drift
 
@@ -117,6 +119,13 @@ A new issue's body carries: the key line, the affected files with line numbers, 
 diagnosis, and the `reference` document. For an invariant, use the `diagnosis` and
 `reference` from that entry in `.claude/suite.json` verbatim — they were written to
 explain the specific silent failure behind the rule, and paraphrasing loses that.
+
+**If no GitHub issue tooling is available in the session**, do not drop the findings
+and do not treat the sweep as complete. Put every finding, in full and with its key
+line, into the report of step 6, and state plainly at the top that issue filing was
+**blocked** and why. A scheduled run reaches a human through its completion
+notification; a finding that only ever existed in a session nobody opened is a finding
+that was never made.
 
 ## 6. Report
 

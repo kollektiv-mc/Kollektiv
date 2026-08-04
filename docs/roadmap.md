@@ -30,6 +30,12 @@ caps it at two teams.
       deliberately omits
 - [x] Schedule it as a weekly cloud Routine, Mondays, filing findings as
       deduplicated GitHub issues in the repo each finding belongs to
+- [ ] Grant the Routine the GitHub connector from the claude.ai Routines UI. It was
+      created over MCP, which cannot attach connectors for this organization, so its
+      sessions currently have no issue-filing tools and the sweep will report filing
+      as blocked and put its findings in the run report instead
+- [ ] Confirm the Routine runs on Opus 5. Its model cannot be set or read over MCP
+      (`model_update_disabled`), so it inherits whatever the account default is
 - [ ] Shift the Routine's cron by an hour twice a year, or move it off UTC — Routine
       cron is evaluated in UTC and does not follow DST, so a schedule set for 09:00
       Berlin fires at 08:00 Berlin from late October to late March

@@ -1,7 +1,7 @@
 {
   "name": "suite-kit",
-  "description": "Shared conventions for the Minecraft tool suite: health checks driven by a per-repo manifest, Minecraft syntax verification, design-token discipline, and mirroring GitHub Issues into Linear.",
-  "version": "0.3.0",
+  "description": "Shared conventions for the Minecraft tool suite: health checks driven by a per-repo manifest, a scheduled suite-wide sweep, Minecraft syntax verification, design-token discipline, and mirroring GitHub Issues into Linear.",
+  "version": "0.4.0",
   "author": {
     "name": "sandrogekeler"
   },

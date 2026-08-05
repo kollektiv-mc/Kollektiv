@@ -33,6 +33,28 @@ Still open: enforcing the `docs/conventions.md` permissions block
 mechanically rather than by review. Kommands can't get CI yet — it has no
 `package.json` until its own scaffolding work lands.
 
+## Scheduled runs
+
+Two cloud Routines exist and are enabled, both created over MCP against this
+repo: the daily `/suite-kit:suite-sync` mirror (`30 6 * * *` UTC) and the weekly
+`/suite-kit:health-sweep` (`0 7 * * 1` UTC). `README.md` describes what each does.
+
+Still open on the sweep:
+
+- Granting its Routine the GitHub connector from the claude.ai Routines UI. It
+  was created over MCP, which cannot attach connectors for this organization, so
+  its sessions have no issue-filing tools yet — the sweep will report filing as
+  blocked and put its findings in the run report instead.
+- Confirming it runs on Opus 5. A Routine's model cannot be set or read over MCP
+  (`model_update_disabled`), so it inherits whatever the account default is.
+- Confirming a second consecutive run opens zero new issues. Dedup via the
+  `Health-Check-Key:` line is the whole design, and only a real second run
+  proves it.
+
+Routine cron is evaluated in UTC and does not follow DST, so both schedules need
+shifting by an hour twice a year, or moving off UTC — a schedule set for 09:00
+Berlin fires at 08:00 Berlin from late October to late March.
+
 ## Suite conventions
 
 The reusable parts of Konnekt's old `agent_docs/LINEAR.md` — the PR

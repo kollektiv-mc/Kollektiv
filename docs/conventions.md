@@ -46,6 +46,26 @@ sequencing now, not a checklist of trackable items; GitHub issue numbers are
 a stable key in a way a roadmap section heading never was, since headings get
 rewritten and sections get merged.
 
+## Issues filed by the health sweep
+
+`/suite-kit:health-sweep` runs weekly across every repo and files what it finds. Its
+issues carry a stable fingerprint line in the body:
+
+```
+Health-Check-Key: <repo>/<check-id>
+```
+
+Same rule as above — **match on that line, never on titles.** The sweep re-runs every
+week and re-finds the same problems; the key is what makes a second run comment on an
+open issue instead of opening its twin.
+
+`<check-id>` is derived from what the finding is, never from the week it was found.
+Everything the sweep files is labelled `health-check`.
+
+The sweep never closes an issue. A finding that stops reproducing gets a comment saying
+so, because "it was fixed" and "the check stopped running" look identical from the
+outside, and only one of them is good news.
+
 ## PR magic words
 
 GitHub's own closing keywords in a PR title or description close the issue
@@ -113,6 +133,8 @@ A repo does not invent its own type or priority labels.
 
 - **No `create_team`.** Teams are made by hand in the Linear UI.
 - **No cycle creation.** Team-settings toggle only.
+- **Two teams, total.** The workspace is on the free plan. A skill that would need a
+  third team needs a different design, not a new team.
 
 `save_initiative` and `save_project` both exist and work — an earlier version of
 this document said initiatives had to be created by hand. That was wrong by

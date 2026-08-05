@@ -102,13 +102,14 @@ rules both products share.
 | Skill | Purpose |
 |---|---|
 | `/suite-kit:health` | Run a product's checks and invariants, report a table |
+| `/suite-kit:health-sweep` | Run those checks across every repo and file findings as issues |
 | `/suite-kit:mc-syntax` | Verify Minecraft syntax against pinned data before writing it |
 | `/suite-kit:design-tokens` | The no-literal-hex, no-literal-px rule |
 | `/suite-kit:suite-sync` | Mirror each repo's GitHub Issues into Linear |
 | `@mc-reviewer` | Review a diff for version-trait and hardcoded-value violations |
 
 The skills are generic. Everything product-specific — the actual commands, the
-actual grep invariants, the Linear team key — lives in that product's
+actual grep invariants, where the repo is tracked — lives in that product's
 `.claude/suite.json`, next to the code it constrains. See
 [`docs/adopting.md`](docs/adopting.md).
 
@@ -145,3 +146,23 @@ Linear's MCP exposes no `create_team`; teams are hand-made in the Linear UI.
 The workspace was recreated from scratch on 2026-08-04 (previously
 `KonnektMC`); old `KON-*` issue references in Konnekt's merged PRs point at
 IDs that no longer exist in the replacement workspace.
+
+## Scheduled runs
+
+Two cloud Routines drive the suite on a schedule, both created over MCP against
+this repo:
+
+| Routine | Cron (UTC) | What it does |
+|---|---|---|
+| Suite sync — GitHub → Linear | `30 6 * * *` | Runs `/suite-kit:suite-sync` |
+| Weekly suite health check | `0 7 * * 1` | Runs `/suite-kit:health-sweep` |
+
+The sweep clones every repo in `suite.repos.json`, runs each one's
+`/suite-kit:health`, checks vendored-token drift, reviews the week's commits, and
+files findings as GitHub issues labelled `health-check` in the repo they belong
+to. It never commits, pushes, or opens pull requests. Its issues carry a
+`Health-Check-Key:` line so the next week's run comments on an open issue rather
+than filing a duplicate.
+
+Routine cron is evaluated in UTC and does not follow DST, so these drift by an
+hour in local terms twice a year — see [`docs/roadmap.md`](docs/roadmap.md).

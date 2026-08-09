@@ -14,40 +14,60 @@ finding one is not a reason to leave the other undiscovered.
 
 ---
 
-## 1. Commands
+## 1. Run the checks
 
-Run each entry in `health.commands` in order. Record pass or fail per entry.
+`suite-check.py` runs all three sections from the manifest. Use it rather than
+reconstructing the commands and greps by hand — two implementations of the same
+checks is the drift this suite exists to prevent, and the hand-run version is the
+one that quietly diverges.
 
-An entry may set `cwd`, a path relative to the repo root — run that command with
-`cwd` as its working directory instead of the repo root. This is for products
-where different toolchains live at different depths: Konnekt's frontend commands
-run from `frontend/`, its Go commands from the repo root, in the same
-`health.commands` list. An entry with no `cwd` runs from the repo root, as before.
+Take the first of these that exists:
 
-## 2. Invariants
+1. `.claude/suite-check.py` — the vendored copy. The normal path, and the only one
+   that works when the plugin is not installed.
+2. `${CLAUDE_PLUGIN_ROOT}/suite-check.py` — the copy inside this plugin.
+3. Neither — run the manifest's entries by hand as described below, and say in your
+   report that you did. Then mention that
+   `kollektiv/scripts/sync-runner.sh` vendors the runner, since a repo missing it
+   will keep hitting this.
 
-Each entry in `health.invariants` is a grep that must find nothing. Run it against
-the entry's `paths`, honouring `exclude`, and treat any match as a failure.
+```sh
+.claude/suite-check.py --json
+```
 
-These are the checks a linter cannot express. They exist because each one has a
-specific, silent failure mode behind it — the entry's `diagnosis` says which, and
-its `reference` points at the document that explains why. Read the reference before
-deciding a match is acceptable.
+`--json` gives one record per check with `status`, `reason`, and the matching lines.
+Useful flags: `--section` to run one section, `--offline` where a network-dependent
+generator should be skipped without probing, `--require-runnable` to make a skip a
+failure.
 
-Some invariants carry a legitimate exception in their `diagnosis` — a namespace
-prefix under construction, for example, as opposed to a fully named identifier.
+Exit codes are `0` no failures, `1` at least one failure, `2` the manifest could not
+be read.
+
+## 2. Judge the invariant matches
+
+The runner reports every match. It does not decide whether a match is a violation,
+because it cannot: `health.invariants` entries carry a `diagnosis` naming the
+specific silent failure behind the rule, and some name a legitimate exception — a
+namespace prefix under construction, as opposed to a fully named identifier.
+
+Read the entry's `diagnosis` and `reference` before deciding a match is acceptable.
 Judge a match against the diagnosis, not against the regex.
 
-## 3. Generated files
+**When you judge a match legitimate, say so in the report and encode it.** Add the
+path to that invariant's `exclude`, or sharpen its `grep`. A decision made once in a
+session is invisible to CI and to the next session; a commit is not. This is the
+whole difference between the runner and the skill — the runner is binary because it
+has no one to ask, so the exception has to become part of the rule.
 
-If `health.generated` is present, run its `regenerate` command and confirm each
-path in `expectCleanDiff` is unchanged.
+## 3. Interpret the skips
 
-A non-empty diff means one of two things, and both are bugs: a generated file was
-hand-edited, or a generator change was committed without its regenerated output.
+The runner skips a check it could not run: no `package.json`, no `node_modules`, a
+path the invariant covers that does not exist yet, a network-dependent generator
+while offline. Each skip carries its reason.
 
-When `requiresNetwork` is true and the machine is offline, report this check as
-**skipped**, with the reason.
+**A skip is never a pass.** Report it as a skip, with the reason. If the whole run is
+skips — which is what a pre-scaffold repo looks like — that is the finding, and the
+report should say plainly that nothing was verified.
 
 ---
 

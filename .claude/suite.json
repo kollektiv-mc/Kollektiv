@@ -20,6 +20,10 @@
       {
         "name": "schema validation",
         "run": "./scripts/validate-schemas.sh"
+      },
+      {
+        "name": "check runner syntax",
+        "run": "python3 -c \"import ast; ast.parse(open('plugins/suite-kit/suite-check.py').read())\""
       }
     ]
   }

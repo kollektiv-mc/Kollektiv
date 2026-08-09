@@ -29,9 +29,30 @@ schedule since drift detection needs every product cloned beside this one).
 Konnekt's `gen:tokens` clean-diff check now runs in its own CI
 (`.github/workflows/ci.yml`), not just `/suite-kit:health`.
 
-Still open: enforcing the `docs/conventions.md` permissions block
-mechanically rather than by review. Kommands can't get CI yet — it has no
-`package.json` until its own scaffolding work lands.
+`plugins/suite-kit/suite-check.py` runs everything a repo's `.claude/suite.json`
+declares, without the plugin installed, and `scripts/sync-runner.sh` vendors it
+into each product the way `sync-tokens.sh` vendors the token source. This exists
+because declaring a plugin does not install one: in a cloud container
+`installed_plugins.json` is empty, so before this the manifest was read by
+nothing there. The runner also distinguishes a skip from a pass, which the
+invariant greps previously could not — a grep over a path that does not exist
+reported clean.
+
+Still open, in rough order:
+
+- Vendoring the runner into Konnekt and Kommands, and adding a CI job in each
+  that runs it. Nothing is committed in either product yet — `sync-runner.sh`
+  writes the copy, but only a checkout with both sides can do that, and neither
+  product's PR has been opened. No issues filed yet either.
+- Kommands turning on `--require-runnable` once `src/` exists. Until then its
+  entire check set reports as skipped, which is honest but verifies nothing.
+- Konnekt's `.claude/suite.json` declaring `linear: { team: "KON" }` instead of
+  `tracking: "github-issues"`, which makes `/suite-kit:suite-sync` skip the repo
+  silently. See `docs/adopting.md` § Konnekt.
+- Enforcing the `docs/conventions.md` permissions block mechanically rather than
+  by review. Kommands can't get CI for its `pnpm` commands yet — it has no
+  `package.json` until its own scaffolding work lands — but the invariant greps
+  need no toolchain and can be wired up before that.
 
 ## Suite conventions
 

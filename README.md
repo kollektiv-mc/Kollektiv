@@ -56,6 +56,10 @@ kollektiv/
 ├── design/suite.schema.json    schema for each repo's .claude/suite.json
 ├── scripts/sync-labels.sh      applies design/labels.json's GitHub side via gh
 │                               (--check reports drift and writes nothing)
+├── scripts/sync-runner.sh      vendors suite-check.py into each product
+│                               (--check reports drift and writes nothing)
+├── scripts/adopt.sh            scaffolds a repo's suite.json, settings block,
+│                               .gitignore lines and both vendored files
 ├── plugins/suite-kit/          the shared plugin
 ├── .claude/                    this repo's own suite-kit + superpowers adoption
 ├── docs/adopting.md            how a repo adopts suite-kit
@@ -111,6 +115,16 @@ The skills are generic. Everything product-specific — the actual commands, the
 actual grep invariants, the Linear team key — lives in that product's
 `.claude/suite.json`, next to the code it constrains. See
 [`docs/adopting.md`](docs/adopting.md).
+
+**The checks do not depend on the plugin.** `plugins/suite-kit/suite-check.py` runs
+everything `.claude/suite.json` declares, and `scripts/sync-runner.sh` vendors it into
+each product the same way `sync-tokens.sh` vendors the token source. Declaring a plugin
+in `.claude/settings.json` does not install it, so in a cloud container or an unattended
+session the vendored runner is the only thing that reaches the checks at all.
+
+What stays in the plugin is judgement: whether a matched line is the legitimate
+exception its `diagnosis` describes, whether a Minecraft identifier is right for the
+target version. A grep never needed to be a skill.
 
 Deliberately **no hooks**. Konnekt already binds `graphify hook-guard` to
 `PreToolUse` on `Bash`, `Read`, and `Glob`; stacking more matchers on top is the

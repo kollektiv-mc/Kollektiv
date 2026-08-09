@@ -17,8 +17,11 @@ change here that requires a product to rebuild is a change in the wrong place.
 | `design/labels.schema.json` | Its schema |
 | `design/suite.schema.json` | Schema for the per-repo `.claude/suite.json` |
 | `plugins/suite-kit/` | The shared Claude Code plugin |
+| `plugins/suite-kit/suite-check.py` | Runs a repo's checks from its `.claude/suite.json`, with no plugin installed |
 | `scripts/bootstrap.sh` | Clones the products as siblings |
+| `scripts/adopt.sh` | Scaffolds a repo's manifest, settings block and vendored files |
 | `scripts/sync-tokens.sh` | Vendors `design/tokens.json` into each product (`--check` to detect drift) |
+| `scripts/sync-runner.sh` | Vendors `suite-check.py` into each product (`--check` to detect drift) |
 | `scripts/sync-labels.sh` | Applies `design/labels.json`'s GitHub side via `gh` (`--check` to detect drift) |
 | `scripts/validate-schemas.sh` | Validates every manifest against its schema |
 | `docs/adopting.md` | How a repo adopts suite-kit |
@@ -61,8 +64,16 @@ to `PreToolUse`; stacking more matchers is the fastest way to make both feel bro
 Run `/suite-kit:health`. It reads `.claude/suite.json` and runs every check, including
 schema validation.
 
+Where the plugin is not installed — a cloud container, an unattended agent, a bare
+clone — run `.claude/suite-check.py` directly. It reads the same manifest and runs the
+same checks. **Declaring a plugin in `.claude/settings.json` does not install it**, so
+this is the normal case in those environments, not a fallback for broken ones.
+
 A check that could not run is **skipped**, never passing. Most of the value of the
-health check is the gap between "I ran the checks" and "the checks passed".
+health check is the gap between "I ran the checks" and "the checks passed". The runner
+enforces that distinction mechanically: a grep over a path that does not exist, a
+`pnpm` script with no `package.json`, a command whose dependencies were never
+installed — each is a skip with a reason, and none of them is a pass.
 
 **Token drift is deliberately not one of those checks.** `/suite-kit:health` reports on
 one repo; drift detection needs every product cloned beside this one, which CI's

@@ -73,6 +73,24 @@ jobs:
       - name: Token drift
         run: ./scripts/sync-tokens.sh --check
 
+      # The check runner is vendored for the same reason the token source is: a
+      # product must be able to run its own checks from a standalone clone,
+      # without the plugin installed. That makes a stale vendored copy the same
+      # class of bug as a stale tokens.source.json, and it is detectable in the
+      # same one place — a checkout holding both sides.
+      #
+      # Runs even when the token check above failed, per the reasoning on the
+      # step below: independent findings, and finding one is not a reason to
+      # leave the other undiscovered.
+      #
+      # Without --require-vendored, because neither product carries the runner
+      # yet and adoption lands in their repos, not this one. A stale copy still
+      # fails here; a product that has not adopted it is reported and skipped.
+      # Add --require-vendored once both have it — see docs/roadmap.md.
+      - name: Check-runner drift
+        if: ${{ !cancelled() }}
+        run: ./scripts/sync-runner.sh --check
+
       # The products are cloned here anyway, so validate their manifests against
       # the schema while we have them.
       #

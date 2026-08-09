@@ -14,8 +14,14 @@ here is tracked and reviewed.
 
 Every repo in the suite tracks its work items in GitHub Issues, declared as
 `tracking: "github-issues"` in `.claude/suite.json`. There is no per-repo
-choice to make anymore — Kommands set this precedent, Konnekt and kollektiv
-now match it.
+choice to make anymore — Kommands set this precedent and kollektiv matches it.
+
+**Konnekt's manifest does not say this yet.** It still declares
+`linear: { team: "KON" }` on `main`, naming a team key from the workspace
+deleted 2026-08-04. `/suite-kit:suite-sync` therefore reports Konnekt and skips
+it, so its issues are not being mirrored — silently, and correctly per the rule
+below. This paragraph used to claim Konnekt already matched; it did not. The fix
+is an unchecked item in `docs/roadmap.md`.
 
 `design/suite.schema.json` still allows a repo to declare `linear: { team:
 ... }` instead, for a hypothetical repo that should be tracked in Linear

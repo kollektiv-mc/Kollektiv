@@ -1,8 +1,19 @@
 # Adopting suite-kit in a product repo
 
-Five things go into each product repo: a settings block, a permissions block, a
-`.claude/suite.json`, a vendored `tokens.source.json`, and two `.gitignore` lines.
-Nothing else about the repo changes.
+Six things go into each product repo: a settings block, a permissions block, a
+`.claude/suite.json`, a vendored `tokens.source.json`, a vendored
+`.claude/suite-check.py`, and two `.gitignore` lines. Nothing else about the repo
+changes.
+
+```sh
+./scripts/adopt.sh ../NewRepo --kind vite-web
+```
+
+does the mechanical part of every step below — the manifest, the permissions floor,
+the `.gitignore` line, and both vendored files. It stops where judgement starts:
+`tokens`, `minecraft` and `health.invariants` describe a particular codebase, and it
+prints which of them still need filling in rather than guessing. Read on for what
+each field means and why.
 
 ---
 
@@ -88,7 +99,45 @@ along with whatever `tokens.generate` produces from it. Both files are inputs a
 build reads, so both are committed — a product must build from a standalone clone,
 without a `kollektiv` checkout beside it.
 
-## 5. Ignore the runtime state
+## 5. Vendor the check runner
+
+```sh
+./scripts/sync-runner.sh          # from the kollektiv root
+```
+
+This copies `plugins/suite-kit/suite-check.py` into the repo as
+`.claude/suite-check.py`. Commit it.
+
+**This is the step that makes the checks real.** Step 1 declares the plugin; it does
+not install it, and nothing in a cloud container, a scheduled routine, or a fresh
+clone will. Without the vendored runner, `.claude/suite.json` — every command, every
+invariant, every `diagnosis` written to explain why a rule exists — is read by nothing
+in exactly the environments that have no human watching.
+
+Run it from the repo root:
+
+```sh
+.claude/suite-check.py              # all sections
+.claude/suite-check.py --json       # for /suite-kit:health to judge against
+```
+
+It reports each check as `pass`, `fail`, or `skip` with a reason, and exits `0`, `1`,
+or `2` (manifest unreadable). Skips do not affect the exit code — a repo that cannot
+run a check yet is not a repo that failed it. `--require-runnable` inverts that, which
+is what a product's CI turns on once its toolchain exists, so the checks cannot go
+quietly vacuous.
+
+Like `tokens.source.json`, the vendored copy is not the place to edit: the next
+`sync-runner.sh` overwrites it. `scripts/sync-runner.sh --check` reports drift, and
+CI's `token-drift` job runs it on every push and nightly.
+
+A product that has never vendored the runner is reported and skipped there rather
+than failed — adoption lands in the product's repo, so a build here cannot fix it.
+A copy that has gone *stale* is a failure, because that one is a check quietly
+running the wrong rules. `--require-vendored` collapses the two, and CI turns it on
+once every product carries the file.
+
+## 6. Ignore the runtime state
 
 ```gitignore
 .claude/settings.local.json
@@ -168,12 +217,25 @@ overlap is deliberate: the rule fires on edit, the skill on request.
 
 ### Konnekt
 
-`.claude/suite.json` uses `kind: "wails-desktop"`, `tracking: "github-issues"`,
-`roadmap: "agent_docs/ROADMAP.md"`, and `tokens.enforce: "migrating"` — the repo is
+`.claude/suite.json` uses `kind: "wails-desktop"`, `roadmap: "agent_docs/ROADMAP.md"`,
+and `tokens.enforce: "migrating"` — the repo is
 mid-migration from an inline-styles-everywhere convention, per
 `agent_docs/HEALTH_CHECKLIST.md` Milestone 2. As of that migration's start the
 covered paths hold 176 hex literals across 33 files and 323 arbitrary-px values
 across 76 `.tsx` files, which is what `migrating` exists to describe.
+
+**Its tracking declaration is wrong on `main` and has not been fixed yet.** It carries
+`linear: { team: "KON" }` where every other repo — and [`conventions.md`](conventions.md),
+and this page's own earlier text, and the README — says `tracking: "github-issues"`.
+The consequence is live and silent: `/suite-kit:suite-sync` reports a repo declaring
+`linear` and **skips** it, so Konnekt's GitHub Issues are not being mirrored at all.
+`KON` also names a team key from the `KonnektMC` workspace deleted 2026-08-04.
+
+**A fix already exists and is unmerged.** Konnekt PR #51 — the companion PR referenced
+from this repo's PR #9 — swaps that block for `tracking: "github-issues"` exactly as it
+should. It has been sitting since 2026-08-05, so the mirror has been skipping Konnekt
+that whole time with the correction already written. Merging it is the fix; nothing new
+needs writing. This page describes what is on `main`, not what is proposed against it.
 
 `tokens.role` is `consumer`, not `source`. Konnekt authored the design language, but
 the values now live in kollektiv's `design/tokens.json` and Konnekt generates

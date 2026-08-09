@@ -58,6 +58,8 @@ kollektiv/
 │                               (--check reports drift and writes nothing)
 ├── scripts/sync-runner.sh      vendors suite-check.py into each product
 │                               (--check reports drift and writes nothing)
+├── scripts/adopt.sh            scaffolds a repo's suite.json, settings block,
+│                               .gitignore lines and both vendored files
 ├── plugins/suite-kit/          the shared plugin
 ├── .claude/                    this repo's own suite-kit + superpowers adoption
 ├── docs/adopting.md            how a repo adopts suite-kit

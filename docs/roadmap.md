@@ -49,6 +49,10 @@ Still open, in rough order:
 - Konnekt's `.claude/suite.json` declaring `linear: { team: "KON" }` instead of
   `tracking: "github-issues"`, which makes `/suite-kit:suite-sync` skip the repo
   silently. See `docs/adopting.md` § Konnekt.
+- Wiring the runner into `/suite-kit:health-sweep`, which PR #9 adds. That skill
+  clones every product and checks token drift; it should check runner drift the
+  same way, and read each product's `.claude/suite-check.py --json` rather than
+  its prose report. The two changes belong in that PR's file, not this one.
 - Enforcing the `docs/conventions.md` permissions block mechanically rather than
   by review. Kommands can't get CI for its `pnpm` commands yet — it has no
   `package.json` until its own scaffolding work lands — but the invariant greps
@@ -63,9 +67,11 @@ these conventions reach an agent session automatically. The per-repo
 `linear-sync` and `health-check` commands the plugin replaced have been
 deleted from both products.
 
-Still open: `scripts/adopt.sh`, to scaffold a new repo's `.claude/suite.json`,
-settings block, and vendored tokens in one command instead of a careful read
-of `docs/adopting.md`.
+`scripts/adopt.sh` scaffolds a new repo's `.claude/suite.json`, permissions block,
+`.gitignore` lines and both vendored files in one command, instead of a careful
+read of `docs/adopting.md`. It writes a manifest that is valid but deliberately
+unfinished — `tokens`, `minecraft` and `health.invariants` describe a specific
+codebase, and a generated guess at them would look reviewed without being.
 
 ## superpowers adoption
 

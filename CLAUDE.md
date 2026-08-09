@@ -19,6 +19,7 @@ change here that requires a product to rebuild is a change in the wrong place.
 | `plugins/suite-kit/` | The shared Claude Code plugin |
 | `plugins/suite-kit/suite-check.py` | Runs a repo's checks from its `.claude/suite.json`, with no plugin installed |
 | `scripts/bootstrap.sh` | Clones the products as siblings |
+| `scripts/adopt.sh` | Scaffolds a repo's manifest, settings block and vendored files |
 | `scripts/sync-tokens.sh` | Vendors `design/tokens.json` into each product (`--check` to detect drift) |
 | `scripts/sync-runner.sh` | Vendors `suite-check.py` into each product (`--check` to detect drift) |
 | `scripts/sync-labels.sh` | Applies `design/labels.json`'s GitHub side via `gh` (`--check` to detect drift) |

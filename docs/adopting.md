@@ -5,6 +5,16 @@ Six things go into each product repo: a settings block, a permissions block, a
 `.claude/suite-check.py`, and two `.gitignore` lines. Nothing else about the repo
 changes.
 
+```sh
+./scripts/adopt.sh ../NewRepo --kind vite-web
+```
+
+does the mechanical part of every step below — the manifest, the permissions floor,
+the `.gitignore` line, and both vendored files. It stops where judgement starts:
+`tokens`, `minecraft` and `health.invariants` describe a particular codebase, and it
+prints which of them still need filling in rather than guessing. Read on for what
+each field means and why.
+
 ---
 
 ## 1. Declare the marketplaces

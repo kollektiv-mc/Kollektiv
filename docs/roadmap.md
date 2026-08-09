@@ -49,6 +49,14 @@ Still open, in rough order:
 - Konnekt's `.claude/suite.json` declaring `linear: { team: "KON" }` instead of
   `tracking: "github-issues"`, which makes `/suite-kit:suite-sync` skip the repo
   silently. See `docs/adopting.md` § Konnekt.
+- Giving Konnekt a `health.invariants` entry for hex and px. It declares
+  `tokens.enforce: "migrating"` and names the covered paths, but declares no
+  invariant at all, so nothing mechanical checks them. Measured against those
+  paths on `main`: 123 hex literals and 324 arbitrary px values across 57 files.
+  The repo carrying the whole literals problem has no literal check, while
+  Kommands — which has no `src/` yet — has one. The entry belongs in Konnekt's
+  manifest, and `migrating` wants the runner to report a count rather than fail,
+  which `suite-check.py` does not yet distinguish from `strict`.
 - Wiring the runner into `/suite-kit:health-sweep`, which PR #9 adds. That skill
   clones every product and checks token drift; it should check runner drift the
   same way, and read each product's `.claude/suite-check.py --json` rather than

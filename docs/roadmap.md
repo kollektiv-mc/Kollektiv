@@ -42,13 +42,18 @@ Still open, in rough order:
 
 - Vendoring the runner into Konnekt and Kommands, and adding a CI job in each
   that runs it. Nothing is committed in either product yet — `sync-runner.sh`
-  writes the copy, but only a checkout with both sides can do that, and neither
-  product's PR has been opened. No issues filed yet either.
+  writes the copy, but only a checkout with both sides can do that. Konnekt PR
+  #51 and Kommands PR #20, the companion PRs referenced from PR #9, are both
+  unmerged and neither carries `.claude/suite-check.py`, so this is new work
+  rather than something already in flight.
+- Merging Konnekt PR #51, which already fixes that repo's tracking declaration
+  (below). It has been open since 2026-08-05 with the correction written; the
+  mirror has skipped Konnekt for as long as it has sat.
 - Kommands turning on `--require-runnable` once `src/` exists. Until then its
   entire check set reports as skipped, which is honest but verifies nothing.
 - Konnekt's `.claude/suite.json` declaring `linear: { team: "KON" }` instead of
-  `tracking: "github-issues"`, which makes `/suite-kit:suite-sync` skip the repo
-  silently. See `docs/adopting.md` § Konnekt.
+  `tracking: "github-issues"` on `main`, which makes `/suite-kit:suite-sync` skip
+  the repo silently. Fixed in unmerged PR #51 — see `docs/adopting.md` § Konnekt.
 - Giving Konnekt a `health.invariants` entry for hex and px. It declares
   `tokens.enforce: "migrating"` and names the covered paths, but declares no
   invariant at all, so nothing mechanical checks them. Measured against those

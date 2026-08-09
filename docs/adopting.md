@@ -229,10 +229,13 @@ across 76 `.tsx` files, which is what `migrating` exists to describe.
 and this page's own earlier text, and the README — says `tracking: "github-issues"`.
 The consequence is live and silent: `/suite-kit:suite-sync` reports a repo declaring
 `linear` and **skips** it, so Konnekt's GitHub Issues are not being mirrored at all.
-`KON` also names a team key from the `KonnektMC` workspace deleted 2026-08-04. The fix
-is a one-line manifest change in Konnekt; it is an unchecked item in
-[`roadmap.md`](roadmap.md) and no issue has been filed for it yet. This page is
-describing what is on disk, not what should be.
+`KON` also names a team key from the `KonnektMC` workspace deleted 2026-08-04.
+
+**A fix already exists and is unmerged.** Konnekt PR #51 — the companion PR referenced
+from this repo's PR #9 — swaps that block for `tracking: "github-issues"` exactly as it
+should. It has been sitting since 2026-08-05, so the mirror has been skipping Konnekt
+that whole time with the correction already written. Merging it is the fix; nothing new
+needs writing. This page describes what is on `main`, not what is proposed against it.
 
 `tokens.role` is `consumer`, not `source`. Konnekt authored the design language, but
 the values now live in kollektiv's `design/tokens.json` and Konnekt generates

@@ -66,12 +66,14 @@ is the summary.
 - area: `area:tokens`, `area:ci`, `area:agents`, `area:ui`, `area:schema`, `area:release`
 - priority: `p0`, `p1`, `p2`, `p3`
 - `blocked`
+- `health-check`, carried by everything `/suite-kit:health-sweep` files
 
 **Linear side** — `repo:kollektiv` / `repo:konnekt` / `repo:kommands`; `Feature` /
 `Bug` / `Chore` / `Docs` (the type set, mirroring GitHub's `type:*`) plus
 `Improvement`, kept as the pre-existing alias for GitHub's default
 `enhancement` label rather than deleted; the same `area:*` set; `blocked`;
-and `source:github`, marking an issue `/suite-kit:suite-sync` created or last
+`health-check`, mirroring the GitHub label of the same name; and
+`source:github`, marking an issue `/suite-kit:suite-sync` created or last
 updated from GitHub — its absence means an issue predates the routine or was
 created by hand in Linear.
 

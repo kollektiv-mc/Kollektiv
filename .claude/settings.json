@@ -5,5 +5,23 @@
   "enabledPlugins": {
     "suite-kit@kollektiv": true,
     "superpowers@superpowers": true
+  },
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)"
+    ],
+    "ask": [
+      "Bash(git push:*)"
+    ],
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(./scripts/validate-schemas.sh:*)",
+      "Bash(./scripts/sync-tokens.sh --check)",
+      "Bash(./scripts/bootstrap.sh:*)"
+    ]
   }
 }

@@ -20,7 +20,9 @@
     { "name": "p2", "color": "fbca04", "description": "Medium priority, normal queue." },
     { "name": "p3", "color": "c2e0c6", "description": "Low priority, nice to have." },
 
-    { "name": "blocked", "color": "5319e7", "description": "Cannot proceed until a stated dependency clears." }
+    { "name": "blocked", "color": "5319e7", "description": "Cannot proceed until a stated dependency clears." },
+
+    { "name": "health-check", "color": "1d76db", "description": "Filed by /suite-kit:health-sweep. Carries a Health-Check-Key line." }
   ],
 
   "linear": {
@@ -49,7 +51,8 @@
 
     "flags": [
       { "name": "blocked", "color": "#5319E7", "description": "Cannot proceed until a stated dependency clears. Mirrors GitHub blocked." },
-      { "name": "source:github", "color": "#94A3B8", "description": "Created or last updated by /suite-kit:suite-sync from a GitHub issue. Absence means the issue predates the routine or was created by hand in Linear." }
+      { "name": "source:github", "color": "#94A3B8", "description": "Created or last updated by /suite-kit:suite-sync from a GitHub issue. Absence means the issue predates the routine or was created by hand in Linear." },
+      { "name": "health-check", "color": "#1D76DB", "description": "Mirrors GitHub health-check: filed by the weekly /suite-kit:health-sweep rather than by a person." }
     ]
   }
 }

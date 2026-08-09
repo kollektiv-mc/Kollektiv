@@ -15,8 +15,8 @@
       "properties": {
         "name": {
           "type": "string",
-          "pattern": "^[a-z][a-z0-9]*(:[a-z0-9]+(-[a-z0-9]+)*)?$",
-          "description": "Lowercase, optionally 'category:value'. No spaces — GitHub label names are free text but the suite's own vocabulary is not."
+          "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*(:[a-z0-9]+(-[a-z0-9]+)*)?$",
+          "description": "Lowercase, hyphen-separated words, optionally 'category:value'. No spaces — GitHub label names are free text but the suite's own vocabulary is not."
         },
         "color": {
           "type": "string",

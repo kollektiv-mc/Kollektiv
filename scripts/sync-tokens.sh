@@ -34,11 +34,10 @@ vendored_name="tokens.source.json"
 [ -f "$manifest" ] || { echo "no suite.repos.json at $root" >&2; exit 1; }
 [ -f "$source_file" ] || { echo "no design/tokens.json at $root" >&2; exit 1; }
 
-command -v python3 >/dev/null 2>&1 || {
-  echo "python3 is required to read the manifest" >&2; exit 1
-}
+. "$(dirname "${BASH_SOURCE[0]}")/lib/python.sh"
+require_python
 
-python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$source_file" || {
+"${PYTHON[@]}" -c 'import json,sys; json.load(open(sys.argv[1]))' "$source_file" || {
   echo "design/tokens.json is not valid JSON — refusing to propagate it" >&2; exit 1
 }
 
@@ -62,7 +61,13 @@ while IFS=$'\t' read -r name role; do
 
   dest="$dir/$vendored_name"
 
-  if [ -f "$dest" ] && cmp -s "$source_file" "$dest"; then
+  # Compared with CRs stripped, not byte for byte. The products normalise line
+  # endings independently (Konnekt's .gitattributes is `* text=auto eol=lf`,
+  # this repo's is the same, Kommands has none), so on a Windows checkout the
+  # same content can sit as CRLF on one side and LF on the other. Comparing raw
+  # bytes there reported permanent drift on a workspace that had none, and the
+  # cp below would then rewrite a file whose content never changed.
+  if [ -f "$dest" ] && cmp -s <(tr -d '\r' < "$source_file") <(tr -d '\r' < "$dest"); then
     echo "= $name already up to date"
     continue
   fi
@@ -81,7 +86,7 @@ while IFS=$'\t' read -r name role; do
   cp "$source_file" "$dest"
   echo "+ $name updated $vendored_name — regenerate its tokens and commit both"
   changed=1
-done < <(python3 -c '
+done < <(python_lines -c '
 import json, sys
 with open(sys.argv[1]) as f:
     for r in json.load(f)["repos"]:

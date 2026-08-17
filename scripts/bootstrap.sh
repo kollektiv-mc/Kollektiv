@@ -13,9 +13,8 @@ manifest="$root/suite.repos.json"
 
 [ -f "$manifest" ] || { echo "no suite.repos.json at $root" >&2; exit 1; }
 
-command -v python3 >/dev/null 2>&1 || {
-  echo "python3 is required to read the manifest" >&2; exit 1
-}
+. "$(dirname "${BASH_SOURCE[0]}")/lib/python.sh"
+require_python
 
 status=0
 
@@ -35,7 +34,7 @@ while IFS=$'\t' read -r name url; do
 
   echo "+ cloning $name"
   git clone "$url" "$dir"
-done < <(python3 -c '
+done < <(python_lines -c '
 import json, sys
 with open(sys.argv[1]) as f:
     for r in json.load(f)["repos"]:

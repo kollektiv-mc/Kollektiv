@@ -24,6 +24,10 @@
       {
         "name": "check runner syntax",
         "run": "python3 -c \"import ast; ast.parse(open('plugins/suite-kit/suite-check.py').read())\""
+      },
+      {
+        "name": "participation",
+        "run": "./scripts/check-participation.sh"
       }
     ]
   }

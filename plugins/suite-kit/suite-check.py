@@ -24,6 +24,7 @@ import fnmatch
 import json
 import os
 import re
+import shlex
 import shutil
 import socket
 import subprocess
@@ -96,7 +97,59 @@ def load_manifest(root):
 # --- availability probes --------------------------------------------------
 
 
-def runnable(run, cwd, root):
+def posix_shell():
+    r"""A POSIX shell to run manifest commands through, or None to use the default.
+
+    Returns None everywhere except Windows, where the default shell is cmd.exe and
+    every manifest in this suite is written in POSIX shell. `for f in scripts/*.sh;
+    do ...; done` is a syntax error there, and `./scripts/foo.sh` is not runnable at
+    all, so a repo whose checks were all fine reported two hard failures and four
+    skips. That is worse than not running: a failure names the code, and this one
+    was naming the operating system.
+
+    subprocess's `executable=` argument is not the fix. On Windows it goes through
+    the same list2cmdline quoting as a plain argument, so a shell under
+    `C:\Program Files` is split at the space and exits 127. The caller uses
+    [shell, "-c", command] instead, which quotes correctly.
+
+    System32\bash.exe is excluded deliberately. That is the WSL launcher, and it
+    runs in a different filesystem namespace where this repo's paths and cwd do not
+    resolve — it would not error, it would check the wrong tree.
+    """
+    if os.name != "nt":
+        return None
+
+    def usable(path):
+        if not path or not os.path.isfile(path):
+            return False
+        system32 = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32")
+        return not os.path.normcase(path).startswith(os.path.normcase(system32))
+
+    candidates = [os.environ.get("SHELL"), shutil.which("bash"), shutil.which("sh")]
+
+    # Git for Windows ships bash, and git is already a hard requirement of the
+    # generated section, so wherever git is, a usable shell is a sibling.
+    git = shutil.which("git")
+    if git:
+        d = os.path.dirname(git)
+        for up in (1, 2, 3):
+            base = os.path.abspath(os.path.join(d, *([os.pardir] * up)))
+            candidates.append(os.path.join(base, "bin", "bash.exe"))
+
+    for c in candidates:
+        if usable(c):
+            return c
+    return None
+
+
+def shell_argv(command, shell):
+    """subprocess arguments for running `command` through `shell` (or the default)."""
+    if shell is None:
+        return dict(args=command, shell=True)
+    return dict(args=[shell, "-c", command])
+
+
+def runnable(run, cwd, root, shell=None):
     """Whether a command has any chance of running, and why not if it does not.
 
     Checked before running rather than after, so an absent toolchain is reported
@@ -119,7 +172,28 @@ def runnable(run, cwd, root):
     if not re.fullmatch(r"[A-Za-z0-9_.\-/]+", first):
         return True, ""  # a variable expansion or similar; not ours to judge
 
-    if shutil.which(first) is None:
+    # A command with a path in it is a file, not something to look up on PATH.
+    # shutil.which resolves a relative path against the *process* cwd rather than
+    # the entry's, and on Windows it consults PATHEXT, so a repo's own
+    # ./scripts/foo.sh came back None there and every such entry reported as
+    # "command not available" — a skip that named the wrong reason, for a script
+    # sitting right there in the tree.
+    if "/" in first or os.sep in first:
+        if os.path.isfile(os.path.join(cwd, first)):
+            return True, ""
+        return False, f"no such file: {first}"
+
+    # Probed through the same shell that will run the command, when there is one.
+    # shutil.which answers for this process: on Windows it consults PATHEXT and so
+    # cannot see a shell script the shell resolves happily. Asking two different
+    # things what "available" means is how a runnable check gets reported as a
+    # skip, and a skip is the one result nobody follows up on.
+    if shell is None:
+        found = shutil.which(first) is not None
+    else:
+        found = subprocess.run([shell, "-c", "command -v " + shlex.quote(first)],
+                               capture_output=True).returncode == 0
+    if not found:
         return False, f"command not available: {first}"
 
     tool = os.path.basename(first)
@@ -192,6 +266,7 @@ def network_available(timeout=3.0):
 
 def run_commands(root, entries):
     results = []
+    shell = posix_shell()
     for entry in entries:
         name, run = entry["name"], entry["run"]
         cwd = os.path.join(root, entry["cwd"]) if entry.get("cwd") else root
@@ -200,12 +275,13 @@ def run_commands(root, entries):
             results.append(Result("commands", name, SKIP,
                                   f"cwd {entry['cwd']!r} does not exist"))
             continue
-        ok, reason = runnable(run, cwd, root)
+        ok, reason = runnable(run, cwd, root, shell)
         if not ok:
             results.append(Result("commands", name, SKIP, reason))
             continue
 
-        proc = subprocess.run(run, shell=True, cwd=cwd, capture_output=True, text=True)
+        proc = subprocess.run(cwd=cwd, capture_output=True, text=True,
+                              **shell_argv(run, shell))
         if proc.returncode == 127:
             results.append(Result("commands", name, SKIP, "command not found"))
         elif proc.returncode != 0:
@@ -305,6 +381,7 @@ def run_invariants(root, entries):
 
 
 def run_generated(root, entries, offline):
+    shell = posix_shell()
     results = []
     in_git = subprocess.run(["git", "rev-parse", "--git-dir"], cwd=root,
                             capture_output=True).returncode == 0
@@ -324,13 +401,13 @@ def run_generated(root, entries, offline):
             results.append(Result("generated", name, SKIP,
                                   f"cwd {entry['cwd']!r} does not exist"))
             continue
-        ok, reason = runnable(regenerate, cwd, root)
+        ok, reason = runnable(regenerate, cwd, root, shell)
         if not ok:
             results.append(Result("generated", name, SKIP, reason))
             continue
 
-        proc = subprocess.run(regenerate, shell=True, cwd=cwd,
-                              capture_output=True, text=True)
+        proc = subprocess.run(cwd=cwd, capture_output=True, text=True,
+                              **shell_argv(regenerate, shell))
         if proc.returncode == 127:
             results.append(Result("generated", name, SKIP, "command not found"))
             continue

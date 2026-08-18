@@ -71,12 +71,16 @@ if [ -f "$manifest" ] && command -v python3 >/dev/null 2>&1; then
     else
       echo "? $name not cloned or not adopted — skipped"
     fi
+  # tr -d: Windows Python translates \n to \r\n on stdout, so every
+  # value this loop reads would carry a trailing \r and no path built from it
+  # would match. CI is LF-only and never sees it; a local Windows run saw every
+  # repo in the manifest as missing.
   done < <(python3 -c '
 import json, sys
 with open(sys.argv[1]) as f:
     for r in json.load(f)["repos"]:
         print(r["name"])
-' "$manifest")
+' "$manifest" | tr -d '\r')
 fi
 
 exit $status

@@ -5,5 +5,8 @@ Kommands/
 # Agent tooling: shared config is committed, personal and runtime state is not.
 .claude/settings.local.json
 
+# Python bytecode, from importing suite-check.py
+__pycache__/
+
 # OS
 .DS_Store

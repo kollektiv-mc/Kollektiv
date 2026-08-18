@@ -88,12 +88,16 @@ sync_one_repo() {
       echo "+ $slug updated '$name'"
       changed=1
     fi
+  # tr -d: Windows Python translates \n to \r\n on stdout, so every
+  # value this loop reads would carry a trailing \r and no path built from it
+  # would match. CI is LF-only and never sees it; a local Windows run saw every
+  # repo in the manifest as missing.
   done < <(python3 -c '
 import json, sys
 with open(sys.argv[1]) as f:
     for l in json.load(f)["github"]:
         print(l["name"], l["color"], l["description"], sep="\t")
-' "$labels_file")
+' "$labels_file" | tr -d '\r')
 }
 
 self_url="$(git -C "$root" remote get-url origin 2>/dev/null || true)"
@@ -115,7 +119,7 @@ import json, sys
 with open(sys.argv[1]) as f:
     for r in json.load(f)["repos"]:
         print(r["name"], r["url"], sep="\t")
-' "$manifest")
+' "$manifest" | tr -d '\r')
 
 if [ "$check_only" -eq 1 ]; then
   if [ "$changed" -ne 0 ]; then

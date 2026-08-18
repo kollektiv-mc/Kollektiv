@@ -115,12 +115,16 @@ while IFS= read -r name; do
   chmod +x "$dest"
   echo "+ $name updated $vendored_path — commit it"
   changed=1
+# tr -d: Windows Python translates \n to \r\n on stdout, so every
+# value this loop reads would carry a trailing \r and no path built from it
+# would match. CI is LF-only and never sees it; a local Windows run saw every
+# repo in the manifest as missing.
 done < <(python3 -c '
 import json, sys
 with open(sys.argv[1]) as f:
     for r in json.load(f)["repos"]:
         print(r["name"])
-' "$manifest")
+' "$manifest" | tr -d '\r')
 
 if [ "$check_only" -eq 1 ]; then
   # Only a clean run over a complete workspace can claim no drift — the same

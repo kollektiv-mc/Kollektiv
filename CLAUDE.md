@@ -24,6 +24,7 @@ change here that requires a product to rebuild is a change in the wrong place.
 | `scripts/sync-runner.sh` | Vendors `suite-check.py` into each product (`--check` to detect drift) |
 | `scripts/sync-labels.sh` | Applies `design/labels.json`'s GitHub side via `gh` (`--check` to detect drift) |
 | `scripts/validate-schemas.sh` | Validates every manifest against its schema |
+| `scripts/check-participation.sh` | Checks each repo's permissions floor and the paths its manifest names (`--require-products` to fail on an uncloned one) |
 | `docs/adopting.md` | How a repo adopts suite-kit |
 | `docs/conventions.md` | Cross-repo rules: tracking, PR magic words, permissions |
 | `docs/linear.md` | The Linear structure `/suite-kit:suite-sync` mirrors GitHub Issues into |
@@ -65,9 +66,20 @@ Run `/suite-kit:health`. It reads `.claude/suite.json` and runs every check, inc
 schema validation.
 
 Where the plugin is not installed — a cloud container, an unattended agent, a bare
-clone — run `.claude/suite-check.py` directly. It reads the same manifest and runs the
-same checks. **Declaring a plugin in `.claude/settings.json` does not install it**, so
-this is the normal case in those environments, not a fallback for broken ones.
+clone — run the check runner directly. It reads the same manifest and runs the same
+checks. **Declaring a plugin in `.claude/settings.json` does not install it**, so this
+is the normal case in those environments, not a fallback for broken ones.
+
+In **this** repo the runner is already on disk as the plugin source, so there is
+nothing to vendor — run `./plugins/suite-kit/suite-check.py`. In a **product** it is
+the vendored copy at `.claude/suite-check.py`, put there by `./scripts/sync-runner.sh`
+and committed in that product's own repo.
+
+On Windows the runner shells out through Git's bash rather than `cmd.exe`, which
+it finds via `SHELL`, `PATH`, or alongside `git`. The scripts it calls need
+`python3` on `PATH`, and Windows Python installs `python.exe` without a `python3`
+alias — without one, four of the six checks here report as unavailable. A shell
+script named `python3` that `exec python "$@"` is enough.
 
 A check that could not run is **skipped**, never passing. Most of the value of the
 health check is the gap between "I ran the checks" and "the checks passed". The runner

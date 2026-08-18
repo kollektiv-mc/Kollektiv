@@ -23,8 +23,9 @@ and a `repo:*` label rather than a third team. See `docs/linear.md`.
 ## Enforcement
 
 CI here checks script syntax, manifest and schema validity, suite-kit version
-match, and vendored-token drift (`scripts/sync-tokens.sh --check`, run on a
-schedule since drift detection needs every product cloned beside this one).
+match, suite participation, and vendored-token drift (`scripts/sync-tokens.sh
+--check`, run on a schedule since drift detection needs every product cloned
+beside this one).
 
 Konnekt's `gen:tokens` clean-diff check now runs in its own CI
 (`.github/workflows/ci.yml`), not just `/suite-kit:health`.
@@ -38,38 +39,48 @@ nothing there. The runner also distinguishes a skip from a pass, which the
 invariant greps previously could not — a grep over a path that does not exist
 reported clean.
 
+Both products now carry `.claude/suite-check.py`, and Konnekt's CI runs it as an
+`invariants` job over the `invariants` and `generated` sections. Not `commands`:
+Konnekt's backend legs run on windows-latest and in a webkit2gtk container, and
+`suite.json`'s flat command list cannot express that matrix, so CI keeps those as
+literal steps. The two sections CI had no equivalent of are the ones the runner
+now covers — before this, Konnekt's `no literal border widths` invariant was
+checked only when someone invoked `/suite-kit:health` by hand.
+
+`scripts/check-participation.sh` checks what the other scripts do not: the
+`docs/conventions.md` permissions floor in each repo's committed
+`.claude/settings.json`, and that the paths each manifest names — `roadmap`,
+`tokens.sourceFile`, every `health.commands[].cwd` — still exist. It runs in this
+repo's `.claude/suite.json` and in CI with `--require-products`.
+
 Still open, in rough order:
 
-- Vendoring the runner into Konnekt and Kommands, and adding a CI job in each
-  that runs it. Nothing is committed in either product yet — `sync-runner.sh`
-  writes the copy, but only a checkout with both sides can do that. Konnekt PR
-  #51 and Kommands PR #20, the companion PRs referenced from PR #9, are both
-  unmerged and neither carries `.claude/suite-check.py`, so this is new work
-  rather than something already in flight.
-- Merging Konnekt PR #51, which already fixes that repo's tracking declaration
-  (below). It has been open since 2026-08-05 with the correction written; the
-  mirror has skipped Konnekt for as long as it has sat.
+- Turning on `scripts/sync-runner.sh --check --require-vendored` in CI. Both
+  products carry the runner in a working tree here, but the flag can only go on
+  once those commits are on their default branches — CI clones from there.
+- A CI job in Kommands that runs its vendored runner. Every check it declares
+  reports as skipped until `src/` and `package.json` exist, so the job would
+  verify nothing yet; it lands with the scaffolding.
 - Kommands turning on `--require-runnable` once `src/` exists. Until then its
   entire check set reports as skipped, which is honest but verifies nothing.
-- Konnekt's `.claude/suite.json` declaring `linear: { team: "KON" }` instead of
-  `tracking: "github-issues"` on `main`, which makes `/suite-kit:suite-sync` skip
-  the repo silently. Fixed in unmerged PR #51 — see `docs/adopting.md` § Konnekt.
-- Giving Konnekt a `health.invariants` entry for hex and px. It declares
-  `tokens.enforce: "migrating"` and names the covered paths, but declares no
-  invariant at all, so nothing mechanical checks them. Measured against those
-  paths on `main`: 123 hex literals and 324 arbitrary px values across 57 files.
-  The repo carrying the whole literals problem has no literal check, while
-  Kommands — which has no `src/` yet — has one. The entry belongs in Konnekt's
-  manifest, and `migrating` wants the runner to report a count rather than fail,
-  which `suite-check.py` does not yet distinguish from `strict`.
-- Wiring the runner into `/suite-kit:health-sweep`, which PR #9 adds. That skill
-  clones every product and checks token drift; it should check runner drift the
-  same way, and read each product's `.claude/suite-check.py --json` rather than
-  its prose report. The two changes belong in that PR's file, not this one.
-- Enforcing the `docs/conventions.md` permissions block mechanically rather than
-  by review. Kommands can't get CI for its `pnpm` commands yet — it has no
-  `package.json` until its own scaffolding work lands — but the invariant greps
-  need no toolchain and can be wired up before that.
+- Widening Konnekt's literals invariant past borders. It declares
+  `tokens.enforce: "migrating"` and names the covered paths, and the
+  `no literal border widths` entry closed the border sweep — 0 literals against
+  181 token call sites. Hex and arbitrary px are still open: 118 hex literals and
+  183 px values across 48 files under the paths its manifest names. A single
+  broad pattern would be red on arrival, so this wants either per-sweep entries
+  or `migrating` finally meaning something to the runner, which does not yet
+  distinguish it from `strict`.
+- Wiring the runner into `/suite-kit:health-sweep`. That skill clones every
+  product and checks token drift; it should check runner drift the same way, and
+  read each product's `.claude/suite-check.py --json` rather than its prose
+  report.
+
+Closed since this section was last written: Konnekt PR #51 merged (`ef49aa7`), so
+its manifest declares `tracking: "github-issues"` on `main` and
+`/suite-kit:suite-sync` no longer skips the repo. Konnekt gained a
+`health.invariants` entry. The permissions block is enforced by
+`check-participation.sh` rather than by review.
 
 ## Scheduled runs
 

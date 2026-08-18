@@ -106,3 +106,14 @@ jobs:
       - name: Product manifest validation
         if: ${{ !cancelled() }}
         run: ./scripts/validate-schemas.sh --require-products
+
+      # The manifests being valid is not the same as the repos still using them.
+      # This checks the permissions floor from docs/conventions.md, which was
+      # enforced by review until now, plus the paths each manifest names. Also
+      # runs on a red run, for the reason stated above.
+      #
+      # --require-products because bootstrap.sh ran: an unadopted product here is
+      # a finding, not the bare-checkout skip it would be locally.
+      - name: Suite participation
+        if: ${{ !cancelled() }}
+        run: ./scripts/check-participation.sh --require-products

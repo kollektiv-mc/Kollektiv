@@ -19,6 +19,7 @@ change here that requires a product to rebuild is a change in the wrong place.
 | `plugins/suite-kit/` | The shared Claude Code plugin |
 | `plugins/suite-kit/suite-check.py` | Runs a repo's checks from its `.claude/suite.json`, with no plugin installed |
 | `scripts/bootstrap.sh` | Clones the products as siblings |
+| `scripts/lib/python.sh` | Resolves a Python 3 interpreter for the other scripts, and strips CRs from its output |
 | `scripts/adopt.sh` | Scaffolds a repo's manifest, settings block and vendored files |
 | `scripts/sync-tokens.sh` | Vendors `design/tokens.json` into each product (`--check` to detect drift) |
 | `scripts/sync-runner.sh` | Vendors `suite-check.py` into each product (`--check` to detect drift) |
@@ -76,10 +77,10 @@ the vendored copy at `.claude/suite-check.py`, put there by `./scripts/sync-runn
 and committed in that product's own repo.
 
 On Windows the runner shells out through Git's bash rather than `cmd.exe`, which
-it finds via `SHELL`, `PATH`, or alongside `git`. The scripts it calls need
-`python3` on `PATH`, and Windows Python installs `python.exe` without a `python3`
-alias — without one, four of the six checks here report as unavailable. A shell
-script named `python3` that `exec python "$@"` is enough.
+it finds via `SHELL`, `PATH`, or alongside `git`. The scripts it calls resolve
+their own interpreter through `scripts/lib/python.sh`, so a stock install with
+`python` and the `py` launcher and no `python3` works without anything being
+aliased by hand.
 
 A check that could not run is **skipped**, never passing. Most of the value of the
 health check is the gap between "I ran the checks" and "the checks passed". The runner

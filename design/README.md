@@ -53,6 +53,10 @@ requirement nobody has.
 - **`color.status`** members are expected to be exposed as separable colour
   components *and* a composed value, so alpha can be varied from a single token
   rather than a second one per opacity.
+- **`bg-overlay`** is the opaque surface *of* a floating layer — a dropdown
+  panel, a tooltip, a popover — not the dimming scrim *behind* a modal. There is
+  no scrim token. The name trips people who have met "overlay" in the other
+  sense, so it is worth saying twice.
 
 ## Adding a token
 
@@ -76,6 +80,27 @@ not a shared design decision, and they stay in `Konnekt/frontend/src/lib/theme.t
 by translucent surfaces plus hairline borders. The suite uses zero drop shadows;
 the only permitted `box-shadow` is an accent-tinted glow inside a keyframe. If a
 design seems to need a drop shadow, it needs a different surface or border.
+
+## Why there are two elevated surfaces
+
+`bg-elevated` is translucent in both themes (alpha `0.82`), which is what makes a
+panel read as sitting *above* the canvas rather than replacing it. A layer that
+floats over arbitrary content cannot afford that: text and controls beneath it
+show through and the layer becomes unreadable over anything busy.
+
+`bg-overlay` is its opaque counterpart, defined as **`bg-elevated` composited
+over `bg-base`** — the colour an elevated panel already resolves to when it sits
+on the app background:
+
+| | computation | result |
+|---|---|---|
+| dark | `0.82 × (18,20,30) + 0.18 × (5,6,10)` | `#10111a` |
+| light | `0.82 × (236,238,245) + 0.18 × (245,246,250)` | `#eeeff6` |
+
+So the two agree wherever a panel happens to sit directly on the canvas, and
+`bg-overlay` keeps agreeing when it does not. Keep both. Deriving one from the
+other is what makes either re-derivable if the inputs change; collapsing them
+loses the reason the alpha exists.
 
 ## Why products vendor rather than read this path
 

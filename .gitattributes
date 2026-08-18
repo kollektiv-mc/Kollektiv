@@ -1,9 +1,9 @@
-*.sh text eol=lf
-
-# The two files that get vendored into the products. Konnekt sets `* text=auto
-# eol=lf` repo-wide, so its copies are LF in the working tree; without these
-# lines these ones are CRLF here under core.autocrlf, and sync-tokens.sh /
-# sync-runner.sh compare bytes — so --check reported drift on a Windows
-# workspace where the content was identical. CI is LF-only and never saw it.
-design/tokens.json text eol=lf
-plugins/suite-kit/suite-check.py text eol=lf
+# Normalize line endings to LF in the repo, matching Konnekt's .gitattributes.
+#
+# This is not cosmetic here. design/tokens.json is byte-compared against each
+# product's vendored copy by scripts/sync-tokens.sh, and the products normalize
+# to LF. Without this, a Windows checkout leaves the source as CRLF and every
+# comparison reports drift on a workspace that has none — invisible in CI, which
+# runs on Linux. The scripts also strip CRs before comparing, so neither side
+# alone has to be right.
+* text=auto eol=lf

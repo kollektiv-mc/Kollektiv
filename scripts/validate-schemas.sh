@@ -34,6 +34,11 @@ done
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 manifest="$root/suite.repos.json"
 
+# Soft: Python is only needed to enumerate the products below, and the schemas
+# this repo owns are validated either way.
+. "$(dirname "${BASH_SOURCE[0]}")/lib/python.sh"
+resolve_python || true
+
 command -v check-jsonschema >/dev/null 2>&1 || {
   echo "check-jsonschema is not installed — cannot validate." >&2
   echo "  pip install check-jsonschema" >&2
@@ -59,7 +64,7 @@ validate "$root/.claude/suite.json" "$root/design/suite.schema.json" ".claude/su
 
 # Products are cloned as siblings and are not tracked here, so validate whichever
 # of them happen to be present rather than requiring a full workspace.
-if [ -f "$manifest" ] && command -v python3 >/dev/null 2>&1; then
+if [ -f "$manifest" ] && [ "${#PYTHON[@]}" -gt 0 ]; then
   while IFS= read -r name; do
     [ -n "$name" ] || continue
     suite="$root/$name/.claude/suite.json"
@@ -71,16 +76,12 @@ if [ -f "$manifest" ] && command -v python3 >/dev/null 2>&1; then
     else
       echo "? $name not cloned or not adopted — skipped"
     fi
-  # tr -d: Windows Python translates \n to \r\n on stdout, so every
-  # value this loop reads would carry a trailing \r and no path built from it
-  # would match. CI is LF-only and never sees it; a local Windows run saw every
-  # repo in the manifest as missing.
-  done < <(python3 -c '
+  done < <(python_lines -c '
 import json, sys
 with open(sys.argv[1]) as f:
     for r in json.load(f)["repos"]:
         print(r["name"])
-' "$manifest" | tr -d '\r')
+' "$manifest")
 fi
 
 exit $status

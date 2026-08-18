@@ -53,14 +53,13 @@ vendored_path=".claude/suite-check.py"
   echo "no plugins/suite-kit/suite-check.py at $root" >&2; exit 1
 }
 
-command -v python3 >/dev/null 2>&1 || {
-  echo "python3 is required to read the manifest" >&2; exit 1
-}
+. "$(dirname "${BASH_SOURCE[0]}")/lib/python.sh"
+require_python
 
 # The runner is the thing that decides whether a product's checks passed. A
 # syntactically broken copy would propagate to every product and fail there, one
 # confusing traceback at a time, so it is checked once here instead.
-python3 -c 'import ast,sys; ast.parse(open(sys.argv[1]).read())' "$source_file" || {
+"${PYTHON[@]}" -c 'import ast,sys; ast.parse(open(sys.argv[1]).read())' "$source_file" || {
   echo "suite-check.py is not valid Python — refusing to propagate it" >&2; exit 1
 }
 
@@ -86,7 +85,10 @@ while IFS= read -r name; do
 
   dest="$dir/$vendored_path"
 
-  if [ -f "$dest" ] && cmp -s "$source_file" "$dest"; then
+  # CRs stripped before comparing, for the reason sync-tokens.sh spells out: the
+  # products normalise line endings independently, so identical content can sit
+  # as CRLF on one side and LF on the other.
+  if [ -f "$dest" ] && cmp -s <(tr -d '\r' < "$source_file") <(tr -d '\r' < "$dest"); then
     echo "= $name already up to date"
     continue
   fi
@@ -115,16 +117,12 @@ while IFS= read -r name; do
   chmod +x "$dest"
   echo "+ $name updated $vendored_path — commit it"
   changed=1
-# tr -d: Windows Python translates \n to \r\n on stdout, so every
-# value this loop reads would carry a trailing \r and no path built from it
-# would match. CI is LF-only and never sees it; a local Windows run saw every
-# repo in the manifest as missing.
-done < <(python3 -c '
+done < <(python_lines -c '
 import json, sys
 with open(sys.argv[1]) as f:
     for r in json.load(f)["repos"]:
         print(r["name"])
-' "$manifest" | tr -d '\r')
+' "$manifest")
 
 if [ "$check_only" -eq 1 ]; then
   # Only a clean run over a complete workspace can claim no drift — the same

@@ -7,23 +7,15 @@
     "commands": [
       {
         "name": "script syntax",
-        "run": "for f in scripts/*.sh; do bash -n \"$f\" || exit 1; done"
+        "run": "for f in scripts/*.sh scripts/lib/*.sh; do bash -n \"$f\" || exit 1; done"
       },
       {
-        "name": "manifest JSON validity",
-        "run": "for f in suite.repos.json .claude-plugin/marketplace.json plugins/suite-kit/.claude-plugin/plugin.json .claude/suite.json design/labels.json; do python3 -m json.tool \"$f\" > /dev/null || exit 1; done"
-      },
-      {
-        "name": "suite-kit version match",
-        "run": "python3 -c \"import json; a=json.load(open('.claude-plugin/marketplace.json'))['plugins'][0]['version']; b=json.load(open('plugins/suite-kit/.claude-plugin/plugin.json'))['version']; exit(0 if a==b else 1)\""
+        "name": "manifests",
+        "run": "./scripts/check-manifests.sh"
       },
       {
         "name": "schema validation",
         "run": "./scripts/validate-schemas.sh"
-      },
-      {
-        "name": "check runner syntax",
-        "run": "python3 -c \"import ast; ast.parse(open('plugins/suite-kit/suite-check.py').read())\""
       },
       {
         "name": "participation",

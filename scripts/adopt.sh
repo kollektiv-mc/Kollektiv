@@ -71,10 +71,27 @@ manifest="$target/.claude/suite.json"
 if [ -f "$manifest" ]; then
   echo "= $product already has .claude/suite.json — left alone"
 else
-  # health.commands is required and must be non-empty, so this writes one entry
-  # that is true of any repo rather than inventing a toolchain. The runner reports
-  # it as a real check; the point is that the file is valid from the first minute,
-  # not that the check is interesting.
+  # health.commands is required and must be non-empty, deliberately: a manifest
+  # that declares no checks would let a repo sit indefinitely reporting health
+  # while verifying nothing, which is the "skip reported as a pass" failure this
+  # suite is built to prevent, in its worst form.
+  #
+  # So the scaffolded entry has to be a real check. This one is:
+  #
+  #   - It can fail. The previous entry could not. It ran `json.tool` over the
+  #     manifest, but suite-check.py exits 2 with a line and column when that file
+  #     will not parse, before any check runs -- so the manifest had to be valid
+  #     for the check that validates it to be reached at all.
+  #   - It needs no toolchain. A repo may be scaffolded before its language is
+  #     installed, and a scaffolded repo has no scripts/lib/python.sh of this
+  #     repo's to call, which is also why it cannot spell `python3`.
+  #   - It is true of any repo, in any language.
+  #   - Nothing else in the suite covers it. docs/conventions.md's permissions
+  #     floor denies *reading* .env and secrets/; nothing catches them being
+  #     committed. This is the other half of that rule.
+  #
+  # Tracked files only. A gitignored .env in the working tree is normal and is
+  # not a finding.
   cat > "$manifest" <<EOF
 {
   "\$schema": "https://github.com/kollektiv-mc/Kollektiv/design/suite.schema.json",
@@ -84,7 +101,7 @@ else
   "roadmap": "$roadmap",
   "health": {
     "commands": [
-      { "name": "manifest JSON validity", "run": "python3 -m json.tool .claude/suite.json > /dev/null" }
+      { "name": "no committed secrets", "run": "! git ls-files | grep -qE '(^|/)([.]env(\$|[.])|secrets/)'" }
     ]
   }
 }

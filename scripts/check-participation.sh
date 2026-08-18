@@ -64,6 +64,24 @@ FLOOR = {
     "ask": ["Bash(git push:*)"],
 }
 
+# docs/conventions.md § Required formatting settings, and Prettier 3's own defaults
+# beside them. Compared as *effective* values: an absent key means Prettier will
+# apply its default, so absent-and-wrong is a real disagreement while
+# absent-and-right is not. semi is the one that bites -- leaving it out means
+# semicolons, which is the opposite of the convention.
+STYLE = {"semi": False, "singleQuote": True, "trailingComma": "all",
+         "printWidth": 100, "tabWidth": 2}
+PRETTIER_DEFAULTS = {"semi": True, "singleQuote": False, "trailingComma": "all",
+                     "printWidth": 80, "tabWidth": 2}
+
+# Only the JSON-parseable forms. A prettier.config.js would have to be executed to
+# be read, and this script will not run a repo's code to check it.
+STYLE_FILES = (".prettierrc", ".prettierrc.json", ".prettierrc.json5")
+STYLE_FILES_UNREADABLE = (".prettierrc.js", ".prettierrc.mjs", ".prettierrc.cjs",
+                          ".prettierrc.yaml", ".prettierrc.yml", ".prettierrc.toml",
+                          "prettier.config.js", "prettier.config.mjs",
+                          "prettier.config.cjs")
+
 status = 0
 skipped = 0
 checked = 0
@@ -78,6 +96,111 @@ def fail(msg):
 def load(path):
     with open(path, encoding="utf-8") as f:
         return json.load(f)
+
+
+def rel(path, repo_dir):
+    """Repo-relative path with forward slashes, so a report reads the same on
+    Windows as it does in CI."""
+    return os.path.relpath(path, repo_dir).replace(os.sep, "/")
+
+
+def own_subdirs(repo_dir):
+    """Immediate subdirectories that belong to this repo.
+
+    A nested git repo does not: the workspace root has the products cloned inside
+    it, so without this the root's search walked into Konnekt/ and reported its
+    package.json as the root's own.
+    """
+    out = []
+    try:
+        names = sorted(os.listdir(repo_dir))
+    except OSError:
+        return out
+    for d in names:
+        full = os.path.join(repo_dir, d)
+        if not os.path.isdir(full) or d.startswith(".") or d == "node_modules":
+            continue
+        if os.path.exists(os.path.join(full, ".git")):
+            continue
+        out.append(full)
+    return out
+
+
+def find_style_config(repo_dir):
+    """(kind, path, settings) for a repo's Prettier config.
+
+    kind is "json" with settings, "unreadable" with a path and no settings, or
+    "none". Searched at the repo root and one level down, because Konnekt keeps its
+    JS toolchain in frontend/ while Kommands will keep its at the root -- the same
+    reason health.commands carries a cwd.
+    """
+    roots = [repo_dir] + own_subdirs(repo_dir)
+
+    for d in roots:
+        for name in STYLE_FILES:
+            f = os.path.join(d, name)
+            if os.path.isfile(f):
+                try:
+                    return "json", f, load(f)
+                except (OSError, ValueError) as e:
+                    return "broken", f, str(e)
+        pkg = os.path.join(d, "package.json")
+        if os.path.isfile(pkg):
+            try:
+                cfg = load(pkg).get("prettier")
+            except (OSError, ValueError):
+                cfg = None
+            if isinstance(cfg, dict):
+                return "json", pkg + " (prettier key)", cfg
+        for name in STYLE_FILES_UNREADABLE:
+            f = os.path.join(d, name)
+            if os.path.isfile(f):
+                return "unreadable", f, None
+    return "none", None, None
+
+
+def has_js_toolchain(repo_dir):
+    if os.path.isfile(os.path.join(repo_dir, "package.json")):
+        return True
+    return any(os.path.isfile(os.path.join(d, "package.json"))
+               for d in own_subdirs(repo_dir))
+
+
+def check_style(label, repo_dir):
+    """The shared formatting settings, compared as effective values."""
+    kind, path, cfg = find_style_config(repo_dir)
+
+    if kind == "none":
+        if has_js_toolchain(repo_dir):
+            fail("%s has a package.json but no Prettier config — the shared "
+                 "formatting settings are unset" % label)
+        else:
+            # kollektiv has no JS at all; Kommands has none yet. Neither is
+            # non-conforming, and calling it a failure would train people to
+            # ignore this check.
+            print("? %s no JS toolchain — formatting settings not applicable" % label)
+        return
+
+    if kind == "broken":
+        fail("%s Prettier config at %s is not readable: %s"
+             % (label, rel(path, repo_dir), cfg))
+        return
+
+    if kind == "unreadable":
+        print("? %s Prettier config is %s — not compared, it would have to be executed"
+              % (label, rel(path, repo_dir)))
+        return
+
+    where = rel(path, repo_dir)
+    wrong = []
+    for key, want in STYLE.items():
+        effective = cfg.get(key, PRETTIER_DEFAULTS[key])
+        if effective != want:
+            wrong.append("%s is %r, want %r" % (key, effective, want))
+    if wrong:
+        fail("%s %s: %s" % (label, where, "; ".join(wrong)))
+    else:
+        print("= %s formatting settings (%s)" % (label, where))
 
 
 def check_repo(label, repo_dir):
@@ -122,6 +245,8 @@ def check_repo(label, repo_dir):
 
     path_check(suite.get("roadmap"), "roadmap")
     path_check((suite.get("tokens") or {}).get("sourceFile"), "tokens.sourceFile")
+
+    check_style(label, repo_dir)
 
     for cmd in suite.get("health", {}).get("commands", []):
         cwd = cmd.get("cwd")

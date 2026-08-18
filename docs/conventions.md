@@ -125,6 +125,37 @@ nobody is watching.
 section binding `graphify hook-guard` to `PreToolUse`. Add the permissions block
 alongside it. suite-kit ships no hooks specifically so it cannot collide with those.
 
+## Required formatting settings
+
+Every repo with a JavaScript or TypeScript toolchain sets these in its Prettier
+config, wherever that config lives:
+
+```json
+{
+  "semi": false,
+  "singleQuote": true,
+  "trailingComma": "all",
+  "printWidth": 100,
+  "tabWidth": 2
+}
+```
+
+`trailingComma` and `tabWidth` match Prettier 3's own defaults and may be omitted;
+the other three do not, and an omitted `semi` means semicolons. Anything else a
+repo needs — plugins, overrides, ignore files — is per-repo and untouched.
+Konnekt adds `prettier-plugin-tailwindcss`; nothing here objects.
+
+These are checked by `scripts/check-participation.sh`, which compares **effective**
+values: a key left out is read as Prettier's default for it, because that is what
+Prettier will do. A repo with no Prettier config and no `package.json` is reported
+as a skip rather than a failure — that is a pre-scaffold repo, not a
+non-conforming one.
+
+Why mechanical rather than documented: before this, the settings were stated in
+Konnekt's `.prettierrc.json` and again, by hand, in Kommands' `CLAUDE.md` prose.
+They agreed, and nothing would have said so if they stopped. One convention
+written down twice is one convention waiting to fork.
+
 ## What's shared vs. what stays per-repo
 
 **Shared**, in `design/labels.json`: the `type:*`/`area:*`/`p0`–`p3`/`blocked`

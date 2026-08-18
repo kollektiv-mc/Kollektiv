@@ -58,9 +58,8 @@ target="$(cd "$target" && pwd)"
 [ -n "$product" ] || product="$(basename "$target")"
 [ -n "$kind" ] || kind="unknown"
 
-command -v python3 >/dev/null 2>&1 || {
-  echo "python3 is required" >&2; exit 1
-}
+. "$(dirname "${BASH_SOURCE[0]}")/lib/python.sh"
+require_python
 
 status=0
 
@@ -101,7 +100,7 @@ settings="$target/.claude/settings.json"
 # goes in alongside whatever is already there — Konnekt's settings carry a hooks
 # section binding graphify hook-guard, and clobbering it would break that repo's
 # guards to install ours.
-python3 - "$settings" <<'PY'
+"${PYTHON[@]}" - "$settings" <<'PY'
 import json, os, sys
 
 path = sys.argv[1]
@@ -163,7 +162,7 @@ fi
 # is the duplication this repo exists to prevent. They read suite.repos.json, so they
 # only act on a repo listed there — a target outside the manifest is told to add
 # itself, not silently skipped.
-if python3 -c '
+if "${PYTHON[@]}" -c '
 import json, sys
 repos = json.load(open(sys.argv[1]))["repos"]
 sys.exit(0 if any(r["name"] == sys.argv[2] for r in repos) else 1)

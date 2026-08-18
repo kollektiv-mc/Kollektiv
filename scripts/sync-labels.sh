@@ -38,11 +38,10 @@ command -v gh >/dev/null 2>&1 || {
   echo "gh (GitHub CLI) is required — https://cli.github.com, then gh auth login" >&2
   exit 1
 }
-command -v python3 >/dev/null 2>&1 || {
-  echo "python3 is required to read the manifest" >&2; exit 1
-}
+. "$(dirname "${BASH_SOURCE[0]}")/lib/python.sh"
+require_python
 
-python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$labels_file" || {
+"${PYTHON[@]}" -c 'import json,sys; json.load(open(sys.argv[1]))' "$labels_file" || {
   echo "design/labels.json is not valid JSON — refusing to propagate it" >&2; exit 1
 }
 
@@ -71,8 +70,8 @@ sync_one_repo() {
       continue
     fi
 
-    existing_color="$(echo "$existing" | python3 -c 'import json,sys; print(json.load(sys.stdin)["color"])')"
-    existing_desc="$(echo "$existing" | python3 -c 'import json,sys; print(json.load(sys.stdin)["description"])')"
+    existing_color="$(echo "$existing" | python_lines -c 'import json,sys; print(json.load(sys.stdin)["color"])')"
+    existing_desc="$(echo "$existing" | python_lines -c 'import json,sys; print(json.load(sys.stdin)["description"])')"
 
     if [ "$existing_color" = "$color" ] && [ "$existing_desc" = "$description" ]; then
       echo "= $slug '$name' already up to date"
@@ -88,16 +87,12 @@ sync_one_repo() {
       echo "+ $slug updated '$name'"
       changed=1
     fi
-  # tr -d: Windows Python translates \n to \r\n on stdout, so every
-  # value this loop reads would carry a trailing \r and no path built from it
-  # would match. CI is LF-only and never sees it; a local Windows run saw every
-  # repo in the manifest as missing.
-  done < <(python3 -c '
+  done < <(python_lines -c '
 import json, sys
 with open(sys.argv[1]) as f:
     for l in json.load(f)["github"]:
         print(l["name"], l["color"], l["description"], sep="\t")
-' "$labels_file" | tr -d '\r')
+' "$labels_file")
 }
 
 self_url="$(git -C "$root" remote get-url origin 2>/dev/null || true)"
@@ -114,12 +109,12 @@ while IFS=$'\t' read -r name url; do
   [ -n "$name" ] || continue
   slug="$(echo "$url" | sed -E 's#^(https://github.com/|git@github.com:)##; s#\.git$##')"
   sync_one_repo "$slug"
-done < <(python3 -c '
+done < <(python_lines -c '
 import json, sys
 with open(sys.argv[1]) as f:
     for r in json.load(f)["repos"]:
         print(r["name"], r["url"], sep="\t")
-' "$manifest" | tr -d '\r')
+' "$manifest")
 
 if [ "$check_only" -eq 1 ]; then
   if [ "$changed" -ne 0 ]; then

@@ -27,26 +27,13 @@ jobs:
       - run: pip install check-jsonschema
 
       - name: Script syntax
-        run: for f in scripts/*.sh; do bash -n "$f" || exit 1; done
+        run: for f in scripts/*.sh scripts/lib/*.sh; do bash -n "$f" || exit 1; done
 
-      - name: Manifest JSON validity
-        run: |
-          for f in suite.repos.json \
-                   .claude-plugin/marketplace.json \
-                   plugins/suite-kit/.claude-plugin/plugin.json \
-                   .claude/suite.json \
-                   design/tokens.json; do
-            python3 -m json.tool "$f" > /dev/null || exit 1
-          done
-
-      - name: suite-kit version match
-        run: |
-          python3 -c "
-          import json
-          a = json.load(open('.claude-plugin/marketplace.json'))['plugins'][0]['version']
-          b = json.load(open('plugins/suite-kit/.claude-plugin/plugin.json'))['version']
-          raise SystemExit(0 if a == b else f'marketplace {a} != plugin {b}')
-          "
+      # Also covers the suite-kit version pair and the runner's syntax, which
+      # used to be checked only by .claude/suite.json and sync-runner.sh
+      # respectively. One implementation, both gates.
+      - name: Manifests
+        run: ./scripts/check-manifests.sh
 
       - name: Schema validation
         run: ./scripts/validate-schemas.sh
@@ -106,3 +93,14 @@ jobs:
       - name: Product manifest validation
         if: ${{ !cancelled() }}
         run: ./scripts/validate-schemas.sh --require-products
+
+      # The manifests being valid is not the same as the repos still using them.
+      # This checks the permissions floor from docs/conventions.md, which was
+      # enforced by review until now, plus the paths each manifest names. Also
+      # runs on a red run, for the reason stated above.
+      #
+      # --require-products because bootstrap.sh ran: an unadopted product here is
+      # a finding, not the bare-checkout skip it would be locally.
+      - name: Suite participation
+        if: ${{ !cancelled() }}
+        run: ./scripts/check-participation.sh --require-products

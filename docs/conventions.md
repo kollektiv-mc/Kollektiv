@@ -16,12 +16,12 @@ Every repo in the suite tracks its work items in GitHub Issues, declared as
 `tracking: "github-issues"` in `.claude/suite.json`. There is no per-repo
 choice to make anymore — Kommands set this precedent and kollektiv matches it.
 
-**Konnekt's manifest does not say this yet.** It still declares
-`linear: { team: "KON" }` on `main`, naming a team key from the workspace
-deleted 2026-08-04. `/suite-kit:suite-sync` therefore reports Konnekt and skips
-it, so its issues are not being mirrored — silently, and correctly per the rule
-below. This paragraph used to claim Konnekt already matched; it did not. The fix
-is an unchecked item in `docs/roadmap.md`.
+Konnekt's manifest now says this too, since PR #51 merged (`ef49aa7`). It
+previously declared `linear: { team: "KON" }` on `main`, naming a team key from
+the workspace deleted 2026-08-04, and `/suite-kit:suite-sync` skipped the repo
+for as long as that sat there. An earlier revision of this paragraph claimed
+Konnekt already matched while it did not; it does now, and
+`scripts/check-participation.sh` is what will notice if that stops being true.
 
 `design/suite.schema.json` still allows a repo to declare `linear: { team:
 ... }` instead, for a hypothetical repo that should be tracked in Linear
@@ -115,6 +115,11 @@ without also waving through a push.
 
 This matters most for unattended agents and scheduled routines, which have no one
 watching to decline a prompt. A repo with no permissions block has no floor at all.
+
+`scripts/check-participation.sh` checks this mechanically across every cloned repo,
+and CI runs it with `--require-products`. It was enforced by review until then,
+which is the weakest place to enforce a rule whose whole purpose is the sessions
+nobody is watching.
 
 **Merging, not replacing.** Konnekt's `.claude/settings.json` also carries a `hooks`
 section binding `graphify hook-guard` to `PreToolUse`. Add the permissions block

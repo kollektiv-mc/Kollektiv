@@ -45,11 +45,13 @@ done
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-command -v python3 >/dev/null 2>&1 || {
-  echo "python3 is required to read the manifests" >&2; exit 1
-}
+# Hard: every check below is written in the Python that follows, so without an
+# interpreter this script has nothing to report. lib/python.sh is what knows that
+# `python3` is not a universal spelling.
+. "$(dirname "${BASH_SOURCE[0]}")/lib/python.sh"
+require_python
 
-ROOT="$root" REQUIRE_PRODUCTS="$require_products" python3 <<'PY'
+ROOT="$root" REQUIRE_PRODUCTS="$require_products" "${PYTHON[@]}" <<'PY'
 import json, os, sys
 
 root = os.environ["ROOT"]

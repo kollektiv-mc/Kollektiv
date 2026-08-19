@@ -156,11 +156,85 @@ Konnekt's `.prettierrc.json` and again, by hand, in Kommands' `CLAUDE.md` prose.
 They agreed, and nothing would have said so if they stopped. One convention
 written down twice is one convention waiting to fork.
 
+## Release notes and pull request labelling
+
+A merged pull request's title is public copy. It is what a person reading the
+release notes sees, and it is the only thing they see about that change, so it
+describes what changed in the product, not which files moved or which branch it
+came off.
+
+Each product builds its notes with `.github/scripts/release-notes.py`, vendored
+from `plugins/suite-kit/release-notes.py` by `scripts/sync-notes.sh` for the
+reason `sync-runner.sh` states about the check runner: a release job runs in the
+product's own container, with this repo nowhere on disk and no plugin installed,
+so the generator has to be *in* the product.
+
+**Every pull request carries exactly one `type:` label.** The label alone decides
+where it lands, and each product's CI fails a pull request without one. Before
+that gate existed, 24 of the 41 pull requests in Konnekt's first release window
+were unlabelled, the generator fell back to reading the title's leading verb, and
+"Add a Full release roadmap section and a nightly snapshot build channel" — a
+website and CI change — was published to users under **Features**.
+
+| Label | Where it lands |
+|---|---|
+| `type:feature` | **Features** |
+| `type:bug` | **Fixes** |
+| `type:chore`, `type:docs` | counted in a footer line, not listed |
+| `changelog:skip` | left out entirely, not counted |
+| none | **Other changes**, and CI is red |
+
+Two rules follow from that table and are worth stating outright:
+
+- **Nothing reaches Features by guesswork.** An unlabelled title is read only
+  well enough to separate a fix from everything else. A wrong entry in the
+  section people read first costs more than a vague one further down, so the
+  guess is confined to where being wrong is cheap.
+- **Maintenance is counted, not listed.** `type:chore` and `type:docs` are real
+  work that changed nothing a user can observe. Listing them is how 17 entries
+  of CI and tooling ended up in a changelog for people downloading a binary. The
+  footer says how many there were, and the full-changelog link has them all.
+
+**One pull request, one concern.** The notes list a merged pull request once,
+under one heading, by its title, so a pull request carrying a feature *and* a
+website pass *and* a CI tweak cannot be described honestly by any single line.
+Split it, or accept that it will be filed as a chore.
+
+### What's shared and what is not
+
+**Shared**, in `plugins/suite-kit/release-notes.py`: the rules above. A person
+reading Konnekt's notes and Kommands' notes should be reading the same document
+in two voices.
+
+**Per-repo**, in each product's `.github/changelog.json`: which of that
+product's paths never reach what it ships. A pull request touching only those is
+dropped and counted. Konnekt excludes `website/`, `agent_docs/`, `docs/`,
+`.github/`, `.claude/`, `scripts/` and the root repo furniture; Kommands has a
+different tree and will need a different list, which is exactly why this half is
+not shared.
+
+Two lessons from Konnekt's list are worth copying rather than rediscovering.
+`README.md` belongs on it: a one-line banner edit beside an all-website diff was
+enough to pull that pull request into the notes twice. `.github/` belongs on it
+too, or the release tooling describes itself to users as an app change — the four
+pull requests that built this very generator did exactly that. And `build/` does
+*not* belong on it, because the app icon, `.desktop` file and RPM spec do ship.
+
+Deliberately not in `.claude/suite.json`: `design/suite.schema.json` sets
+`additionalProperties: false` and this repo's CI validates every product's
+manifest nightly, so a key there is a change that has to land here first. A
+separate file next to its one consumer needs no such coordination.
+
 ## What's shared vs. what stays per-repo
 
 **Shared**, in `design/labels.json`: the `type:*`/`area:*`/`p0`–`p3`/`blocked`
 label taxonomy, applied identically to every repo by `scripts/sync-labels.sh`.
 A repo does not invent its own type or priority labels.
+
+**Shared**, in `plugins/suite-kit/release-notes.py`: how a merged pull request
+becomes a line in the release notes, vendored by `scripts/sync-notes.sh`. See
+§ Release notes and pull request labelling above for the split between those
+rules and each product's own `.github/changelog.json`.
 
 **Per-repo:**
 
@@ -169,7 +243,8 @@ A repo does not invent its own type or priority labels.
   objects rather than something each repo declares on its own.
 - Cycle cadence. Cycle creation is a team-settings toggle not exposed via the
   Linear MCP; enable it once in **Team Settings → Cycles**.
-- Anything about the product's own build, CI, or release.
+- Anything about the product's own build, CI, or release — including which of
+  its paths never reach what it ships, in `.github/changelog.json`.
 
 ## Known Linear MCP gaps
 

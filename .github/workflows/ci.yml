@@ -38,6 +38,12 @@ jobs:
       - name: Schema validation
         run: ./scripts/validate-schemas.sh
 
+      # The classifier every product's release notes are built by. Pure and
+      # offline, and this is the master copy — a product only ever runs the
+      # vendored one.
+      - name: Release-notes classifier
+        run: python3 plugins/suite-kit/release-notes_test.py
+
   token-drift:
     runs-on: ubuntu-latest
     steps:
@@ -77,6 +83,20 @@ jobs:
       - name: Check-runner drift
         if: ${{ !cancelled() }}
         run: ./scripts/sync-runner.sh --check
+
+      # The release-notes generator is vendored for the same reason the runner
+      # is: a product cuts releases in its own container, where this repo is
+      # nowhere on disk. A stale copy means a release describing itself by last
+      # month's rules, which nobody notices until the notes are already
+      # published — so it is caught here, in the one checkout holding both
+      # sides.
+      #
+      # Runs on a red run, per the reasoning on the steps around it. Without
+      # --require-vendored while Kommands has yet to adopt it; a stale copy in
+      # either product still fails.
+      - name: Release-notes drift
+        if: ${{ !cancelled() }}
+        run: ./scripts/sync-notes.sh --check
 
       # The products are cloned here anyway, so validate their manifests against
       # the schema while we have them.

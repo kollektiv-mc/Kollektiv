@@ -4,7 +4,7 @@
   "title": "Kollektiv label taxonomy",
   "description": "The suite's single source of truth for issue labels, on both sides of the sync: GitHub labels applied by scripts/sync-labels.sh, and their Linear counterparts created by hand or by /suite-kit:suite-sync. Never add a label directly in a repo or in Linear — add it here and propagate it, for the same reason design/tokens.json is not edited from a product.",
   "type": "object",
-  "required": ["version", "github", "linear"],
+  "required": ["version", "github", "priority", "linear"],
   "additionalProperties": false,
 
   "$defs": {
@@ -25,6 +25,50 @@
         },
         "description": { "type": "string", "minLength": 1, "maxLength": 100 }
       }
+    },
+
+    "priorityLevel": {
+      "type": "object",
+      "required": ["label", "linear", "reporterSelectable", "rubric"],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string",
+          "pattern": "^p[0-3]$",
+          "description": "The GitHub label this level is carried by. Must also appear in the 'github' array above, which is where its color and one-line description live. That cross-reference is asserted by scripts/validate-schemas.sh, since JSON Schema cannot express it."
+        },
+        "linear": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4,
+          "description": "Linear's own priority number. 1 Urgent, 2 High, 3 Medium, 4 Low. An issue with no priority label is Linear priority 0 (None), which is why it is not a level here: it is the absence of one."
+        },
+        "reporterSelectable": {
+          "type": "boolean",
+          "description": "Whether the vendored issue-form block offers this level to whoever is filing. False is how p0 stays maintainer-only: the option list simply does not contain it, so there is no cap to enforce anywhere and nothing to spoof."
+        },
+        "default": {
+          "const": true,
+          "description": "The level an unsure assessment resolves to. Exactly one entry carries it, and it is never false: omit the key rather than setting it, so there is one spelling of 'not the default'."
+        },
+        "formOption": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The option text shown on the form, in the reporter's terms rather than the maintainer's. Its first word is the key the vendored workflow matches on when it reads the rendered issue body, so the words must stay distinct from each other."
+        },
+        "rubric": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the level means, in the terms a person or an agent has to decide against. docs/conventions.md quotes these verbatim rather than paraphrasing them."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "reporterSelectable": { "const": true } }, "required": ["reporterSelectable"] },
+          "then": { "required": ["formOption"] },
+          "else": { "not": { "required": ["formOption"] } }
+        }
+      ]
     },
 
     "linearLabel": {
@@ -57,6 +101,16 @@
       "minItems": 1,
       "items": { "$ref": "#/$defs/githubLabel" },
       "description": "The label set scripts/sync-labels.sh applies to every repo in suite.repos.json plus this one. Flat and repo-agnostic — the same fifteen labels exist everywhere, so an issue's meaning does not depend on which repo it lives in."
+    },
+
+    "priority": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/priorityLevel" },
+      "contains": { "required": ["default"] },
+      "minContains": 1,
+      "maxContains": 1,
+      "description": "What p0-p3 mean, and what each maps to on the Linear side. The labels themselves are declared in 'github' above; this is the half that lets a person or an agent choose between them, and it spans both sides of the sync on purpose. Splitting the label from its meaning across two files is the same failure as writing a convention down twice."
     },
 
     "linear": {

@@ -62,6 +62,48 @@ validate "$root/design/tokens.json" "$root/design/tokens.schema.json" "design/to
 validate "$root/design/labels.json" "$root/design/labels.schema.json" "design/labels.json"
 validate "$root/.claude/suite.json" "$root/design/suite.schema.json" ".claude/suite.json"
 
+# design/labels.json's priority[] names labels declared in its own github[] array.
+# JSON Schema cannot express a cross-reference between two sibling arrays, so the
+# one rule that keeps the two halves of that file honest has to be asserted here.
+# It matters because the failure is silent in exactly the wrong way: a priority
+# level naming a label nothing creates produces a form option that maps to a label
+# GitHub will accept, invent in default gray, and file nothing under.
+if [ "${#PYTHON[@]}" -gt 0 ]; then
+  if "${PYTHON[@]}" - "$root/design/labels.json" <<'PYEOF'
+import json, sys
+
+with open(sys.argv[1], encoding="utf-8") as f:
+    doc = json.load(f)
+
+declared = {label["name"] for label in doc["github"]}
+levels = [level["label"] for level in doc["priority"]]
+problems = []
+
+for name in levels:
+    if name not in declared:
+        problems.append(f"priority level {name!r} is not declared in github[]")
+
+duplicates = {name for name in levels if levels.count(name) > 1}
+for name in sorted(duplicates):
+    problems.append(f"priority level {name!r} is declared more than once")
+
+for problem in problems:
+    print(problem, file=sys.stderr)
+
+sys.exit(1 if problems else 0)
+PYEOF
+  then
+    echo "= design/labels.json priority[] cross-reference"
+  else
+    echo "! design/labels.json priority[] cross-reference" >&2
+    status=1
+  fi
+else
+  # A check that could not run is not a check that passed.
+  echo "? design/labels.json priority[] cross-reference — no Python interpreter" >&2
+  status=1
+fi
+
 # Products are cloned as siblings and are not tracked here, so validate whichever
 # of them happen to be present rather than requiring a full workspace.
 if [ -f "$manifest" ] && [ "${#PYTHON[@]}" -gt 0 ]; then

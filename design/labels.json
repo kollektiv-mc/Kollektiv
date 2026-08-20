@@ -27,6 +27,37 @@
     { "name": "changelog:skip", "color": "8792a2", "description": "Leave this pull request out of the release notes entirely." }
   ],
 
+  "priority": [
+    {
+      "label": "p0",
+      "linear": 1,
+      "reporterSelectable": false,
+      "rubric": "Drop everything. Data loss, a shipped build that will not start, a security fix, or the default branch red. Other work stops until it clears."
+    },
+    {
+      "label": "p1",
+      "linear": 2,
+      "reporterSelectable": true,
+      "formOption": "Blocking: I cannot use it and have no way around it",
+      "rubric": "Next up. A user-visible capability is broken with no workaround, or a release is blocked on it."
+    },
+    {
+      "label": "p2",
+      "linear": 3,
+      "reporterSelectable": true,
+      "default": true,
+      "formOption": "Significant: it costs me real time, but I can work around it",
+      "rubric": "Normal queue. Real work with a workaround, or with no deadline. The honest answer for most issues, and the one an unsure assessment resolves to."
+    },
+    {
+      "label": "p3",
+      "linear": 4,
+      "reporterSelectable": true,
+      "formOption": "Minor: it would be nice, but it is not in my way",
+      "rubric": "Nice to have. Polish, cleanup, or an idea worth keeping. No commitment that it gets done."
+    }
+  ],
+
   "linear": {
     "repo": [
       { "name": "repo:kollektiv", "color": "#8792A2", "description": "Umbrella repo: conventions, tokens, suite-kit, CI." },

@@ -65,8 +65,12 @@ longer exists on GitHub (deleted, or the repo was renamed) is reported, not touc
   the same name if one exists on that project; otherwise leave the issue
   milestone-less rather than inventing one.
 - Labels: see the mapping table below.
-- Priority: `p0`–`p3` labels map to Urgent/High/Medium/Low; no priority label →
-  Linear priority None.
+- Priority: `p0`–`p3` labels map to Urgent/High/Medium/Low. A GitHub issue with no
+  priority label still mirrors at Linear priority None, but **report it** in step 4
+  rather than passing over it: `docs/conventions.md` § Priority requires exactly one
+  `p*` label on every issue, so an unlabelled one is a gap, not a resting state. Do
+  not invent a priority to close it — the whole point of the report is that somebody
+  chooses.
 - Assignee: carry the GitHub assignee across if that person is a Linear workspace
   member; otherwise leave unassigned. Do not default to yourself — that was a
   decision the old per-repo model made and it produced a false sense of ownership.
@@ -144,3 +148,7 @@ manufacturing one.
 
 Summarise what changed: created, updated, flagged for review, per repo. If nothing
 changed, say that rather than manufacturing activity.
+
+List separately the issues carrying no `p*` label, with links. They are the ones
+sitting at Linear priority None, which sorts below `p3` and is indistinguishable
+from nobody wanting them done.

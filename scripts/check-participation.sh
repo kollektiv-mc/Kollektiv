@@ -18,11 +18,16 @@
 #                 cwd is gone is reported by the runner as a skip, and a skip
 #                 nobody reads is how a check stops running without anyone
 #                 noticing.
+#   intake        the repo has issue forms and blank issues are off. Whether a
+#                 form carries the shared priority field is sync-priority.sh's
+#                 finding, not this one; a repo with no forms at all is a skip
+#                 there and a gap here.
 #
 # Deliberately not re-checked here, because each already has an owner: manifest
 # presence and schema validity (validate-schemas.sh), runner presence and drift
-# (sync-runner.sh), token drift (sync-tokens.sh). Two scripts reporting the same
-# finding is how they drift apart.
+# (sync-runner.sh), token drift (sync-tokens.sh), priority-field drift
+# (sync-priority.sh). Two scripts reporting the same finding is how they drift
+# apart.
 #
 #   --require-products   Treat an absent or unadopted product as a failure
 #                        instead of a skip.
@@ -52,7 +57,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 require_python
 
 ROOT="$root" REQUIRE_PRODUCTS="$require_products" "${PYTHON[@]}" <<'PY'
-import json, os, sys
+import json, os, re, sys
 
 root = os.environ["ROOT"]
 require_products = os.environ["REQUIRE_PRODUCTS"] == "1"
@@ -203,6 +208,49 @@ def check_style(label, repo_dir):
         print("= %s formatting settings (%s)" % (label, where))
 
 
+def check_intake(label, repo_dir):
+    """That the repo has a way in at all: issue forms, with blank issues off.
+
+    Presence only. Whether each form carries the shared priority field, and whether
+    that field still matches design/labels.json, belongs to sync-priority.sh --
+    two scripts reporting the same finding is how they drift apart. What that one
+    cannot see is a repo with no forms for it to splice into, which reads there as
+    a skip and is a real gap here: with no form, every issue arrives as one line of
+    prose and the priority rule has nowhere to attach.
+    """
+    template_dir = os.path.join(repo_dir, ".github", "ISSUE_TEMPLATE")
+    if not os.path.isdir(os.path.join(repo_dir, ".github")):
+        print("? %s has no .github/ — issue intake not applicable" % label)
+        return
+
+    forms = []
+    if os.path.isdir(template_dir):
+        forms = [f for f in sorted(os.listdir(template_dir))
+                 if f.endswith((".yml", ".yaml")) and f != "config.yml"]
+
+    if not forms:
+        fail("%s has no issue forms in .github/ISSUE_TEMPLATE/ — every report "
+             "arrives as prose, and there is nothing for the shared priority field "
+             "to live in" % label)
+        return
+
+    config = os.path.join(template_dir, "config.yml")
+    if not os.path.isfile(config):
+        fail("%s has issue forms but no ISSUE_TEMPLATE/config.yml, so the chooser "
+             "falls back to defaults and blank issues stay on" % label)
+        return
+
+    # Read the one line rather than parsing: no YAML library is guaranteed here, and
+    # this key is a boolean on a line of its own in every repo that sets it.
+    text = open(config, encoding="utf-8").read()
+    if re.search(r"^blank_issues_enabled:\s*false\s*$", text, re.M):
+        print("= %s issue intake (%d form%s, blank issues off)"
+              % (label, len(forms), "" if len(forms) == 1 else "s"))
+    else:
+        fail("%s ISSUE_TEMPLATE/config.yml does not set blank_issues_enabled: false, "
+             "so a report can still bypass the forms entirely" % label)
+
+
 def check_repo(label, repo_dir):
     """Every check runs. One failure does not cancel the rest — health/SKILL.md's
     rule, for the same reason: they are independent findings."""
@@ -247,6 +295,7 @@ def check_repo(label, repo_dir):
     path_check((suite.get("tokens") or {}).get("sourceFile"), "tokens.sourceFile")
 
     check_style(label, repo_dir)
+    check_intake(label, repo_dir)
 
     for cmd in suite.get("health", {}).get("commands", []):
         cwd = cmd.get("cwd")

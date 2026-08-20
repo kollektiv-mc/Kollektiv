@@ -24,6 +24,10 @@
       {
         "name": "participation",
         "run": "./scripts/check-participation.sh"
+      },
+      {
+        "name": "priority field",
+        "run": "./scripts/sync-priority.sh --check"
       }
     ]
   }

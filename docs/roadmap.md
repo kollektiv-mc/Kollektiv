@@ -55,6 +55,9 @@ repo's `.claude/suite.json` and in CI with `--require-products`.
 
 Still open, in rough order:
 
+- Turning on `scripts/sync-priority.sh --check --require-vendored` in CI, once
+  every repo carries the priority field and `.github/workflows/issue-priority.yml`
+  on its default branch. Same reason as the runner below: CI clones from there.
 - Turning on `scripts/sync-runner.sh --check --require-vendored` in CI. Both
   products carry the runner in a working tree here, but the flag can only go on
   once those commits are on their default branches — CI clones from there.

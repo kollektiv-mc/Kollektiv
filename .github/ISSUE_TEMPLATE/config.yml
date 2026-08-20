@@ -1,0 +1,28 @@
+# The chooser shown at /issues/new/choose.
+#
+# Blank issues are off, so every route in goes through a form and arrives with an
+# area and a priority already attached. scripts/check-participation.sh checks that
+# this stays true across every repo in the suite.
+#
+# The first contact link is the one that earns its place here: this repo owns
+# conventions, tokens and the plugin, and a bug in a product is a bug in that
+# product's tracker. An issue filed in the wrong repo is worse than one not filed,
+# because it looks handled.
+blank_issues_enabled: false
+
+contact_links:
+  - name: Something wrong in Konnekt
+    url: https://github.com/kollektiv-mc/Konnekt/issues/new/choose
+    about: The desktop dashboard. File it there, not here, even if the cause turns out to be a shared convention.
+
+  - name: Something wrong in Kommands
+    url: https://github.com/kollektiv-mc/Kommands/issues/new/choose
+    about: The command generator. File it there, not here.
+
+  - name: Report a security vulnerability
+    url: https://github.com/kollektiv-mc/Kollektiv/security/advisories/new
+    about: Report it privately through GitHub. Please do not open a public issue for a security problem.
+
+  - name: Cross-repo conventions
+    url: https://github.com/kollektiv-mc/Kollektiv/blob/main/docs/conventions.md
+    about: Tracking, labels, priority, PR labelling, the permissions floor and the formatting settings every repo shares.

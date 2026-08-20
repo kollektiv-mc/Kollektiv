@@ -126,7 +126,21 @@ need untangling by hand.
 Closing is a human's call. An issue that stops reproducing may have been fixed, or the
 check may have stopped running — and this sweep cannot tell those apart.
 
-Label everything it files `health-check`. Create the label if the repo lacks it.
+Label everything it files `health-check`, and **give every issue a priority**, per
+`docs/conventions.md` § Priority. An unprioritised issue mirrors into Linear at
+priority None, and a weekly unattended run is the fastest way to fill a tracker with
+them. Assess against the rubric there; for what this sweep finds, that lands as:
+
+| Finding | Priority |
+|---|---|
+| A declared check is red, or stopped running at all | `p1` |
+| A broken invariant, drift, or a generated file out of sync | `p2` |
+| Documentation, hygiene, or a rotating-deep-dive observation | `p3` |
+
+The sweep never files `p0`. `p0` means other work stops, and that is a call for
+whoever reads the report, not for an unattended run at 07:00 on a Monday.
+
+Create either label if the repo lacks it.
 
 ### What an issue says
 

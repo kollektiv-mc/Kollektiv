@@ -167,6 +167,15 @@ if ("HEADING: %s" % yaml_single_quote(HEADING)) not in workflow:
     fail("plugins/suite-kit/issue-priority.workflow.yml's HEADING is not %r, so it would "
          "read a heading the vendored form never writes" % HEADING)
 
+# docs/conventions.md quotes the rubric so a person can read it without opening a
+# JSON file. That makes it a second copy, and the only kind of second copy this
+# suite tolerates is one that cannot go stale quietly.
+conventions = read(os.path.join(root, "docs", "conventions.md"))
+for level in labels["priority"]:
+    if level["rubric"] not in conventions:
+        fail("docs/conventions.md does not quote %s's rubric verbatim; it reads\n    %s"
+             % (level["label"], level["rubric"]))
+
 if status:
     print("the source disagrees with itself; nothing was propagated", file=sys.stderr)
     sys.exit(status)

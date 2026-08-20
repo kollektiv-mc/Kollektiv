@@ -1,9 +1,9 @@
 # Adopting suite-kit in a product repo
 
-Six things go into each product repo: a settings block, a permissions block, a
+Seven things go into each product repo: a settings block, a permissions block, a
 `.claude/suite.json`, a vendored `tokens.source.json`, a vendored
-`.claude/suite-check.py`, and two `.gitignore` lines. Nothing else about the repo
-changes.
+`.claude/suite-check.py`, two `.gitignore` lines, and issue forms carrying the
+shared priority field. Nothing else about the repo changes.
 
 ```sh
 ./scripts/adopt.sh ../NewRepo --kind vite-web
@@ -145,6 +145,33 @@ once every product carries the file.
 
 Shared config is committed so every clone and cloud agent inherits the same setup.
 Personal permission allowlists are not shared.
+
+## 7. Add issue forms, and take the priority field
+
+`scripts/adopt.sh` does not write these: a form asks about a specific product in
+that product's own words, and a generated one would be a template nobody edits.
+Write `config.yml` with `blank_issues_enabled: false`, plus at least one form that
+applies a `type:` label. Konnekt's are the worked example; this repo's are the short
+version, for a repo that ships no binary.
+
+Then, from the kollektiv root:
+
+```sh
+./scripts/sync-priority.sh
+```
+
+This splices the shared priority field into every form applying a `type:` label,
+and vendors `.github/workflows/issue-priority.yml`. Commit both in the product.
+
+**Why the workflow and not just the field.** A GitHub issue form applies only the
+static `labels:` list in its front matter; a dropdown answer lands as text in the
+issue body and never becomes a label. Without the workflow the field is a question
+nothing reads. See [`conventions.md`](conventions.md) § Priority.
+
+Like the token source and the check runner, the vendored copies are not the place to
+edit — the next sync overwrites them, and `./scripts/sync-priority.sh --check`
+reports drift. `scripts/check-participation.sh` separately checks that the forms
+exist at all, which is the gap the sync script reads as a skip.
 
 ---
 

@@ -52,6 +52,61 @@ sequencing now, not a checklist of trackable items; GitHub issue numbers are
 a stable key in a way a roadmap section heading never was, since headings get
 rewritten and sections get merged.
 
+## Priority
+
+Every issue in every repo carries **exactly one** `p*` label. No label is not a
+neutral middle: `/suite-kit:suite-sync` mirrors an unlabelled issue into Linear
+as priority None, which sorts below `p3` and drops it out of every ordered view.
+An issue nobody has prioritised looks, from Linear, exactly like one nobody
+thinks is worth doing.
+
+The four levels are defined once, in `design/labels.json`'s `priority` array.
+They are quoted verbatim below, because this is the page a person reads and that
+is the file the tooling reads — `scripts/sync-priority.sh` fails if the two
+disagree.
+
+| Label | Linear | Means |
+|---|---|---|
+| `p0` | Urgent | Drop everything. Data loss, a shipped build that will not start, a security fix, or the default branch red. Other work stops until it clears. |
+| `p1` | High | Next up. A user-visible capability is broken with no workaround, or a release is blocked on it. |
+| `p2` | Medium | Normal queue. Real work with a workaround, or with no deadline. The honest answer for most issues, and the one an unsure assessment resolves to. |
+| `p3` | Low | Nice to have. Polish, cleanup, or an idea worth keeping. No commitment that it gets done. |
+
+Priority is a claim about sequencing, not a measure of how annoyed the reporter
+was. Triage may change it, and changing it is normal rather than a correction.
+
+**`p0` is maintainer-only**, and not by a rule anyone has to remember. It is
+declared `reporterSelectable: false`, so the field `sync-priority.sh` generates
+into the public forms does not contain it. There is no cap to enforce anywhere
+and nothing to spoof, because the option was never offered.
+
+### How the label actually gets there
+
+A GitHub issue form applies only the static `labels:` list in its front matter. A
+dropdown answer lands as text in the issue body and never becomes a label on its
+own, so the priority field the forms ask for would be decorative without
+something reading it back. `.github/workflows/issue-priority.yml`, vendored into
+every repo by `sync-priority.sh`, is that something: it maps the answer to a
+label on `issues: opened`, and leaves an issue that already carries one alone.
+
+### Agents assess priority before filing
+
+An agent opening an issue — `/suite-kit:health-sweep`, or a session working in a
+repo — applies a `p*` label **in the same call** that creates it, chosen against
+the table above. "Unsure" resolves to `p2`, never to nothing.
+
+This is the case the forms cannot reach. An issue opened through the API has no
+form answer in its body, so the workflow has nothing to map and comments saying
+so instead. GitHub has no way to refuse an issue, so a comment is the strongest
+gate available; it is also the one an agent reading its own issue back will
+actually see. It deliberately applies no triage label on that path, because
+attaching a label a repo does not declare makes GitHub invent it in default grey
+with no description (see § Known GitHub MCP gaps), and quietly inventing
+vocabulary is what `design/labels.json` exists to prevent.
+
+An issue that reaches Linear with no priority is reported by
+`/suite-kit:suite-sync` as a finding rather than mirrored silently at None.
+
 ## Issues filed by the health sweep
 
 `/suite-kit:health-sweep` runs weekly across every repo and files what it finds. Its
@@ -229,7 +284,9 @@ separate file next to its one consumer needs no such coordination.
 
 **Shared**, in `design/labels.json`: the `type:*`/`area:*`/`p0`–`p3`/`blocked`
 label taxonomy, applied identically to every repo by `scripts/sync-labels.sh`.
-A repo does not invent its own type or priority labels.
+A repo does not invent its own type or priority labels. What the priority levels
+*mean*, and the form field and workflow that put them on an issue, are shared
+from the same file — see § Priority.
 
 **Shared**, in `plugins/suite-kit/release-notes.py`: how a merged pull request
 becomes a line in the release notes, vendored by `scripts/sync-notes.sh`. See

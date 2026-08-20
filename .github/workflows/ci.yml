@@ -98,6 +98,22 @@ jobs:
         if: ${{ !cancelled() }}
         run: ./scripts/sync-notes.sh --check
 
+      # The priority field and the workflow that reads it, vendored for the same
+      # reason as the three above: the job runs in the product's own repo, where
+      # this one is nowhere on disk. A stale field here is worse than a missing
+      # one, because the form still asks the question and the workflow no longer
+      # recognises the answer -- so it looks like it works.
+      #
+      # This step also covers the half that needs no products at all: that
+      # design/labels.json, the workflow's copy of the mapping, and the table in
+      # docs/conventions.md still agree with each other.
+      #
+      # Runs on a red run, per the reasoning on the steps around it. Without
+      # --require-vendored until every repo carries it on its default branch.
+      - name: Priority-field drift
+        if: ${{ !cancelled() }}
+        run: ./scripts/sync-priority.sh --check
+
       # The products are cloned here anyway, so validate their manifests against
       # the schema while we have them.
       #

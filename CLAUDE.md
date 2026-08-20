@@ -13,7 +13,7 @@ change here that requires a product to rebuild is a change in the wrong place.
 |---|---|
 | `design/tokens.json` | The suite's single source of truth for design values |
 | `design/tokens.schema.json` | Its schema |
-| `design/labels.json` | The suite's single source of truth for the GitHub/Linear label taxonomy |
+| `design/labels.json` | The suite's single source of truth for the GitHub/Linear label taxonomy, and for what `p0`–`p3` mean |
 | `design/labels.schema.json` | Its schema |
 | `design/suite.schema.json` | Schema for the per-repo `.claude/suite.json` |
 | `plugins/suite-kit/` | The shared Claude Code plugin |
@@ -24,6 +24,7 @@ change here that requires a product to rebuild is a change in the wrong place.
 | `scripts/sync-tokens.sh` | Vendors `design/tokens.json` into each product (`--check` to detect drift) |
 | `scripts/sync-runner.sh` | Vendors `suite-check.py` into each product (`--check` to detect drift) |
 | `scripts/sync-labels.sh` | Applies `design/labels.json`'s GitHub side via `gh` (`--check` to detect drift) |
+| `scripts/sync-priority.sh` | Splices the shared priority field into each repo's issue forms and vendors the workflow that reads it (`--check` to detect drift) |
 | `scripts/validate-schemas.sh` | Validates every manifest against its schema |
 | `scripts/check-participation.sh` | Checks each repo's permissions floor and the paths its manifest names (`--require-products` to fail on an uncloned one) |
 | `docs/adopting.md` | How a repo adopts suite-kit |
@@ -57,6 +58,13 @@ from a standalone clone; requiring a `kollektiv` checkout beside it would break 
 
 **suite-kit ships no hooks, deliberately.** Konnekt already binds `graphify hook-guard`
 to `PreToolUse`; stacking more matchers is the fastest way to make both feel broken.
+
+**Priority is defined here and nowhere else.** `design/labels.json`'s `priority`
+array says what `p0`–`p3` mean, which Linear priority each maps to, and which of them
+a reporter may pick. Everything downstream is generated or checked against it: the
+issue-form field, the workflow that reads the answer, and the table in
+`docs/conventions.md`. Same one-way flow as tokens, and `scripts/sync-priority.sh`
+refuses to propagate anything while the copies disagree.
 
 **Version bumps come in pairs.** `plugins/suite-kit/.claude-plugin/plugin.json` and
 `.claude-plugin/marketplace.json` must agree — a health check fails if they diverge.

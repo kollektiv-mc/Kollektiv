@@ -1,0 +1,86 @@
+# Asks what is going wrong today before what to build, for the reason Konnekt's
+# version of this form states: a request phrased only as a solution throws away the
+# situation that produced it, and the situation is the part that can be designed
+# against.
+#
+# Worth more here than in a product. A convention proposed without the friction that
+# prompted it is a rule nobody can later judge, and this repo's own CLAUDE.md is
+# explicit that an invariant with no stated reason gets deleted the first time it is
+# inconvenient.
+name: Convention or tooling proposal
+description: Propose a shared rule, a check, or a change to the suite's tooling
+title: '[Proposal]: '
+labels: ['type:feature']
+
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What goes wrong today?
+      description: |
+        The friction, not the rule you have in mind. Ideally something that has already happened
+        at least once.
+      placeholder: |
+        Two repos state the same Prettier settings in different files. They agree right now, and
+        nothing would say so if they stopped.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What should change?
+      description: A rough sketch is fine, and so is "I do not know, but something".
+    validations:
+      required: true
+
+  - type: dropdown
+    id: enforcement
+    attributes:
+      label: How would it be enforced?
+      description: |
+        A convention enforced only by review is enforced weakest in the sessions nobody watches.
+        "Not sure" is a fine answer; it is a design question, not a quiz.
+      options:
+        - A check in CI or in .claude/suite.json
+        - A schema
+        - A skill or agent instruction
+        - Documented only, enforced by review
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part?
+      options:
+        - Design tokens (design/tokens.json and its consumers)
+        - Labels and the taxonomy (design/labels.json)
+        - CI, health checks or schema validation
+        - suite-kit skills, agents or Claude Code config
+        - A schema or a generated-data pipeline
+        - Build, packaging or release
+        - Something else, or not sure
+    validations:
+      required: true
+
+  # >>> suite:priority. Vendored from kollektiv by scripts/sync-priority.sh. Edit it there.
+  - type: dropdown
+    id: priority
+    attributes:
+      label: How urgent is this for you?
+      description: Your honest read. Triage may change it, and that is normal.
+      options:
+        - 'Blocking: I cannot use it and have no way around it'
+        - 'Significant: it costs me real time, but I can work around it'
+        - 'Minor: it would be nice, but it is not in my way'
+    validations:
+      required: true
+  # <<< suite:priority
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Prior art in another repo, a link to where this bit, anything already tried.

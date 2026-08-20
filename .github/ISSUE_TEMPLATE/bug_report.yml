@@ -1,0 +1,78 @@
+# This repo ships no binary, so a bug here is a script, schema, skill or convention
+# behaving differently from what it says about itself. The form asks for the two
+# things that make that reproducible: what was run, and what it printed.
+#
+# The `area` options are the area:* labels in design/labels.json, minus area:ui,
+# which nothing here has. They are recorded rather than applied: like Konnekt's
+# forms, the label goes on during triage.
+name: Bug report
+description: A script, schema, skill or convention in this repo does not do what it says
+title: '[Bug]: '
+labels: ['type:bug']
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For a bug in Konnekt or Kommands, use that repo's tracker instead. This one is for the
+        umbrella: `design/`, `plugins/suite-kit/`, `scripts/`, `docs/` and CI.
+
+  - type: input
+    id: summary
+    attributes:
+      label: What went wrong?
+      description: One sentence. There is room for the detail below.
+      placeholder: sync-tokens.sh --check reports drift on a clean workspace
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: What did you run, and what happened?
+      description: The command and its output. Paste the relevant lines rather than a full log.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part?
+      options:
+        - Design tokens (design/tokens.json and its consumers)
+        - Labels and the taxonomy (design/labels.json)
+        - CI, health checks or schema validation
+        - suite-kit skills, agents or Claude Code config
+        - A schema or a generated-data pipeline
+        - Build, packaging or release
+        - Something else, or not sure
+    validations:
+      required: true
+
+  # >>> suite:priority. Vendored from kollektiv by scripts/sync-priority.sh. Edit it there.
+  - type: dropdown
+    id: priority
+    attributes:
+      label: How urgent is this for you?
+      description: Your honest read. Triage may change it, and that is normal.
+      options:
+        - 'Blocking: I cannot use it and have no way around it'
+        - 'Significant: it costs me real time, but I can work around it'
+        - 'Minor: it would be nice, but it is not in my way'
+    validations:
+      required: true
+  # <<< suite:priority
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Which machine, which interpreter, whether it started recently, anything already tried.

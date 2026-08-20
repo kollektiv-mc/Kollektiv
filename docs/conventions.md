@@ -252,6 +252,16 @@ rules and each product's own `.github/changelog.json`.
 - **No cycle creation.** Team-settings toggle only.
 - **Two teams, total.** The workspace is on the free plan. A skill that would need a
   third team needs a different design, not a new team.
+- **No Releases.** Release pipelines, stages and per-release issue sets need a
+  Business or Enterprise plan — the same free-plan constraint as the two-team cap.
+  The tools (`save_release`, `list_release_pipelines`, …) are present in the MCP
+  and the workspace has no pipelines, so this reads as "nothing set up yet" rather
+  than "not entitled"; it is the latter. Releases has no timeline view in any case.
+  `docs/linear.md` § Version timeline uses project milestones instead, which are
+  the only dated Linear object that renders on a timeline.
+- **No milestone deletion.** `save_milestone` creates and updates; nothing removes.
+  A milestone that outlives its purpose is left in place and marked, and retiring
+  it is a manual step in the Linear UI.
 
 `save_initiative` and `save_project` both exist and work — an earlier version of
 this document said initiatives had to be created by hand. That was wrong by

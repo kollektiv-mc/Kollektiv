@@ -104,6 +104,34 @@ Routine cron is evaluated in UTC and does not follow DST, so both schedules need
 shifting by an hour twice a year, or moving off UTC — a schedule set for 09:00
 Berlin fires at 08:00 Berlin from late October to late March.
 
+## Version timeline
+
+`/suite-kit:suite-sync` step 4 places completed work on a timeline by the version
+it shipped in — one Linear project milestone per git tag, dated to the tag, sorted
+into Snapshot / Alpha / Beta / Release by the tag's suffix. `docs/linear.md`
+§ Version timeline is the structure; the milestones for Konnekt's five tags exist
+in Linear, and Konnekt's roadmap `Alpha` milestone is marked superseded.
+
+Linear's own Releases feature would have been the obvious home and is not
+available on the free plan — see `docs/conventions.md` § Known Linear MCP gaps.
+
+Still open:
+
+- Attaching completed issues to their version milestone. The milestones are dated
+  and empty; nothing is on the timeline until a sync run with GitHub access to
+  Konnekt and Kommands reads each issue's `closed_at` and files it. The first
+  scheduled run does this.
+- The daily Routine's inline prompt still summarises the old behaviour. It
+  delegates to this skill and the skill is the specification, so runs pick up
+  step 4 regardless, but the summary is stale. It cannot be edited over MCP —
+  the Routine fires into a persistent session, and `update_trigger` refuses a
+  prompt edit for one. Fix it in the claude.ai Routines UI, or recreate it.
+- Retiring Konnekt's `Alpha` milestone in the Linear UI. It holds nothing and is
+  marked superseded; there is no deletion tool.
+- A timeline for kollektiv and Kommands. Neither repo has a single tag, so both
+  correctly report no version timeline. This is a fact about the repos, not a gap
+  in the skill, and it resolves when they start tagging.
+
 ## Suite conventions
 
 The reusable parts of Konnekt's old `agent_docs/LINEAR.md` — the PR

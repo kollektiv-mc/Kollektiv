@@ -12,9 +12,9 @@
 # What is shared and what is not, because this split is the whole point:
 #
 #   shared    The rules. Which label means which section, that a title is never
-#             read as a promotion into Features, that maintenance is counted
-#             rather than listed. A user reading Konnekt's notes and Kommands'
-#             notes should be reading the same document in two voices.
+#             read at all, that maintenance is counted rather than listed. A
+#             user reading Konnekt's notes and Kommands' notes should be
+#             reading the same document in two voices.
 #   per-repo  Which of that product's paths never reach what it ships. Konnekt
 #             has website/ and agent_docs/; Kommands has neither. That list
 #             lives in each product's .github/changelog.json and is not

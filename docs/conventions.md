@@ -186,10 +186,12 @@ website and CI change — was published to users under **Features**.
 
 Two rules follow from that table and are worth stating outright:
 
-- **Nothing reaches Features by guesswork.** An unlabelled title is read only
-  well enough to separate a fix from everything else. A wrong entry in the
-  section people read first costs more than a vague one further down, so the
-  guess is confined to where being wrong is cheap.
+- **The title is never read.** Not by its leading verb, not by a `feat:`
+  prefix, not at all. The guess that used to run was first confined to where
+  being wrong was cheap, and has now been removed outright: a verb says how
+  someone phrased a sentence, not what the change was. An unlabelled pull
+  request lands in "Other changes", which is where a failed gate stays visible
+  instead of being dressed up as a category.
 - **Maintenance is counted, not listed.** `type:chore` and `type:docs` are real
   work that changed nothing a user can observe. Listing them is how 17 entries
   of CI and tooling ended up in a changelog for people downloading a binary. The
@@ -199,6 +201,39 @@ Two rules follow from that table and are worth stating outright:
 under one heading, by its title, so a pull request carrying a feature *and* a
 website pass *and* a CI tweak cannot be described honestly by any single line.
 Split it, or accept that it will be filed as a chore.
+
+### Which `type:` label
+
+Since the label is the only input, it has to be decidable by whoever applies
+one, at the moment they apply it. Ask these in order and stop at the first yes:
+
+1. **Can a user of the product tell the difference?** If nothing they can see,
+   run or click changed, it is `type:chore`, or `type:docs` when the change is
+   documentation and nothing else. Refactors, tests, CI, tooling and dependency
+   bumps stop here, however large the diff.
+2. **Was the product already meant to do this, and not doing it?** Then it is
+   `type:bug`. That covers anything the UI offers, the docs describe or the
+   product plainly implies, including things that fail silently.
+3. **Otherwise it is `type:feature`:** the product can now do something it
+   never offered.
+
+**The size of the diff is not the test**, and that is where this goes wrong in
+both directions. A repair that needed a new file, a new bound method and a new
+row of UI is still `type:bug`; a new surface built in service of a repair
+belongs to the repair. Konnekt's #97 "Write a log file a bug reporter can
+attach" was published under **Features** on exactly that reasoning, by a person
+rather than by the generator: the app was already writing diagnostics, a
+packaged build with no terminal was throwing them away, and the change is the
+repair.
+
+When the ladder feels ambiguous, revert the change in your head and ask what
+the user loses. Something goes back to being broken is `type:bug`. They lose
+something they never had is `type:feature`. They cannot tell is `type:chore`.
+A change that is honestly half repair and half new capability is two pull
+requests, which is the one-concern rule doing its job.
+
+These four sentences are also the label descriptions in `design/labels.json`,
+so the ladder is in the label picker and not only in this document.
 
 ### What's shared and what is not
 

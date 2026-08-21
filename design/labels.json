@@ -3,10 +3,10 @@
   "version": 1,
 
   "github": [
-    { "name": "type:feature", "color": "bb87fc", "description": "New capability, not yet shipped." },
-    { "name": "type:bug", "color": "eb5757", "description": "Existing behavior is wrong." },
-    { "name": "type:chore", "color": "8792a2", "description": "Maintenance work with no user-facing behavior change." },
-    { "name": "type:docs", "color": "0b84a5", "description": "Documentation only." },
+    { "name": "type:feature", "color": "bb87fc", "description": "New capability: the product can now do something it never offered." },
+    { "name": "type:bug", "color": "eb5757", "description": "Existing behavior is wrong. Still a bug when the repair adds new code or new UI." },
+    { "name": "type:chore", "color": "8792a2", "description": "No user-visible change: refactors, tests, CI, deps. Counted in the notes, not listed." },
+    { "name": "type:docs", "color": "0b84a5", "description": "Documentation only. Counted in the release notes, not listed." },
 
     { "name": "area:tokens", "color": "d4c5f9", "description": "design/tokens.json and its vendored consumers." },
     { "name": "area:ci", "color": "c5e8b7", "description": "CI, health checks, schema and drift validation." },
@@ -35,9 +35,9 @@
     ],
 
     "type": [
-      { "name": "Feature", "color": "#BB87FC", "description": "New capability, not yet shipped. Mirrors GitHub type:feature." },
-      { "name": "Bug", "color": "#EB5757", "description": "Existing behavior is wrong. Mirrors GitHub type:bug." },
-      { "name": "Chore", "color": "#8792A2", "description": "Maintenance work with no user-facing behavior change. Mirrors GitHub type:chore." },
+      { "name": "Feature", "color": "#BB87FC", "description": "New capability the product never offered. Mirrors GitHub type:feature." },
+      { "name": "Bug", "color": "#EB5757", "description": "Existing behavior is wrong, repair size irrelevant. Mirrors GitHub type:bug." },
+      { "name": "Chore", "color": "#8792A2", "description": "No user-visible change: refactors, tests, CI, deps. Mirrors GitHub type:chore." },
       { "name": "Docs", "color": "#0B84A5", "description": "Documentation only. Mirrors GitHub type:docs." },
       { "name": "Improvement", "color": "#4EA7FC", "description": "Predates this taxonomy; kept as the Linear-side alias for GitHub's default 'enhancement' label, which /suite-kit:suite-sync maps here rather than to Feature." }
     ],

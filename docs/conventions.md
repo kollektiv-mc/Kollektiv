@@ -163,18 +163,28 @@ release notes sees, and it is the only thing they see about that change, so it
 describes what changed in the product, not which files moved or which branch it
 came off.
 
-Each product builds its notes with `.github/scripts/release-notes.py`, vendored
-from `plugins/suite-kit/release-notes.py` by `scripts/sync-notes.sh` for the
-reason `sync-runner.sh` states about the check runner: a release job runs in the
+A product that has adopted this builds its notes with
+`.github/scripts/release-notes.py`, vendored from
+`plugins/suite-kit/release-notes.py` by `scripts/sync-notes.sh` for the reason
+`sync-runner.sh` states about the check runner: a release job runs in the
 product's own container, with this repo nowhere on disk and no plugin installed,
 so the generator has to be *in* the product.
 
+**Adoption is per product, and only Konnekt has adopted it.** The marker is a
+product's own `.github/changelog.json`, holding the non-app path list the
+generator cannot run without; `sync-notes.sh` skips a product that has none and
+reports it as not adopted rather than as drift. Kommands has no
+`.github/changelog.json`, so it has neither the generator nor the label gate
+below, and that is the expected state rather than a gap to close. Whether it
+should adopt is a separate decision about whether that repo wants generated
+release notes at all, and it starts by writing a `changelog.json`.
+
 **Every pull request carries exactly one `type:` label.** The label alone decides
-where it lands, and each product's CI fails a pull request without one. Before
-that gate existed, 24 of the 41 pull requests in Konnekt's first release window
-were unlabelled, the generator fell back to reading the title's leading verb, and
-"Add a Full release roadmap section and a nightly snapshot build channel" — a
-website and CI change — was published to users under **Features**.
+where it lands, and in an adopting product CI fails a pull request without one.
+Before that gate existed, 24 of the 41 pull requests in Konnekt's first release
+window were unlabelled, the generator fell back to reading the title's leading
+verb, and "Add a Full release roadmap section and a nightly snapshot build
+channel" — a website and CI change — was published to users under **Features**.
 
 | Label | Where it lands |
 |---|---|

@@ -147,6 +147,56 @@ read of `docs/adopting.md`. It writes a manifest that is valid but deliberately
 unfinished — `tokens`, `minecraft` and `health.invariants` describe a specific
 codebase, and a generated guess at them would look reviewed without being.
 
+## Cross-product handoff
+
+Konnekt and Kommands are growing a link between them: a command built in Kommands
+lands in Konnekt's console, and later stays bound to its Kommands original so an
+edit there propagates here. Tracked in
+[`konnekt#213`](https://github.com/kollektiv-mc/Konnekt/issues/213), with the
+blocking work filed in Kommands. **Nothing of it exists on disk yet, in any of the
+three repos.**
+
+Most of it is product work and belongs in the products. Two decisions taken while
+scoping it are this repo's, because they are cross-repo by construction and neither
+product can hold them alone.
+
+**The shared path.** Kommands writes its saved commands to
+`os.UserConfigDir()/kommands/saved-commands.json` and Konnekt only ever reads them.
+That read-only posture on Konnekt's side is what makes divergence structurally
+impossible rather than merely unlikely, and it is why the canonical copy sits with
+the writer instead of in a neutral suite directory. Both apps resolve the path from
+the same Go stdlib call, so neither discovers the other: Konnekt's own data directory
+is already `os.UserConfigDir()/konnekt` (`backend/services/datadir.go`). The file
+format and its version field become a cross-repo compatibility surface the first time
+Konnekt reads one.
+
+**The shell choice that makes the above free.** Kommands gains a standalone desktop
+build on Wails v2, matching Konnekt's major rather than starting on v3. Tauri and
+Electron were both assessed and declined, Tauri for adding Rust as a third language
+in a two-language suite and Electron for a bundled-Chromium argument Konnekt's worlds
+tile already disproves. v3 was declined for this app because the scheme handler and
+`SingleInstanceLock` are a different API there, so two majors would mean writing the
+suite's one genuinely shareable piece of Go twice, and because v3's GTK4 default
+drops the Ubuntu 22.04 and Debian 12 that Konnekt's README promises. The full
+reasoning is on `konnekt#213`.
+
+Still open here:
+
+- Writing the path and file format into `docs/conventions.md`, once they exist. They
+  are a cross-repo contract, which is this repo's to hold, but nothing is on disk to
+  describe yet and a conventions entry written ahead of the code would be this repo
+  being wrong about itself again.
+- Running `scripts/sync-labels.sh` against Kommands, which has never had it applied.
+  It is missing `area:release`, `area:agents`, `p0` to `p3`, `health-check` and
+  `changelog:skip`, and its `area:tokens` carries GitHub's default `ededed` and an
+  empty description, which is what applying a label by hand creates. No Kommands
+  issue has ever carried a priority, so the suite's own rule that a repo does not
+  invent its own priority scale is currently unenforced there rather than followed.
+- Deciding whether `suite.repos.json` and `design/suite.schema.json` should describe
+  Kommands as something other than `"kind": "vite-web"` once it also ships a Wails
+  binary. Konnekt is `wails-desktop` and Kommands would be genuinely both, which the
+  single-`kind` field cannot express.
+
 ## superpowers adoption
 
 OMC (Oh-My-ClaudeCode) is dropped suite-wide, along with its `.omc-workspace`

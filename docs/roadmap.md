@@ -63,9 +63,9 @@ Three things are shared as files a product vendors and this repo's gate holds
 clean: `.aislop/base.yml` (`scripts/sync-aislop.sh`), the issue-priority workflow
 and the question its forms ask, rendered from `design/labels.json`
 (`scripts/sync-priority.sh`), and the release-notes generator
-(`scripts/sync-notes.sh`). One is shared by reference: the aislop CI job is a
-reusable workflow, `.github/workflows/aislop.yml`, so the aislop and ruff versions
-are pinned once. `check-participation.sh` checks that every vendored file is
+(`scripts/sync-notes.sh`). Two are shared by reference, as reusable workflows: the aislop CI job
+(`.github/workflows/aislop.yml`, so the aislop and ruff versions are pinned once)
+and the pull-request label gate (`.github/workflows/pr-labelled.yml`). `check-participation.sh` checks that every vendored file is
 excluded from the product's own formatter and scanner, which is the rule the
 Sep 2026 drift (Konnekt's gate reformatting its vendored generator) was an instance
 of.
@@ -76,7 +76,8 @@ Still open, in rough order:
   with the base vendored beside it, the vendored generator in its `.aislopignore`,
   the priority question in its three forms, and calling the reusable aislop
   workflow instead of its own job. Then `sync-aislop.sh` and `sync-priority.sh`
-  can run with `--require-vendored`.
+  can run with `--require-vendored`. Its inline `pr-labelled` job predates the
+  reusable one and can become a call to it.
 - Kommands adopting them too: aislop with its own ratchet (it scores 89 today
   with no gate), the label gate and a `.github/changelog.json`, Dependabot,
   CodeQL, Scorecard and a security policy, all of which Konnekt has and it does

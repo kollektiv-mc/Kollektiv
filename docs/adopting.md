@@ -178,6 +178,28 @@ That workflow pins aislop and ruff in one place for every repo. ruff matters: ai
 Python engines run only when a ruff binary is on PATH, and report nothing when it is
 not.
 
+A repo adopting with findings already in its tree does not get to 100 in the same
+pull request that adopts the gate; a11y and React findings are judgement calls for a
+health session, not a CI change. Such a repo overrides `ci.failBelow` in its own
+config with its current score, as a second ratchet: raised as findings close, never
+lowered, with the open findings listed in its health checklist. The base's 100 is
+where the ratchet ends.
+
+**The label gate.** Every pull request carries one `type:` and one `area:` label
+(conventions.md § Release notes and pull request labelling). The check is a reusable
+workflow too:
+
+```yaml
+  pr-labelled:
+    if: github.event_name == 'pull_request'
+    uses: kollektiv-mc/Kollektiv/.github/workflows/pr-labelled.yml@main
+```
+
+with `labeled` and `unlabeled` among the caller's `pull_request` types, so adding the
+label turns the check green. The labels themselves come from `design/labels.json`
+via `scripts/sync-labels.sh`, which needs an authenticated `gh`; a repo that has
+never had it applied fails the gate on every pull request until it does.
+
 **The priority question.** Every issue form asks it, and
 `.github/workflows/issue-priority.yml` turns the answer into a `p*` label, because a
 form's dropdown answer is otherwise body text that never becomes a label. Put the

@@ -28,6 +28,7 @@ change here that requires a product to rebuild is a change in the wrong place.
 | `scripts/sync-priority.sh` | Vendors `.github/workflows/issue-priority.yml` and renders the forms' priority question from `design/labels.json` (`--check` to detect drift) |
 | `.aislop/base.yml` | The suite's aislop policy; each repo's `.aislop/config.yml` extends it with only that tree's size ratchet |
 | `.github/workflows/aislop.yml` | The aislop gate as a reusable workflow, pinning aislop and ruff once; `ci.yml` here and each product's CI call it |
+| `.github/workflows/pr-labelled.yml` | The pull-request label gate as a reusable workflow, called from each product's CI |
 | `.github/workflows/drift.yml` | The cross-repo drift checks, on every push and nightly |
 | `scripts/sync-labels.sh` | Applies `design/labels.json`'s GitHub side via `gh` (`--check` to detect drift) |
 | `scripts/validate-schemas.sh` | Validates every manifest against its schema |

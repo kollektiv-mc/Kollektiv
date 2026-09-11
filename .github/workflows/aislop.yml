@@ -1,0 +1,39 @@
+# The aislop gate, as a reusable workflow: kollektiv's own CI calls it locally,
+# and each product calls it as
+#
+#   uses: kollektiv-mc/Kollektiv/.github/workflows/aislop.yml@main
+#
+# so the aislop version and the ruff version are pinned in exactly one place.
+# The policy the run applies is not here: it is .aislop/base.yml, vendored into
+# each product by scripts/sync-aislop.sh, plus that product's own
+# .aislop/config.yml on top. A reusable workflow checks out the *calling*
+# repository, so the config it finds is the caller's.
+#
+# ruff is installed explicitly because aislop's Python formatting and lint
+# engines run only when a ruff binary is on PATH, and report nothing at all
+# when one is not. Konnekt's job found this the hard way: its gate passed at
+# 100 in CI while a local scan, with ruff present, flagged a vendored file.
+# Pinned, like aislop itself, because a formatter that moves on its own is not
+# a gate.
+name: aislop
+
+on:
+  workflow_call:
+
+jobs:
+  aislop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install ruff==0.16.7
+
+      - run: npx --yes aislop@0.16.0 ci

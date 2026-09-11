@@ -44,6 +44,13 @@ jobs:
       - name: Release-notes classifier
         run: python3 plugins/suite-kit/release-notes_test.py
 
+  # The AI-slop gate this repo asks the products to carry, applied to itself:
+  # the master copies of the runner and the generator are scored here, so a
+  # finding against a vendored file is always a finding against this repo.
+  # The job body is the reusable workflow the products call.
+  aislop:
+    uses: ./.github/workflows/aislop.yml
+
   token-drift:
     runs-on: ubuntu-latest
     steps:

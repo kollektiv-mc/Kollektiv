@@ -53,16 +53,39 @@ checked only when someone invoked `/suite-kit:health` by hand.
 `tokens.sourceFile`, every `health.commands[].cwd` — still exist. It runs in this
 repo's `.claude/suite.json` and in CI with `--require-products`.
 
+The cross-repo checks are one workflow, `.github/workflows/drift.yml`, on every
+push and nightly: token, runner, aislop-policy, priority and release-notes drift,
+product manifest validation and participation. The runner check runs with
+`--require-vendored`; the other three sync checks do not, until Konnekt adopts the
+aislop base and the priority question and Kommands adopts the generator.
+
+Three things are shared as files a product vendors and this repo's gate holds
+clean: `.aislop/base.yml` (`scripts/sync-aislop.sh`), the issue-priority workflow
+and the question its forms ask, rendered from `design/labels.json`
+(`scripts/sync-priority.sh`), and the release-notes generator
+(`scripts/sync-notes.sh`). One is shared by reference: the aislop CI job is a
+reusable workflow, `.github/workflows/aislop.yml`, so the aislop and ruff versions
+are pinned once. `check-participation.sh` checks that every vendored file is
+excluded from the product's own formatter and scanner, which is the rule the
+Sep 2026 drift (Konnekt's gate reformatting its vendored generator) was an instance
+of.
+
 Still open, in rough order:
 
-- Turning on `scripts/sync-runner.sh --check --require-vendored` in CI. Both
-  products carry the runner in a working tree here, but the flag can only go on
-  once those commits are on their default branches — CI clones from there.
-- A CI job in Kommands that runs its vendored runner. Every check it declares
-  reports as skipped until `src/` and `package.json` exist, so the job would
-  verify nothing yet; it lands with the scaffolding.
-- Kommands turning on `--require-runnable` once `src/` exists. Until then its
-  entire check set reports as skipped, which is honest but verifies nothing.
+- Konnekt adopting the shared gates: `extends: ./base.yml` in its aislop config
+  with the base vendored beside it, the vendored generator in its `.aislopignore`,
+  the priority question in its three forms, and calling the reusable aislop
+  workflow instead of its own job. Then `sync-aislop.sh` and `sync-priority.sh`
+  can run with `--require-vendored`.
+- Kommands adopting them too: aislop with its own ratchet (it scores 89 today
+  with no gate), the label gate and a `.github/changelog.json`, Dependabot,
+  CodeQL, Scorecard and a security policy, all of which Konnekt has and it does
+  not. The release-notes generator itself once it tags a release; until then
+  `sync-notes.sh` reports it as not adopted, and that is a skip, not a pass.
+- Turning `sync-notes.sh --check --require-vendored` on once Kommands carries
+  the generator.
+- Returning this repo's `quality.maxNesting` to the base's 5. It is held at 7 by
+  `run_invariants` in `suite-check.py`, which #23 already needs to touch.
 - Widening Konnekt's literals invariant past borders. It declares
   `tokens.enforce: "migrating"` and names the covered paths, and the
   `no literal border widths` entry closed the border sweep — 0 literals against
@@ -192,10 +215,11 @@ Still open here:
   empty description, which is what applying a label by hand creates. No Kommands
   issue has ever carried a priority, so the suite's own rule that a repo does not
   invent its own priority scale is currently unenforced there rather than followed.
-- Deciding whether `suite.repos.json` and `design/suite.schema.json` should describe
-  Kommands as something other than `"kind": "vite-web"` once it also ships a Wails
-  binary. Konnekt is `wails-desktop` and Kommands would be genuinely both, which the
-  single-`kind` field cannot express.
+
+Closed: the schema now has a `distribution` block for a product that ships more than
+one build from one codebase, with `current` and `planned` lists, which is what the
+single-valued `kind` could not say; Kommands' manifest and `suite.repos.json` both
+read `vite-web+wails-desktop`.
 
 ## superpowers adoption
 

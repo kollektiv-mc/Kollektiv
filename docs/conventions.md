@@ -175,9 +175,8 @@ product's own `.github/changelog.json`, holding the non-app path list the
 generator cannot run without; `sync-notes.sh` skips a product that has none and
 reports it as not adopted rather than as drift. Kommands has no
 `.github/changelog.json`, so it has neither the generator nor the label gate
-below, and that is the expected state rather than a gap to close. Whether it
-should adopt is a separate decision about whether that repo wants generated
-release notes at all, and it starts by writing a `changelog.json`.
+below. Both are on `docs/roadmap.md`: the label gate first, since its issues
+already carry the same labels, and the generator once Kommands tags a release.
 
 **Every pull request carries exactly one `type:` label.** The label alone decides
 where it lands, and in an adopting product CI fails a pull request without one.
@@ -280,6 +279,26 @@ A repo does not invent its own type or priority labels.
 becomes a line in the release notes, vendored by `scripts/sync-notes.sh`. See
 § Release notes and pull request labelling above for the split between those
 rules and each product's own `.github/changelog.json`.
+
+**Shared**, in `.aislop/base.yml`: the aislop policy, vendored by
+`scripts/sync-aislop.sh`, and the gate that runs it, the reusable workflow
+`.github/workflows/aislop.yml`, which every repo's CI calls so the aislop and
+ruff versions are pinned once. Per-repo: the size ratchet in each
+`.aislop/config.yml`, held at that tree's largest function and file, and the
+`.aislopignore` naming what that tree generates or vendors.
+
+**Shared**, in `design/labels.json`'s `priorityForm`: the question every issue
+form asks and the `p*` label each answer becomes, rendered into the forms and
+into the vendored `.github/workflows/issue-priority.yml` by
+`scripts/sync-priority.sh`. Per-repo: everything else in the forms.
+
+**A vendored file is never touched by a product's own tools.** Every sync script
+byte-compares its master against the product's copy, so a product formatter or
+scanner that rewrites one hands the nightly a drift only the next sync can undo.
+The masters here are held to the same aislop gate the products run, so they
+arrive clean, and `scripts/check-participation.sh` checks that each product's
+`.aislopignore`, and its root `.prettierignore` where Prettier runs at the root,
+list what it vendors.
 
 **Per-repo:**
 

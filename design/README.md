@@ -126,8 +126,8 @@ Drift is caught by the only checkout that holds both sides:
 ./scripts/sync-tokens.sh --check     # reports drift, writes nothing, exits non-zero
 ```
 
-The hub's `token-drift` CI job clones every product from `suite.repos.json` and runs
-exactly that. It also runs on a daily schedule, because drift is introduced by commits
+The hub's `Suite drift` workflow (`.github/workflows/drift.yml`) clones every product
+from `suite.repos.json` and runs exactly that. It also runs on a daily schedule, because drift is introduced by commits
 to the *product* repos, which this repo never sees — without the schedule it would go
 unnoticed until the next change here.
 

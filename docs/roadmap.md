@@ -55,15 +55,15 @@ repo's `.claude/suite.json` and in CI with `--require-products`.
 
 The cross-repo checks are one workflow, `.github/workflows/drift.yml`, on every
 push and nightly: token, runner, aislop-policy, priority and release-notes drift,
-product manifest validation and participation. The runner check runs with
-`--require-vendored`; the other three sync checks do not, until Konnekt adopts the
-aislop base and the priority question and Kommands adopts the generator.
+product manifest validation and participation. The runner and release-notes
+checks run with `--require-vendored`; the aislop and priority checks do not, until
+Konnekt adopts the aislop base and the priority question.
 
 Three things are shared as files a product vendors and this repo's gate holds
 clean: `.aislop/base.yml` (`scripts/sync-aislop.sh`), the issue-priority workflow
 and the question its forms ask, rendered from `design/labels.json`
-(`scripts/sync-priority.sh`), and the release-notes generator
-(`scripts/sync-notes.sh`). Two are shared by reference, as reusable workflows: the aislop CI job
+(`scripts/sync-priority.sh`), and the release-notes generator with
+its tests and GitHub's fallback layout (`scripts/sync-notes.sh`). Two are shared by reference, as reusable workflows: the aislop CI job
 (`.github/workflows/aislop.yml`, so the aislop and ruff versions are pinned once)
 and the pull-request label gate (`.github/workflows/pr-labelled.yml`). `check-participation.sh` checks that every vendored file is
 excluded from the product's own formatter and scanner, which is the rule the
@@ -78,13 +78,9 @@ Still open, in rough order:
   workflow instead of its own job. Then `sync-aislop.sh` and `sync-priority.sh`
   can run with `--require-vendored`. Its inline `pr-labelled` job predates the
   reusable one and can become a call to it.
-- Kommands adopting them too: aislop with its own ratchet (it scores 89 today
-  with no gate), the label gate and a `.github/changelog.json`, Dependabot,
-  CodeQL, Scorecard and a security policy, all of which Konnekt has and it does
-  not. The release-notes generator itself once it tags a release; until then
-  `sync-notes.sh` reports it as not adopted, and that is a skip, not a pass.
-- Turning `sync-notes.sh --check --require-vendored` on once Kommands carries
-  the generator.
+- A release workflow for Kommands. It carries the generator, its
+  `.github/changelog.json` and the fallback layout, and tests the generator on
+  every push, but nothing there cuts a tag or calls it yet.
 - Returning this repo's `quality.maxNesting` to the base's 5. It is held at 7 by
   `run_invariants` in `suite-check.py`, which #23 already needs to touch.
 - Widening Konnekt's literals invariant past borders. It declares

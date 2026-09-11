@@ -23,7 +23,7 @@ change here that requires a product to rebuild is a change in the wrong place.
 | `scripts/adopt.sh` | Scaffolds a repo's manifest, settings block and vendored files |
 | `scripts/sync-tokens.sh` | Vendors `design/tokens.json` into each product (`--check` to detect drift) |
 | `scripts/sync-runner.sh` | Vendors `suite-check.py` into each product (`--check` to detect drift) |
-| `scripts/sync-notes.sh` | Vendors the release-notes generator into each product that has a `.github/changelog.json` (`--check` to detect drift) |
+| `scripts/sync-notes.sh` | Vendors the release-notes generator, its tests and GitHub's fallback layout into each product; a product's `.github/changelog.json` is the adoption marker (`--check` to detect drift) |
 | `scripts/sync-aislop.sh` | Vendors `.aislop/base.yml` into each product that has adopted aislop (`--check` to detect drift, and a config that does not extend it) |
 | `scripts/sync-priority.sh` | Vendors `.github/workflows/issue-priority.yml` and renders the forms' priority question from `design/labels.json` (`--check` to detect drift) |
 | `.aislop/base.yml` | The suite's aislop policy; each repo's `.aislop/config.yml` extends it with only that tree's size ratchet |

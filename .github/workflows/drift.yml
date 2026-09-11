@@ -83,12 +83,12 @@ jobs:
       # published — so it is caught here, in the one checkout holding both
       # sides.
       #
-      # Runs on a red run, per the reasoning on the steps around it. Without
-      # --require-vendored while Kommands has yet to adopt it; a stale copy in
-      # either product still fails.
+      # Runs on a red run, per the reasoning on the steps around it.
+      # --require-vendored: both products carry a .github/changelog.json, so a
+      # product without the generator is one that lost it, not one yet to adopt.
       - name: Release-notes drift
         if: ${{ !cancelled() }}
-        run: ./scripts/sync-notes.sh --check
+        run: ./scripts/sync-notes.sh --check --require-vendored
 
       # The products are cloned here anyway, so validate their manifests against
       # the schema while we have them.

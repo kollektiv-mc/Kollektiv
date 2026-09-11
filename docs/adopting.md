@@ -216,7 +216,17 @@ into a form without the markers. Add the workflow to the repo's `.prettierignore
 Prettier runs at its root: the sync byte-compares the copies, and a formatted copy is
 drift.
 
-`scripts/check-participation.sh` checks the last point for every vendored file, in
+**The release notes.** Write `.github/changelog.json` with the repo's `nonAppPaths`,
+the prefixes a pull request can touch without changing what ships (Konnekt's and
+Kommands' are worked examples, with the reasoning for each entry beside it), then
+run `./scripts/sync-notes.sh`, which copies the generator, its tests and GitHub's
+fallback layout in. Add a CI job that runs `.github/scripts/release-notes_test.py`
+on every push, and list the two Python files in `.aislopignore` and the layout in
+`.prettierignore`. The release workflow, when the repo has one, calls the generator
+the way Konnekt's does and falls back to GitHub's layout if it cannot produce a
+body.
+
+`scripts/check-participation.sh` checks the ignore rule for every vendored file, in
 `.aislopignore` and a root `.prettierignore`, so a product gate cannot rewrite a
 vendored file and hand the nightly a drift it cannot fix.
 
@@ -284,10 +294,12 @@ records that only the web build is released today, with the desktop shell under
 `planned` until a release workflow produces installable artefacts.
 
 It carries the priority question in both forms and the vendored
-`.github/workflows/issue-priority.yml`, and its `.prettierignore` excludes the
-workflow and `tokens.source.json`. It has not adopted aislop, and has no
-`.github/changelog.json`, so neither the release-notes generator nor the label gate
-runs there yet; both are on `docs/roadmap.md`.
+`.github/workflows/issue-priority.yml`, the aislop base with its own ratchet and,
+for now, the score it had on adoption, the release-notes generator with its
+`.github/changelog.json`, and both reusable gates in CI. Its `.prettierignore`
+excludes every vendored YAML and JSON file, and its `.aislopignore` the vendored
+Python. It has no release workflow yet, so the generator is tested on every push
+and not yet called.
 
 `.claude/rules/*.md` stay where they are. They are path-scoped and auto-inject when
 a matching file is edited — a plugin skill does not do that, so the plugin does not

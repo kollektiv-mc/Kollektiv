@@ -170,13 +170,13 @@ A product that has adopted this builds its notes with
 product's own container, with this repo nowhere on disk and no plugin installed,
 so the generator has to be *in* the product.
 
-**Adoption is per product, and only Konnekt has adopted it.** The marker is a
-product's own `.github/changelog.json`, holding the non-app path list the
-generator cannot run without; `sync-notes.sh` skips a product that has none and
-reports it as not adopted rather than as drift. Kommands has no
-`.github/changelog.json`, so it has neither the generator nor the label gate
-below. Both are on `docs/roadmap.md`: the label gate first, since its issues
-already carry the same labels, and the generator once Kommands tags a release.
+**Both products carry it.** The marker is a product's own
+`.github/changelog.json`, holding the non-app path list the generator cannot run
+without; `sync-notes.sh` vendors the generator, its tests and GitHub's fallback
+layout (`.github/release.yml`) beside it, and the drift check runs with
+`--require-vendored`. Konnekt's release workflow calls the generator when it cuts
+a release; Kommands has no release workflow yet, so there the generator is
+tested on every push and waits for its first tag.
 
 **Every pull request carries exactly one `type:` label.** The label alone decides
 where it lands, and CI fails a pull request without one: the check is

@@ -57,10 +57,16 @@ SHELL_KEYWORDS = {
 # can do anything. Having the binary installed is not the same as having
 # something for it to run against, and conflating the two turns "this repo is
 # not scaffolded yet" into a wall of red failures.
+#
+# npx is deliberately not here. `npx --yes <package>` fetches and runs a tool
+# against whatever directory it is in, package.json or not, which is how the
+# aislop gate runs in kollektiv, a repo with no JavaScript. Listing it did two
+# wrong things: kollektiv's aislop check was skipped on sight, and in a product
+# an aislop failure with no node_modules installed was reported as
+# "dependencies not installed" rather than as the failure it was.
 PROJECT_MANIFESTS = {
     "pnpm": "package.json",
     "npm": "package.json",
-    "npx": "package.json",
     "yarn": "package.json",
     "go": "go.mod",
     "cargo": "Cargo.toml",

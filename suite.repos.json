@@ -21,7 +21,7 @@
     {
       "name": "Kommands",
       "url": "https://github.com/kollektiv-mc/Kommands.git",
-      "kind": "vite-web",
+      "kind": "vite-web+wails-desktop",
       "roadmap": "docs/roadmap.md",
       "tokens": {
         "role": "consumer",

@@ -79,6 +79,12 @@ inside a skill, as confusing prose.
 | `minecraft.targetVersion` | Version the repo emits for |
 | `minecraft.dataSource` | Where pinned registry data comes from |
 | `minecraft.traitMatrix` | Path to the version-trait document |
+| `distribution.current` | Builds a user can obtain today, e.g. `web`, `desktop-wails-v2`. For a product shipping more than one build from one codebase, which the single-valued `kind` cannot express. Omitted by a repo with one build |
+| `distribution.planned` | Builds in the tree with no release producing installable artefacts yet |
+| `distribution.doc` | The document describing the builds and the boundary between them. Must exist |
+| `distribution.issue` | GitHub issue URL tracking the planned build, if one is open |
+| `distribution.note` | A short pointer into `doc`, not a second copy of it |
+| `docs` | camelCase names to repo-relative paths, the named entry points a skill or a person needs without guessing: `architecture`, `persistence`, `healthChecklist`. Every path must exist |
 | `health.commands` | Ordered `{ name, run, cwd? }` list — `cwd` is relative to the repo root and defaults to it |
 | `health.invariants` | `{ name, grep, paths, exclude, expect, diagnosis, reference }` |
 | `health.generated` | List of `{ regenerate, cwd?, expectCleanDiff, requiresNetwork, diagnosis, reference }` — a repo can have more than one generator, and Kommands has two. `expectCleanDiff` is the list of repo-relative paths that must be unchanged after `regenerate` runs |

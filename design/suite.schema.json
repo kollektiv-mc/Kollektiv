@@ -211,6 +211,48 @@
       }
     },
 
+    "distribution": {
+      "type": "object",
+      "required": ["current", "doc"],
+      "additionalProperties": false,
+      "description": "How this product reaches its users, for a repo that ships more than one build from one codebase. 'kind' names the stack; this names what is actually released today and what is on the way. Present so that a product which is both a web app and a desktop binary is not forced to pick one for a single-valued field. Omitted by a repo with one build and by the workspace root.",
+      "properties": {
+        "current": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Builds a user can obtain today. Free-form names, e.g. 'web', 'desktop-wails-v2'."
+        },
+        "planned": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Builds that exist in the tree but have no release producing installable artefacts yet. A shell that compiles is not the same as a build users can get, and this list is where that distinction is recorded."
+        },
+        "doc": {
+          "allOf": [{ "$ref": "#/$defs/repoRelativePath" }],
+          "description": "The document describing the builds and the boundary between them."
+        },
+        "issue": {
+          "type": "string",
+          "pattern": "^https://github\\.com/[^/]+/[^/]+/issues/[0-9]+$",
+          "description": "The GitHub issue tracking the planned build, if one is open."
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Anything the lists above cannot say, kept short. The document named in 'doc' is where the reasoning belongs; this is a pointer into it, not a second copy."
+        }
+      }
+    },
+
+    "docs": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "$ref": "#/$defs/repoRelativePath" },
+      "propertyNames": { "pattern": "^[a-z][a-zA-Z0-9]*$" },
+      "description": "Named entry points into the repo's documentation, for a skill or a person that needs the architecture or persistence document without guessing its path. camelCase names to repo-relative paths. Like 'roadmap' above, every path named here must exist; scripts/check-participation.sh checks that it does."
+    },
+
     "health": {
       "type": "object",
       "required": ["commands"],

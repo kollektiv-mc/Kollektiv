@@ -245,6 +245,9 @@ def check_repo(label, repo_dir):
 
     path_check(suite.get("roadmap"), "roadmap")
     path_check((suite.get("tokens") or {}).get("sourceFile"), "tokens.sourceFile")
+    path_check((suite.get("distribution") or {}).get("doc"), "distribution.doc")
+    for key, rel_path in sorted((suite.get("docs") or {}).items()):
+        path_check(rel_path, "docs.%s" % key)
 
     check_style(label, repo_dir)
 

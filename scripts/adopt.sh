@@ -10,7 +10,7 @@
 #   scripts/adopt.sh <path> [--kind <kind>] [--product <name>] [--roadmap <path>]
 #
 # Writes .claude/suite.json, merges the permissions block into .claude/settings.json,
-# adds the .gitignore lines, then delegates the two vendoring steps to the scripts
+# adds the .gitignore lines, then delegates the vendoring steps to the scripts
 # that already own them.
 #
 # Non-destructive, like every script here. A repo that already carries a manifest is
@@ -174,7 +174,7 @@ fi
 
 # --- vendored files -------------------------------------------------------
 
-# Delegated rather than reimplemented. These two scripts already know how to vendor,
+# Delegated rather than reimplemented. These scripts already know how to vendor,
 # how to report, and how to detect drift afterwards; a second copy of that logic here
 # is the duplication this repo exists to prevent. They read suite.repos.json, so they
 # only act on a repo listed there — a target outside the manifest is told to add
@@ -186,9 +186,11 @@ sys.exit(0 if any(r["name"] == sys.argv[2] for r in repos) else 1)
 ' "$root/suite.repos.json" "$(basename "$target")" 2>/dev/null; then
   "$root/scripts/sync-tokens.sh" || status=1
   "$root/scripts/sync-runner.sh" || status=1
+  "$root/scripts/sync-workflows.sh" || status=1
+  "$root/scripts/sync-priority.sh" || status=1
 else
   echo "? $product is not in suite.repos.json — add it there, then run:" >&2
-  echo "    ./scripts/sync-tokens.sh && ./scripts/sync-runner.sh" >&2
+  echo "    ./scripts/sync-tokens.sh && ./scripts/sync-runner.sh && ./scripts/sync-workflows.sh && ./scripts/sync-priority.sh" >&2
   status=1
 fi
 

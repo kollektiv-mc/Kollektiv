@@ -137,7 +137,62 @@ A copy that has gone *stale* is a failure, because that one is a check quietly
 running the wrong rules. `--require-vendored` collapses the two, and CI turns it on
 once every product carries the file.
 
-## 6. Ignore the runtime state
+## 6. Vendor the shared workflows
+
+```sh
+./scripts/sync-workflows.sh       # from the kollektiv root
+```
+
+This copies `plugins/suite-kit/workflows/codeql.yml` and `scorecard.yml` into the
+repo's `.github/workflows/`. Commit them. A workflow has to be in the repo for
+GitHub to run it, and a copy is reviewed where it runs, which a `uses:` reference
+to a branch of this repo would not be.
+
+Like the other vendored files, the copies are not the place to edit: the next
+`sync-workflows.sh` overwrites them, and `scripts/sync-workflows.sh --check` in
+CI's `token-drift` job reports a copy that has drifted. A repo that has never
+carried a workflow is reported and skipped there; `--require-vendored` turns that
+into a failure once every product carries every file.
+
+Nothing product-specific belongs in a shared workflow. CodeQL's language matrix
+is the one thing in there that could tempt it, and it is the same four languages
+on both products by construction; a fifth changes the source here.
+
+## 7. Vendor the priority block
+
+Every issue form in the suite ends by asking how urgent the report is, and a
+workflow turns the answer into a `p1`-`p3` label when the issue is opened. The
+dropdown and the workflow are vendored together, because an answer the workflow
+cannot read is the silent failure this exists to prevent.
+
+Adopting takes one manual step first. In every form under
+`.github/ISSUE_TEMPLATE/`, put a pair of marker lines where the question belongs,
+normally just before the closing free-text field:
+
+```yaml
+  # >>> suite:priority. Vendored from kollektiv by scripts/sync-priority.sh. Edit it there.
+  # <<< suite:priority
+```
+
+Then:
+
+```sh
+./scripts/sync-priority.sh        # from the kollektiv root
+```
+
+This fills the space between the markers from
+`plugins/suite-kit/issue-forms/priority.yml` and copies
+`plugins/suite-kit/workflows/issue-priority.yml` to
+`.github/workflows/issue-priority.yml`. Commit both. Before copying anything it
+checks that the heading the workflow looks for is the dropdown's label, that every
+option maps to a label, and that every mapped label is one `design/labels.json`
+defines; a mismatch stops the sync.
+
+Every form must carry the markers once any does. The workflow comments on each
+issue that arrives without an answer, and a form with no dropdown produces exactly
+that issue, so `--check` fails on a form left out.
+
+## 8. Ignore the runtime state
 
 ```gitignore
 .claude/settings.local.json

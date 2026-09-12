@@ -5,7 +5,11 @@ and **Kommands** (Vite · React). This repo owns **conventions, domain knowledge
 agent tooling**.
 
 It does **not** own builds, CI, or releases for the products — each keeps its own. A
-change here that requires a product to rebuild is a change in the wrong place.
+change here that requires a product to rebuild is a change in the wrong place. The one
+exception is the handful of workflows under `plugins/suite-kit/workflows/` that run
+identically on every product: authored here, vendored into each product by
+`scripts/sync-workflows.sh` and `scripts/sync-priority.sh`, and owned by the product
+that commits the copy and runs it.
 
 ## What lives here
 
@@ -18,11 +22,17 @@ change here that requires a product to rebuild is a change in the wrong place.
 | `design/suite.schema.json` | Schema for the per-repo `.claude/suite.json` |
 | `plugins/suite-kit/` | The shared Claude Code plugin |
 | `plugins/suite-kit/suite-check.py` | Runs a repo's checks from its `.claude/suite.json`, with no plugin installed |
+| `plugins/suite-kit/release-notes.py` | The release-notes generator every product cuts its notes with, vendored into `.github/scripts/` |
+| `plugins/suite-kit/workflows/` | The workflows every product runs identically, vendored into `.github/workflows/` |
+| `plugins/suite-kit/issue-forms/priority.yml` | The priority dropdown every issue form carries, vendored between marker lines |
 | `scripts/bootstrap.sh` | Clones the products as siblings |
 | `scripts/lib/python.sh` | Resolves a Python 3 interpreter for the other scripts, and strips CRs from its output |
 | `scripts/adopt.sh` | Scaffolds a repo's manifest, settings block and vendored files |
 | `scripts/sync-tokens.sh` | Vendors `design/tokens.json` into each product (`--check` to detect drift) |
 | `scripts/sync-runner.sh` | Vendors `suite-check.py` into each product (`--check` to detect drift) |
+| `scripts/sync-notes.sh` | Vendors the release-notes generator into each product (`--check` to detect drift) |
+| `scripts/sync-workflows.sh` | Vendors the shared workflows into each product (`--check` to detect drift) |
+| `scripts/sync-priority.sh` | Vendors the priority workflow and dropdown together, checked against `design/labels.json` (`--check` to detect drift) |
 | `scripts/sync-labels.sh` | Applies `design/labels.json`'s GitHub side via `gh` (`--check` to detect drift) |
 | `scripts/validate-schemas.sh` | Validates every manifest against its schema |
 | `scripts/check-participation.sh` | Checks each repo's permissions floor and the paths its manifest names (`--require-products` to fail on an uncloned one) |
@@ -54,6 +64,11 @@ regenerating safe — do not give a product `tokens.role: "source"`.
 
 **Products vendor rather than reference.** Konnekt has a tag-driven release that builds
 from a standalone clone; requiring a `kollektiv` checkout beside it would break that.
+
+**Shared workflows are vendored, never referenced.** A `uses: kollektiv-mc/Kollektiv/...@main`
+line in a product's CI would make every run there depend on an unpinned branch of this
+repo, and a change here would land in the product with no pull request to review it. The
+copy is reviewed where it runs; `sync-workflows.sh --check` in CI is what keeps it honest.
 
 **suite-kit ships no hooks, deliberately.** Konnekt already binds `graphify hook-guard`
 to `PreToolUse`; stacking more matchers is the fastest way to make both feel broken.

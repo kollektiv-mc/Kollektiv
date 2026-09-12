@@ -1,0 +1,9 @@
+# Paths aislop does not score. Same glob semantics as its `exclude`.
+
+# The products, cloned beside this repo by scripts/bootstrap.sh. Each is its own
+# repository with its own gate; scoring them here would score them twice.
+Konnekt
+Kommands
+
+# Python bytecode, from importing suite-check.py.
+__pycache__

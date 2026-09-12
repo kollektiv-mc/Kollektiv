@@ -23,19 +23,22 @@ that commits the copy and runs it.
 | `plugins/suite-kit/` | The shared Claude Code plugin |
 | `plugins/suite-kit/suite-check.py` | Runs a repo's checks from its `.claude/suite.json`, with no plugin installed |
 | `plugins/suite-kit/release-notes.py` | The release-notes generator every product cuts its notes with, vendored into `.github/scripts/` |
-| `plugins/suite-kit/workflows/` | The workflows every product runs identically, vendored into `.github/workflows/` |
-| `plugins/suite-kit/issue-forms/priority.yml` | The priority dropdown every issue form carries, vendored between marker lines |
+| `plugins/suite-kit/workflows/` | The workflows every product runs identically (the aislop gate, CodeQL, the pull-request label gate, Scorecard), vendored into `.github/workflows/` |
 | `scripts/bootstrap.sh` | Clones the products as siblings |
 | `scripts/lib/python.sh` | Resolves a Python 3 interpreter for the other scripts, and strips CRs from its output |
 | `scripts/adopt.sh` | Scaffolds a repo's manifest, settings block and vendored files |
 | `scripts/sync-tokens.sh` | Vendors `design/tokens.json` into each product (`--check` to detect drift) |
 | `scripts/sync-runner.sh` | Vendors `suite-check.py` into each product (`--check` to detect drift) |
-| `scripts/sync-notes.sh` | Vendors the release-notes generator into each product (`--check` to detect drift) |
+| `scripts/sync-notes.sh` | Vendors the release-notes generator, its tests and GitHub's fallback layout into each product; a product's `.github/changelog.json` is the adoption marker (`--check` to detect drift) |
 | `scripts/sync-workflows.sh` | Vendors the shared workflows into each product (`--check` to detect drift) |
-| `scripts/sync-priority.sh` | Vendors the priority workflow and dropdown together, checked against `design/labels.json` (`--check` to detect drift) |
+| `scripts/sync-aislop.sh` | Vendors `.aislop/base.yml` into each product that has adopted aislop (`--check` to detect drift, and a config that does not extend it) |
+| `scripts/sync-priority.sh` | Vendors `.github/workflows/issue-priority.yml` and renders the forms' priority question from `design/labels.json` (`--check` to detect drift) |
+| `.aislop/base.yml` | The suite's aislop policy; each repo's `.aislop/config.yml` extends it with only that tree's size ratchet |
+| `.github/workflows/issue-priority.yml` | The issue-priority workflow, run here and vendored into each product |
+| `.github/workflows/drift.yml` | The cross-repo drift checks, on every push and nightly |
 | `scripts/sync-labels.sh` | Applies `design/labels.json`'s GitHub side via `gh` (`--check` to detect drift) |
 | `scripts/validate-schemas.sh` | Validates every manifest against its schema |
-| `scripts/check-participation.sh` | Checks each repo's permissions floor and the paths its manifest names (`--require-products` to fail on an uncloned one) |
+| `scripts/check-participation.sh` | Checks each repo's permissions floor, the paths its manifest names, its formatting settings, and that every vendored file is excluded from that repo's own formatter and scanner (`--require-products` to fail on an uncloned one) |
 | `docs/adopting.md` | How a repo adopts suite-kit |
 | `docs/conventions.md` | Cross-repo rules: tracking, PR magic words, permissions |
 | `docs/linear.md` | The Linear structure `/suite-kit:suite-sync` mirrors GitHub Issues into |
@@ -76,6 +79,15 @@ to `PreToolUse`; stacking more matchers is the fastest way to make both feel bro
 **Version bumps come in pairs.** `plugins/suite-kit/.claude-plugin/plugin.json` and
 `.claude-plugin/marketplace.json` must agree — a health check fails if they diverge.
 
+**A vendored file is never touched by a product's own tools.** Every sync script
+byte-compares its master against the product's copy, so a product formatter or
+scanner that rewrites one creates drift nothing but the next sync can undo. That
+happened once: Konnekt's aislop gate ran `ruff format` over its vendored
+`release-notes.py`, and the nightly was red for a week. The masters here are held
+to the same gate the products run, so they arrive clean, and
+`check-participation.sh` checks that each product's `.aislopignore` and root
+`.prettierignore` list what it vendors.
+
 ## Before calling a task done
 
 Run `/suite-kit:health`. It reads `.claude/suite.json` and runs every check, including
@@ -104,10 +116,10 @@ enforces that distinction mechanically: a grep over a path that does not exist, 
 installed — each is a skip with a reason, and none of them is a pass.
 
 **Token drift is deliberately not one of those checks.** `/suite-kit:health` reports on
-one repo; drift detection needs every product cloned beside this one, which CI's
-`token-drift` job guarantees with `bootstrap.sh` and a bare clone does not. Including it
-here would fail on a clean checkout. Run `./scripts/sync-tokens.sh --check` yourself when
-you have a full workspace.
+one repo; drift detection needs every product cloned beside this one, which the `Suite drift`
+workflow (`.github/workflows/drift.yml`) guarantees with `bootstrap.sh` and a bare
+clone does not. Including it here would fail on a clean checkout. Run the `--check`
+form of each `sync-*.sh` script yourself when you have a full workspace.
 
 ## Writing docs in this repo
 

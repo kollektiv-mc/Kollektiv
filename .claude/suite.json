@@ -24,6 +24,10 @@
       {
         "name": "participation",
         "run": "./scripts/check-participation.sh"
+      },
+      {
+        "name": "aislop",
+        "run": "npx --yes aislop@0.16.0 ci"
       }
     ]
   }

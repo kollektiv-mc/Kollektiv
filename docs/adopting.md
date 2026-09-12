@@ -2,7 +2,9 @@
 
 Six things go into each product repo: a settings block, a permissions block, a
 `.claude/suite.json`, a vendored `tokens.source.json`, a vendored
-`.claude/suite-check.py`, and two `.gitignore` lines. Nothing else about the repo
+`.claude/suite-check.py`, and two `.gitignore` lines. Two more are the shared
+gates, adopted once the repo has a toolchain to gate: the aislop policy and the
+priority question its issue forms ask (step 7). Nothing else about the repo
 changes.
 
 ```sh
@@ -79,6 +81,12 @@ inside a skill, as confusing prose.
 | `minecraft.targetVersion` | Version the repo emits for |
 | `minecraft.dataSource` | Where pinned registry data comes from |
 | `minecraft.traitMatrix` | Path to the version-trait document |
+| `distribution.current` | Builds a user can obtain today, e.g. `web`, `desktop-wails-v2`. For a product shipping more than one build from one codebase, which the single-valued `kind` cannot express. Omitted by a repo with one build |
+| `distribution.planned` | Builds in the tree with no release producing installable artefacts yet |
+| `distribution.doc` | The document describing the builds and the boundary between them. Must exist |
+| `distribution.issue` | GitHub issue URL tracking the planned build, if one is open |
+| `distribution.note` | A short pointer into `doc`, not a second copy of it |
+| `docs` | camelCase names to repo-relative paths, the named entry points a skill or a person needs without guessing: `architecture`, `persistence`, `healthChecklist`. Every path must exist |
 | `health.commands` | Ordered `{ name, run, cwd? }` list — `cwd` is relative to the repo root and defaults to it |
 | `health.invariants` | `{ name, grep, paths, exclude, expect, diagnosis, reference }` |
 | `health.generated` | List of `{ regenerate, cwd?, expectCleanDiff, requiresNetwork, diagnosis, reference }` — a repo can have more than one generator, and Kommands has two. `expectCleanDiff` is the list of repo-relative paths that must be unchanged after `regenerate` runs |
@@ -129,13 +137,12 @@ quietly vacuous.
 
 Like `tokens.source.json`, the vendored copy is not the place to edit: the next
 `sync-runner.sh` overwrites it. `scripts/sync-runner.sh --check` reports drift, and
-CI's `token-drift` job runs it on every push and nightly.
+the `Suite drift` workflow (`.github/workflows/drift.yml`) runs it on every push and
+nightly, with `--require-vendored`: both products carry the runner, so a product
+without it is one that lost the file, not one that has yet to adopt.
 
-A product that has never vendored the runner is reported and skipped there rather
-than failed — adoption lands in the product's repo, so a build here cannot fix it.
-A copy that has gone *stale* is a failure, because that one is a check quietly
-running the wrong rules. `--require-vendored` collapses the two, and CI turns it on
-once every product carries the file.
+The same split, not adopted is a skip and stale is a failure, holds for every other
+vendored file, and each `sync-*.sh --check` reports it the same way.
 
 ## 6. Vendor the shared workflows
 
@@ -201,6 +208,83 @@ that issue, so `--check` fails on a form left out.
 Shared config is committed so every clone and cloud agent inherits the same setup.
 Personal permission allowlists are not shared.
 
+## 7. Adopt the shared gates
+
+Two more files are vendored once the repo has code to gate. Neither is scaffolded
+by `adopt.sh`, because each needs a decision the script cannot make.
+
+**The aislop policy.** Write `.aislop/config.yml` with `extends: ./base.yml` as its
+first line (the `./` is load-bearing: aislop resolves the path relative to the config
+and silently loads nothing without it), then run `./scripts/sync-aislop.sh` from the
+kollektiv root, which copies `.aislop/base.yml` beside it. The base is the policy:
+engines, the rules turned off and why, scoring, telemetry off, and `failBelow: 100`.
+Your config carries only the size ratchet, `quality.maxFunctionLoc` and
+`quality.maxFileLoc`, each held at the tree's largest function and file today and
+lowered as they shrink, never raised; run `npx --yes aislop@0.16.0 scan` to find the
+numbers. Add an `.aislopignore` listing what is generated or vendored, the vendored
+Python above included. Then call the gate from CI:
+
+```yaml
+  aislop:
+    uses: kollektiv-mc/Kollektiv/.github/workflows/aislop.yml@main
+```
+
+That workflow pins aislop and ruff in one place for every repo. ruff matters: aislop's
+Python engines run only when a ruff binary is on PATH, and report nothing when it is
+not.
+
+A repo adopting with findings already in its tree does not get to 100 in the same
+pull request that adopts the gate; a11y and React findings are judgement calls for a
+health session, not a CI change. Such a repo overrides `ci.failBelow` in its own
+config with its current score, as a second ratchet: raised as findings close, never
+lowered, with the open findings listed in its health checklist. The base's 100 is
+where the ratchet ends.
+
+**The label gate.** Every pull request carries one `type:` and one `area:` label
+(conventions.md § Release notes and pull request labelling). The check is a reusable
+workflow too:
+
+```yaml
+  pr-labelled:
+    if: github.event_name == 'pull_request'
+    uses: kollektiv-mc/Kollektiv/.github/workflows/pr-labelled.yml@main
+```
+
+with `labeled` and `unlabeled` among the caller's `pull_request` types, so adding the
+label turns the check green. The labels themselves come from `design/labels.json`
+via `scripts/sync-labels.sh`, which needs an authenticated `gh`; a repo that has
+never had it applied fails the gate on every pull request until it does.
+
+**The priority question.** Every issue form asks it, and
+`.github/workflows/issue-priority.yml` turns the answer into a `p*` label, because a
+form's dropdown answer is otherwise body text that never becomes a label. Put the
+markers into each form where the question should sit, as an empty block:
+
+```yaml
+  # >>> suite:priority. Vendored from kollektiv by scripts/sync-priority.sh. Edit it there.
+  # <<< suite:priority
+```
+
+then run `./scripts/sync-priority.sh`, which renders the dropdown between them from
+`design/labels.json`'s `priorityForm` and copies the workflow in. Nothing is inserted
+into a form without the markers. Add the workflow to the repo's `.prettierignore` if
+Prettier runs at its root: the sync byte-compares the copies, and a formatted copy is
+drift.
+
+**The release notes.** Write `.github/changelog.json` with the repo's `nonAppPaths`,
+the prefixes a pull request can touch without changing what ships (Konnekt's and
+Kommands' are worked examples, with the reasoning for each entry beside it), then
+run `./scripts/sync-notes.sh`, which copies the generator, its tests and GitHub's
+fallback layout in. Add a CI job that runs `.github/scripts/release-notes_test.py`
+on every push, and list the two Python files in `.aislopignore` and the layout in
+`.prettierignore`. The release workflow, when the repo has one, calls the generator
+the way Konnekt's does and falls back to GitHub's layout if it cannot produce a
+body.
+
+`scripts/check-participation.sh` checks the ignore rule for every vendored file, in
+`.aislopignore` and a root `.prettierignore`, so a product gate cannot rewrite a
+vendored file and hand the nightly a drift it cannot fix.
+
 ---
 
 ## Per-repo notes
@@ -256,14 +340,21 @@ Its `.claude/commands/health-check.md` was **deleted** on adoption. It reimpleme
 is the drift this repo exists to prevent, and shipping the plugin while leaving the
 copy in place would have been the clearest possible example of it.
 
-`health.commands` is present but every entry is currently unrunnable — the repo is
-pre-scaffold, with `docs/` and `.claude/` and no `package.json`. That is expected,
-and `/suite-kit:health` reports an unrunnable check as `skipped` with a reason
-rather than as passing. `tokens.generate` names `pnpm gen:tokens`, which likewise
-does not exist yet; `docs/design-tokens.md` specifies its contract for whoever
-scaffolds the app. The repo has no CI beyond the Claude workflows for the same
-reason; adding it is a scaffold-time task — tracked as
-[kollektiv-mc/kommands#19](https://github.com/kollektiv-mc/Kommands/issues/19).
+`health.commands` declares the JS toolchain (`pnpm lint`, `typecheck`, `test`,
+`format:check`, the build and bundle budget) and the Go shell's checks (`go vet` and
+`go test` over `shell/`), three `invariants` and three `generated` entries, and its
+CI runs the vendored runner with `--require-runnable` on every push, so a skip there
+is a failure. Its `kind` is `vite-web+wails-desktop`, and its `distribution` block
+records that only the web build is released today, with the desktop shell under
+`planned` until a release workflow produces installable artefacts.
+
+It carries the priority question in both forms and the vendored
+`.github/workflows/issue-priority.yml`, the aislop base with its own ratchet and,
+for now, the score it had on adoption, the release-notes generator with its
+`.github/changelog.json`, and both reusable gates in CI. Its `.prettierignore`
+excludes every vendored YAML and JSON file, and its `.aislopignore` the vendored
+Python. It has no release workflow yet, so the generator is tested on every push
+and not yet called.
 
 `.claude/rules/*.md` stay where they are. They are path-scoped and auto-inject when
 a matching file is edited — a plugin skill does not do that, so the plugin does not
@@ -279,18 +370,10 @@ mid-migration from an inline-styles-everywhere convention, per
 covered paths hold 176 hex literals across 33 files and 323 arbitrary-px values
 across 76 `.tsx` files, which is what `migrating` exists to describe.
 
-**Its tracking declaration is wrong on `main` and has not been fixed yet.** It carries
-`linear: { team: "KON" }` where every other repo — and [`conventions.md`](conventions.md),
-and this page's own earlier text, and the README — says `tracking: "github-issues"`.
-The consequence is live and silent: `/suite-kit:suite-sync` reports a repo declaring
-`linear` and **skips** it, so Konnekt's GitHub Issues are not being mirrored at all.
-`KON` also names a team key from the `KonnektMC` workspace deleted 2026-08-04.
-
-**A fix already exists and is unmerged.** Konnekt PR #51 — the companion PR referenced
-from this repo's PR #9 — swaps that block for `tracking: "github-issues"` exactly as it
-should. It has been sitting since 2026-08-05, so the mirror has been skipping Konnekt
-that whole time with the correction already written. Merging it is the fix; nothing new
-needs writing. This page describes what is on `main`, not what is proposed against it.
+Its manifest declares `tracking: "github-issues"` on `main` since its PR #51
+merged. An earlier revision of this page described the `linear: { team: "KON" }`
+block that preceded it, which made `/suite-kit:suite-sync` skip the repo; that is
+history now, and `scripts/check-participation.sh` is what notices if it returns.
 
 `tokens.role` is `consumer`, not `source`. Konnekt authored the design language, but
 the values now live in kollektiv's `design/tokens.json` and Konnekt generates
@@ -304,9 +387,15 @@ Kommands' mcmeta derivation it works offline. Its clean-diff check runs in CI
 (`.github/workflows/ci.yml`), not just `/suite-kit:health` — that landed in PR #22,
 merged 2026-08-04.
 
-It has no `health.invariants`: Konnekt is a server dashboard, not a command
-generator, so the Minecraft-syntax grep checks Kommands carries don't apply here —
-nothing was invented to fill the slot.
+It has one `health.invariants` entry, `no literal border widths`, from its own
+token migration. The Minecraft-syntax greps Kommands carries do not apply to a
+server dashboard, and nothing was invented to fill that slot.
+
+It carries the release-notes generator (`.github/changelog.json` is its adoption
+marker) and gates itself with aislop, with its own `.aislop/config.yml` predating the
+suite's `base.yml`; adopting the base, listing the vendored generator in its
+`.aislopignore`, and asking the priority question in its forms are all on
+`docs/roadmap.md`.
 
 `health.commands` uses `cwd` to mix toolchains in one list — `pnpm typecheck`,
 `pnpm lint`, `pnpm test`, `pnpm check-bundle` with `cwd: "frontend"`, and

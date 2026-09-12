@@ -1,0 +1,118 @@
+# The checks that need every product cloned beside this repo. Split out of
+# ci.yml so that a red run here reads as what it is: a product moved and the
+# suite noticed, not this repo's own push failing. Drift is introduced by
+# commits to the *product* repos, which this repo never sees, so the schedule
+# is the only thing that catches it between changes here, which could be
+# months apart.
+#
+# Its own concurrency group, on purpose. A group is repo-wide, and sharing
+# ci.yml's would have each workflow cancelling the other on the same push.
+name: Suite drift
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '17 6 * * *'
+
+concurrency:
+  group: drift-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  token-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install check-jsonschema
+
+      # Clones the products as siblings, per suite.repos.json. They are public,
+      # so no credentials are involved.
+      - name: Bootstrap the workspace
+        run: ./scripts/bootstrap.sh
+
+      # A product cannot detect its own staleness — its generator reads the
+      # vendored copy, so a stale copy still regenerates a clean diff. This is
+      # the only place both sides exist at once. See design/README.md.
+      - name: Token drift
+        run: ./scripts/sync-tokens.sh --check
+
+      # The check runner is vendored for the same reason the token source is: a
+      # product must be able to run its own checks from a standalone clone,
+      # without the plugin installed. That makes a stale vendored copy the same
+      # class of bug as a stale tokens.source.json, and it is detectable in the
+      # same one place — a checkout holding both sides.
+      #
+      # Runs even when the token check above failed, per the reasoning on the
+      # step below: independent findings, and finding one is not a reason to
+      # leave the other undiscovered.
+      #
+      # --require-vendored: both products carry the runner, so a product without
+      # it is no longer work not started but a product that lost the file.
+      - name: Check-runner drift
+        if: ${{ !cancelled() }}
+        run: ./scripts/sync-runner.sh --check --require-vendored
+
+      # The aislop policy, vendored for the reason the runner is: a product's
+      # gate reads its own copy, so a stale copy is a gate applying last
+      # month's rules and only this checkout can tell. A product that has not
+      # adopted aislop is reported and skipped; one whose config does not
+      # extend the vendored file fails, since a policy nothing reads is the
+      # check that never runs.
+      - name: aislop policy drift
+        if: ${{ !cancelled() }}
+        run: ./scripts/sync-aislop.sh --check
+
+      # The issue-priority workflow and the question the forms ask, both
+      # rendered from design/labels.json. Without --require-vendored while
+      # Konnekt has yet to adopt it.
+      - name: Issue-priority drift
+        if: ${{ !cancelled() }}
+        run: ./scripts/sync-priority.sh --check
+
+      # The release-notes generator is vendored for the same reason the runner
+      # is: a product cuts releases in its own container, where this repo is
+      # nowhere on disk. A stale copy means a release describing itself by last
+      # month's rules, which nobody notices until the notes are already
+      # published — so it is caught here, in the one checkout holding both
+      # sides.
+      #
+      # Runs on a red run, per the reasoning on the steps around it.
+      # --require-vendored: both products carry a .github/changelog.json, so a
+      # product without the generator is one that lost it, not one yet to adopt.
+      - name: Release-notes drift
+        if: ${{ !cancelled() }}
+        run: ./scripts/sync-notes.sh --check --require-vendored
+
+      # The products are cloned here anyway, so validate their manifests against
+      # the schema while we have them.
+      #
+      # Runs even when the drift check above failed. Drift and a malformed
+      # manifest are independent findings, and finding one is not a reason to
+      # leave the other undiscovered — the rule health/SKILL.md already states.
+      # Without this the step is skipped on every red run, so it never executes
+      # at all on exactly the runs worth reading.
+      #
+      # --require-products because bootstrap.sh ran: a product still missing here
+      # means that failed, and validating "every product present" would pass over
+      # a set that was never checked.
+      - name: Product manifest validation
+        if: ${{ !cancelled() }}
+        run: ./scripts/validate-schemas.sh --require-products
+
+      # The manifests being valid is not the same as the repos still using them.
+      # This checks the permissions floor from docs/conventions.md, which was
+      # enforced by review until now, plus the paths each manifest names. Also
+      # runs on a red run, for the reason stated above.
+      #
+      # --require-products because bootstrap.sh ran: an unadopted product here is
+      # a finding, not the bare-checkout skip it would be locally.
+      - name: Suite participation
+        if: ${{ !cancelled() }}
+        run: ./scripts/check-participation.sh --require-products

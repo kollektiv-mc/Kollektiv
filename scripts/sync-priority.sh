@@ -1,42 +1,35 @@
 #!/usr/bin/env bash
 #
-# Vendor the issue-priority workflow and the priority dropdown it reads into
-# each cloned product, and check that the two still agree with each other and
-# with design/labels.json.
+# Vendor the issue-priority workflow and the priority question into each product.
 #
-# Three things move together here, and that is the reason this is its own
-# script rather than a third file in sync-workflows.sh:
+# A GitHub issue form applies only the static `labels:` in its front matter; a
+# dropdown answer lands as text in the body. .github/workflows/issue-priority.yml
+# reads that answer back out and applies the p* label it means, and it runs in
+# every repo in suite.repos.json plus this one. Kommands has carried a copy of
+# it since 2026-08-20 with a header saying this script vendors it. This is that
+# script, written after the fact; until now nothing compared the copies.
 #
-#   plugins/suite-kit/workflows/issue-priority.yml
-#       The workflow. On every issue opened, it reads the dropdown answer back
-#       out of the body and applies the matching p* label, or says that none
-#       was given. Copied whole to .github/workflows/issue-priority.yml.
-#   plugins/suite-kit/issue-forms/priority.yml
-#       The dropdown. Copied into every issue form in .github/ISSUE_TEMPLATE/
-#       between a `# >>> suite:priority` line and a `# <<< suite:priority` line
-#       the form carries. The markers are the product's; what sits between
-#       them is this file.
-#   design/labels.json
-#       Where p0-p3 are defined. The workflow's map from a dropdown option to a
-#       label is asserted against it, so the map is a copy that cannot drift
-#       silently rather than a second source.
+# Two things are vendored, and both are rendered from design/labels.json's
+# priorityForm so they cannot disagree:
 #
-# A dropdown answer the workflow cannot read is the failure this exists to
-# catch: it is silent everywhere else, and shows up as issues that mirror into
-# Linear at priority None. So before anything is copied, the heading the
-# workflow looks for is checked against the dropdown's label, every option's
-# leading word against the map, and every mapped label against labels.json.
+#   .github/workflows/issue-priority.yml   copied whole. The master is this repo's
+#                                          own copy, since it runs here too. Its
+#                                          PRIORITY_MAP block between the
+#                                          `suite:priority-map` markers, and its
+#                                          HEADING, are checked against labels.json.
+#   .github/ISSUE_TEMPLATE/*.yml           only the block between the
+#                                          `>>> suite:priority` and `<<< suite:priority`
+#                                          markers is touched. A form without the
+#                                          markers is a form that has not adopted
+#                                          the question, and nothing is inserted
+#                                          into a file a human wrote.
 #
 #   --check             Report drift and exit non-zero without writing anything.
-#   --require-vendored  Treat a product that has not adopted the block as a
-#                       failure instead of a skip.
+#   --require-vendored  Treat a product that has never adopted this as a failure
+#                       instead of a skip.
 #
-# Adoption is a human step, because only a person knows where in a form the
-# question belongs: add the two marker lines to every form, then run this. A
-# product with neither the workflow nor a marked form is reported and skipped.
-# A product with one but not the other is a failure whatever the flags say,
-# because a workflow with nothing to read flags every issue, and a form with
-# nothing reading it asks a question that goes nowhere.
+# The split follows sync-runner.sh: not adopted is work not started and a skip;
+# adopted and stale is a workflow applying last month's rubric, and a failure.
 
 set -euo pipefail
 
@@ -55,205 +48,186 @@ for arg in "$@"; do
 done
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-[ -f "$root/suite.repos.json" ] || { echo "no suite.repos.json at $root" >&2; exit 1; }
 
 . "$(dirname "${BASH_SOURCE[0]}")/lib/python.sh"
 require_python
 
-# The work is in Python because it is text surgery on YAML, which bash does
-# badly, and because the consistency checks are the same code on every
-# platform the suite's scripts run on.
-"${PYTHON[@]}" - "$root" "$check_only" "$require_vendored" <<'PY'
-import json
-import re
-import sys
-from pathlib import Path
+ROOT="$root" CHECK_ONLY="$check_only" REQUIRE_VENDORED="$require_vendored" "${PYTHON[@]}" <<'PY'
+import glob, json, os, sys
 
-root = Path(sys.argv[1])
-check_only = sys.argv[2] == "1"
-require_vendored = sys.argv[3] == "1"
+root = os.environ["ROOT"]
+check_only = os.environ["CHECK_ONLY"] == "1"
+require_vendored = os.environ["REQUIRE_VENDORED"] == "1"
 
-WORKFLOW_SRC = root / "plugins/suite-kit/workflows/issue-priority.yml"
-BLOCK_SRC = root / "plugins/suite-kit/issue-forms/priority.yml"
-LABELS_SRC = root / "design/labels.json"
-WORKFLOW_DEST = ".github/workflows/issue-priority.yml"
-FORMS_DIR = ".github/ISSUE_TEMPLATE"
-
-# `suite:priority` followed by a dot, a space or the end of the line, so the
-# workflow's own `suite:priority-map` markers never match.
-START = re.compile(r"^\s*# >>> suite:priority(?:[.\s]|$)")
-END = re.compile(r"^\s*# <<< suite:priority\s*$")
+WORKFLOW = ".github/workflows/issue-priority.yml"
+FORMS = ".github/ISSUE_TEMPLATE"
+FORM_OPEN = "# >>> suite:priority. Vendored from kollektiv by scripts/sync-priority.sh. Edit it there."
+FORM_CLOSE = "# <<< suite:priority"
+MAP_OPEN = "# >>> suite:priority-map"
+MAP_CLOSE = "# <<< suite:priority-map"
 
 
-def read(path):
-    # CRs stripped for the reason sync-tokens.sh spells out: the products
-    # normalise line endings independently.
-    return path.read_text(encoding="utf-8").replace("\r", "")
+def load(path):
+    with open(path, encoding="utf-8") as f:
+        return f.read().replace("\r", "")
 
 
-def fail(message):
-    print(f"! {message}", file=sys.stderr)
+def fail(msg):
+    global status
+    print("! " + msg, file=sys.stderr)
+    status = 1
 
 
-for path in (WORKFLOW_SRC, BLOCK_SRC, LABELS_SRC):
-    if not path.is_file():
-        print(f"no {path.relative_to(root)} at {root}", file=sys.stderr)
-        sys.exit(1)
-
-# --- the three sources must agree before anything is copied ---------------
-
-block_text = read(BLOCK_SRC)
-block = block_text.splitlines()
-workflow_text = read(WORKFLOW_SRC)
-
-heading = re.search(r"^\s*label:\s*(.+?)\s*$", block_text, re.M)
-options = re.findall(r"^\s*-\s*'([^':]+):", block_text, re.M)
-wanted = re.search(r"^\s*HEADING:\s*'([^']*)'", workflow_text, re.M)
-mapping = re.search(
-    r"# >>> suite:priority-map\n(.*?)# <<< suite:priority-map", workflow_text, re.S
-)
-
-problems = []
-if heading is None:
-    problems.append("the dropdown block has no label:")
-if not options:
-    problems.append("the dropdown block has no options of the form 'Word: ...'")
-if wanted is None:
-    problems.append("the workflow has no HEADING: line")
-if mapping is None:
-    problems.append("the workflow has no suite:priority-map block")
-
-if not problems:
-    heading = heading.group(1).strip().strip("'\"")
-    wanted = wanted.group(1)
-    if heading != wanted:
-        problems.append(
-            f"the workflow looks for the heading {wanted!r} but the dropdown is labelled {heading!r}"
-        )
-    pairs = re.findall(r"^\s*([^:\s][^:]*):\s*(\S+)\s*$", mapping.group(1), re.M)
-    pairs = [(k, v) for k, v in pairs if k != "PRIORITY_MAP"]
-    mapped = {k: v for k, v in pairs}
-    if set(mapped) != set(options):
-        problems.append(
-            f"the map covers {sorted(mapped)} but the dropdown offers {sorted(options)}"
-        )
-    labels = {entry["name"] for entry in json.loads(read(LABELS_SRC))["github"]}
-    for option, label in mapped.items():
-        if not re.fullmatch(r"p[0-3]", label) or label not in labels:
-            problems.append(
-                f"{option!r} maps to {label!r}, which design/labels.json does not define as a priority"
-            )
-
-if problems:
-    for problem in problems:
-        fail(problem)
-    print("the priority sources disagree — fix them here before syncing", file=sys.stderr)
-    sys.exit(1)
+with open(os.path.join(root, "design", "labels.json"), encoding="utf-8") as f:
+    form = json.load(f)["priorityForm"]
+with open(os.path.join(root, "suite.repos.json"), encoding="utf-8") as f:
+    repos = [r["name"] for r in json.load(f)["repos"]]
 
 
-# --- then each product ------------------------------------------------------
+def render_form_block(indent):
+    """The dropdown, rendered at the indentation the form's body list uses."""
+    pad = " " * indent
+    lines = [
+        pad + FORM_OPEN,
+        pad + "- type: dropdown",
+        pad + "  id: priority",
+        pad + "  attributes:",
+        pad + "    label: " + form["heading"],
+        pad + "    description: " + form["description"],
+        pad + "    options:",
+    ]
+    for o in form["options"]:
+        lines.append(pad + "      - '" + o["text"] + "'")
+    lines += [
+        pad + "  validations:",
+        pad + "    required: true",
+        pad + FORM_CLOSE,
+    ]
+    return "\n".join(lines)
 
-def splice(text, block):
-    """The form text with the block between its markers replaced, or None if
-    the form does not carry both markers in order."""
-    lines = text.splitlines()
-    start = next((i for i, line in enumerate(lines) if START.match(line)), None)
-    if start is None:
-        return None
-    end = next((i for i in range(start + 1, len(lines)) if END.match(lines[i])), None)
-    if end is None:
-        return None
-    out = lines[: start + 1] + block + lines[end:]
-    return "\n".join(out) + ("\n" if text.endswith("\n") else "")
+
+def render_map_block(indent):
+    pad = " " * indent
+    lines = [pad + MAP_OPEN, pad + "PRIORITY_MAP: |"]
+    for o in form["options"]:
+        lines.append(pad + "  " + o["text"].split(":")[0] + ": " + o["label"])
+    lines.append(pad + MAP_CLOSE)
+    return "\n".join(lines)
 
 
-with open(root / "suite.repos.json", encoding="utf-8") as f:
-    names = [r["name"] for r in json.load(f)["repos"]]
+def find_block(text, opener, closer):
+    """(start, end, indent) of the marked block, or None. end is exclusive and
+    includes the closing marker's line."""
+    lines = text.split("\n")
+    start = None
+    for i, line in enumerate(lines):
+        if line.strip() == opener:
+            start = i
+        elif start is not None and line.strip() == closer:
+            return start, i + 1, len(lines[start]) - len(lines[start].lstrip())
+    return None
+
+
+def replace_block(text, opener, closer, rendered):
+    found = find_block(text, opener, closer)
+    lines = text.split("\n")
+    s, e, _ = found
+    return "\n".join(lines[:s] + rendered.split("\n") + lines[e:])
+
 
 status = 0
 changed = 0
 skipped = 0
 
-for name in names:
-    product = root / name
-    if not product.is_dir():
-        print(f"? {name} not cloned — run scripts/bootstrap.sh first", file=sys.stderr)
+# The master first: it runs here, and it is what the products get. Its map and
+# heading are rendered from labels.json, so a labels.json edit shows up here as
+# drift until the workflow is regenerated.
+master_path = os.path.join(root, WORKFLOW)
+master = load(master_path)
+found = find_block(master, MAP_OPEN, MAP_CLOSE)
+if found is None:
+    fail("%s has no %s block" % (WORKFLOW, MAP_OPEN))
+    sys.exit(1)
+rendered_map = render_map_block(found[2])
+heading_line = "HEADING: '" + form["heading"] + "'"
+if "\n".join(master.split("\n")[found[0]:found[1]]) != rendered_map or heading_line not in master:
+    if check_only:
+        fail("%s does not match design/labels.json priorityForm" % WORKFLOW)
+    else:
+        master = replace_block(master, MAP_OPEN, MAP_CLOSE, rendered_map)
+        import re
+        master = re.sub(r"HEADING: '[^']*'", heading_line, master, count=1)
+        with open(master_path, "w", encoding="utf-8") as f:
+            f.write(master)
+        print("+ kollektiv regenerated %s from labels.json — commit it" % WORKFLOW)
+        changed = 1
+else:
+    print("= kollektiv %s matches labels.json" % WORKFLOW)
+
+for name in repos:
+    d = os.path.join(root, name)
+    if not os.path.isdir(d):
+        print("? %s not cloned — run scripts/bootstrap.sh first" % name, file=sys.stderr)
         status = 1
         continue
 
-    workflow_dest = product / WORKFLOW_DEST
-    forms_dir = product / FORMS_DIR
-    forms = sorted(p for p in forms_dir.glob("*.yml") if p.name != "config.yml") if forms_dir.is_dir() else []
-    marked = [p for p in forms if splice(read(p), block) is not None]
-    unmarked = [p for p in forms if p not in marked]
+    forms = sorted(glob.glob(os.path.join(d, FORMS, "*.yml")))
+    forms = [p for p in forms if os.path.basename(p) != "config.yml"]
+    adopted_forms = [p for p in forms if find_block(load(p), FORM_OPEN, FORM_CLOSE)]
+    dest = os.path.join(d, WORKFLOW)
 
-    has_workflow = workflow_dest.is_file()
-
-    if not has_workflow and not marked:
+    if not adopted_forms and not os.path.isfile(dest):
         if require_vendored:
-            fail(f"{name} has not adopted the priority block")
-            status = 1
+            fail("%s has no %s and no form carries the priority question" % (name, WORKFLOW))
             changed = 1
         else:
-            print(f"? {name} has no {WORKFLOW_DEST} and no form carries the suite:priority markers — not adopted yet, skipped")
+            print("? %s has not adopted the priority question — skipped" % name)
             skipped += 1
         continue
 
-    if has_workflow and not marked:
-        fail(f"{name} runs {WORKFLOW_DEST} but no form in {FORMS_DIR} carries the suite:priority markers, so every issue would be flagged")
-        status = 1
-        continue
+    product_changed = 0
 
-    product_changed = False
-
-    # Every form must carry the block once any does: the workflow comments on
-    # each issue that arrives without an answer, and a form with no dropdown
-    # produces exactly that issue.
-    for form in unmarked:
-        fail(f"{name}'s {form.relative_to(product)} has no suite:priority markers, so issues filed through it will be flagged")
-        status = 1
-        product_changed = True
-
-    # The workflow, copied whole.
-    if not has_workflow:
-        if check_only:
-            fail(f"{name} has no {WORKFLOW_DEST}")
-            status = 1
-            changed = 1
+    if os.path.isfile(dest) and load(dest) == master:
+        pass
+    elif check_only:
+        if os.path.isfile(dest):
+            fail("%s has drifted from %s" % (name, WORKFLOW))
         else:
-            workflow_dest.parent.mkdir(parents=True, exist_ok=True)
-            workflow_dest.write_text(workflow_text, encoding="utf-8")
-            print(f"+ {name} gained {WORKFLOW_DEST} — commit it")
-            changed = 1
-        product_changed = True
-    elif read(workflow_dest) != workflow_text:
-        if check_only:
-            fail(f"{name} has drifted from plugins/suite-kit/workflows/issue-priority.yml")
-            status = 1
-        else:
-            workflow_dest.write_text(workflow_text, encoding="utf-8")
-            print(f"+ {name} updated {WORKFLOW_DEST} — commit it")
+            fail("%s forms ask the question but %s is missing" % (name, WORKFLOW))
         changed = 1
-        product_changed = True
+        product_changed = 1
+    else:
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        with open(dest, "w", encoding="utf-8") as f:
+            f.write(master)
+        print("+ %s updated %s — commit it" % (name, WORKFLOW))
+        changed = 1
+        product_changed = 1
 
-    # The block, spliced into each marked form.
-    for form in marked:
-        current = read(form)
-        wanted_text = splice(current, block)
-        if wanted_text == current:
+    # Every form, not just the adopted ones: a form without the question is
+    # reported, because a repo with the workflow and one form that never asks
+    # is a repo where that form's issues always arrive unprioritised.
+    for path in forms:
+        rel = os.path.relpath(path, d).replace(os.sep, "/")
+        text = load(path)
+        found = find_block(text, FORM_OPEN, FORM_CLOSE)
+        if found is None:
+            print("? %s %s does not carry the priority question" % (name, rel))
             continue
-        rel = form.relative_to(product)
+        rendered = render_form_block(found[2])
+        if "\n".join(text.split("\n")[found[0]:found[1]]) == rendered:
+            continue
         if check_only:
-            fail(f"{name}'s {rel} priority block has drifted from plugins/suite-kit/issue-forms/priority.yml")
-            status = 1
+            fail("%s %s priority block has drifted" % (name, rel))
         else:
-            form.write_text(wanted_text, encoding="utf-8")
-            print(f"+ {name} updated {rel} — commit it")
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(replace_block(text, FORM_OPEN, FORM_CLOSE, rendered))
+            print("+ %s updated %s — commit it" % (name, rel))
         changed = 1
-        product_changed = True
+        product_changed = 1
 
     if not product_changed:
-        print(f"= {name} already up to date")
+        print("= %s already up to date" % name)
 
 if check_only:
     if changed:
@@ -261,8 +235,8 @@ if check_only:
     elif status:
         print("no drift among the products present, but the workspace is incomplete", file=sys.stderr)
     elif skipped:
-        noun = "1 product has" if skipped == 1 else f"{skipped} products have"
-        print(f"no drift among the products carrying the priority block; {noun} not adopted it")
+        noun = "1 product has" if skipped == 1 else "%d products have" % skipped
+        print("no drift among the products asking the question; %s not adopted it" % noun)
     else:
         print("no drift")
 elif not changed:

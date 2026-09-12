@@ -36,18 +36,22 @@
    nothing here is a colour, and nothing below redeclares a token. A value the
    apps could share belongs in design/tokens.json, not here. */
 :root {
-  --max-width: 1120px;
-  --narrow-width: 720px;
+  --max-width: 1200px;
+  --prose-width: 62ch;
   --nav-h: 64px;
   --page-x: clamp(16px, 4vw, 40px);
   --section-y: clamp(64px, 9vh, 120px);
 
-  /* The hero's two tiles: the gap between them, the blur that hides the
-     screenshot while the veil is up, and the veil's inset. */
-  --tile-gap: clamp(12px, 1.5vw, 20px);
-  --tile-blur: 14px;
-  --tile-pad: clamp(20px, 3vw, 44px);
-  --tile-min-h: 360px;
+  /* The hero's two tiles: the gap between them, the veil's inset, and how
+     far up the window the veil's fade reaches — the top half stays clear. */
+  --tile-gap: clamp(16px, 2vw, 28px);
+  --tile-pad: clamp(20px, 2.6vw, 36px);
+  --tile-min-h: 320px;
+  --veil-top: 42%;
+
+  /* The downloads table's fixed columns. */
+  --product-name-w: 240px;
+  --product-actions-w: 300px;
 
   /* Display sizes. The token scale tops out at --text-xl (20px), which is the
      lead paragraph here; the headings sit above it. */
@@ -126,8 +130,8 @@ code {
   padding: 0 var(--page-x);
 }
 
-.container.narrow {
-  max-width: var(--narrow-width);
+.prose {
+  max-width: var(--prose-width);
 }
 
 .wordmark {
@@ -222,12 +226,18 @@ code {
 
 /* ── Hero ───────────────────────────────────────────────────────────────────
    One viewport tall on anything wide enough to hover. The top bar is a fixed
-   height so the tiles can take exactly what is left. */
+   height so the tiles can take exactly what is left. Everything sits in the
+   same .container as the sections below, so the wordmark, the tiles, every
+   heading and the footer share one left edge. */
 .hero {
   min-height: 100svh;
   display: flex;
+}
+
+.hero-inner {
+  display: flex;
   flex-direction: column;
-  padding: 0 var(--page-x) var(--space-5);
+  padding-bottom: var(--space-6);
 }
 
 .topbar {
@@ -265,8 +275,62 @@ code {
   gap: var(--tile-gap);
 }
 
+/* A tile is a title row over a window. The row holds the name and the pill;
+   the window holds the app. */
 .tile {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tile-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0 var(--space-1) var(--space-3);
+}
+
+.tile-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-size: var(--text-xl);
+  letter-spacing: -0.01em;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  border: var(--border-hairline) solid var(--border-subtle);
+  background: var(--bg-surface);
+  font-family: var(--font-title);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* What main.js appends once GitHub has answered: a tag, or the fallback. */
+.pill em {
+  font-style: normal;
+  color: var(--text-muted);
+}
+
+.pill em::before {
+  content: '·';
+  margin-right: var(--space-2);
+}
+
+.tile-window {
   position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: hidden;
   isolation: isolate;
   border-radius: var(--radius-xl);
@@ -275,14 +339,14 @@ code {
   transition: border-color var(--duration-panel) var(--ease-standard);
 }
 
-.tile:hover,
-.tile:focus-within {
+.tile-window:hover,
+.tile-window:focus-within {
   border-color: var(--border-hover);
 }
 
-/* The screenshot fills the tile from its top-left corner, the way the app's
-   own window would, so the sidebar and title bar stay legible at any tile
-   size instead of a centred crop landing on the middle of a chart. */
+/* The screenshot fills the window from its top corner, the way the app's own
+   window would, so the chrome stays legible at any size instead of a centred
+   crop landing on the middle of a chart. Black and white until hovered. */
 .tile-shot {
   position: absolute;
   inset: 0;
@@ -290,17 +354,17 @@ code {
   height: 100%;
   object-fit: cover;
   object-position: left top;
+  filter: grayscale(1);
+  opacity: 0.85;
   transition:
     filter var(--duration-panel) var(--ease-standard),
-    opacity var(--duration-panel) var(--ease-standard),
-    transform var(--duration-panel) var(--ease-standard);
+    opacity var(--duration-panel) var(--ease-standard);
 }
 
-.tile:hover .tile-shot,
-.tile:focus-within .tile-shot {
-  filter: blur(var(--tile-blur)) saturate(0.7);
-  opacity: 0.4;
-  transform: scale(1.04);
+.tile-window:hover .tile-shot,
+.tile-window:focus-within .tile-shot {
+  filter: none;
+  opacity: 1;
 }
 
 /* Which corner of the screenshot survives the crop. Konnekt's sidebar and
@@ -310,42 +374,11 @@ code {
   object-position: right top;
 }
 
-/* The name in the corner while the picture is showing, so a tile is never
-   an unlabelled screenshot. It hands over to the veil's title on hover. */
-.tile-tag {
-  position: absolute;
-  left: var(--space-4);
-  bottom: var(--space-4);
-  z-index: 1;
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--space-2);
-  padding: var(--space-1-5) var(--space-3);
-  border-radius: var(--radius-pill);
-  border: var(--border-hairline) solid var(--border-subtle);
-  background: var(--bg-elevated);
-  backdrop-filter: blur(var(--space-2));
-  font-family: var(--font-title);
-  font-weight: var(--weight-medium);
-  font-size: var(--text-sm);
-  color: var(--text-primary);
-  transition: opacity var(--duration-fast) var(--ease-standard);
-}
-
-.tile-tag em {
-  font-style: normal;
-  font-size: var(--text-xs);
-  color: var(--text-muted);
-}
-
-.tile:hover .tile-tag,
-.tile:focus-within .tile-tag {
-  opacity: 0;
-}
-
-/* The veil: what a hover reveals. It is always in the DOM so its buttons are
-   reachable by keyboard — tabbing into one is what :focus-within keys off —
-   and it is only ever transparent, never display: none. */
+/* The veil: what a hover reveals. The lower part of the window fades into the
+   page and carries the description and actions; above --veil-top the app stays
+   as it is. Always in the DOM so its buttons are reachable by keyboard —
+   tabbing into one is what :focus-within keys off — and only ever transparent,
+   never display: none. */
 .tile-veil {
   position: absolute;
   inset: 0;
@@ -353,13 +386,17 @@ code {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  gap: var(--space-3);
+  gap: var(--space-4);
   padding: var(--tile-pad);
   background: linear-gradient(
     to top,
-    color-mix(in srgb, var(--bg-base) 75%, transparent),
-    transparent 70%
+    var(--bg-base) 0%,
+    color-mix(in srgb, var(--bg-base) 88%, transparent) 55%,
+    transparent 100%
   );
+  background-size: 100% calc(100% - var(--veil-top));
+  background-position: bottom;
+  background-repeat: no-repeat;
   opacity: 0;
   transform: translateY(var(--space-3));
   transition:
@@ -367,55 +404,25 @@ code {
     transform var(--duration-panel) var(--ease-standard);
 }
 
-.tile:hover .tile-veil,
-.tile:focus-within .tile-veil {
+.tile-window:hover .tile-veil,
+.tile-window:focus-within .tile-veil {
   opacity: 1;
   transform: none;
 }
 
-.tile-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-weight: var(--weight-display);
-  font-size: var(--display-lg);
-  line-height: 1.02;
-  letter-spacing: -0.02em;
-}
-
 .tile-veil p {
   max-width: 44ch;
-  color: var(--text-secondary);
-  font-size: var(--lead);
-}
-
-.tile-veil .actions {
-  margin-top: var(--space-2);
-}
-
-.hero-more {
-  align-self: center;
-  margin-top: var(--space-5);
-  font-family: var(--font-title);
-  font-weight: var(--weight-medium);
-  font-size: var(--text-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  text-decoration: none;
-  transition: color var(--duration-fast) var(--ease-standard);
-}
-
-.hero-more:hover {
   color: var(--text-primary);
+  font-size: var(--lead);
 }
 
 /* Stacked: where there is no hover, or no room for two tiles side by side,
    nothing may live behind a hover. The hero stops pretending to be a viewport,
-   the tiles go one under the other, and each becomes the picture with the veil
-   laid out beneath it, all of it visible. The corner tag goes because the title
-   is right there. Width is a condition too, not only hover, because a narrow
-   window on a desktop reports hover and would otherwise get two cramped tiles
-   with everything behind a pointer. */
+   the tiles go one under the other, and each window becomes the picture in
+   colour with the veil laid out beneath it, all of it visible. Width is a
+   condition too, not only hover, because a narrow window on a desktop reports
+   hover and would otherwise get two cramped tiles with everything behind a
+   pointer. */
 @media (hover: none), (max-width: 900px) {
   .hero {
     min-height: 0;
@@ -423,17 +430,16 @@ code {
   .tiles {
     grid-template-columns: 1fr;
   }
-  .tile {
-    min-height: 0;
+  .tile-window {
+    flex: none;
   }
   .tile-shot {
     position: static;
     height: auto;
     aspect-ratio: 16 / 10;
+    filter: none;
+    opacity: 1;
     border-bottom: var(--border-hairline) solid var(--border-subtle);
-  }
-  .tile-tag {
-    display: none;
   }
   .tile-veil {
     position: static;
@@ -441,12 +447,6 @@ code {
     transform: none;
     background: none;
     padding: var(--space-6);
-  }
-  .tile:hover .tile-shot,
-  .tile:focus-within .tile-shot {
-    filter: none;
-    opacity: 1;
-    transform: none;
   }
 }
 
@@ -482,15 +482,6 @@ code {
 
 .lead {
   font-size: var(--lead);
-  color: var(--text-primary);
-  margin-bottom: var(--space-5);
-}
-
-.section p + p {
-  margin-top: var(--space-4);
-}
-
-#about p:not(.lead) {
   color: var(--text-secondary);
 }
 
@@ -536,13 +527,19 @@ code {
   border-top: var(--border-hairline) solid var(--border-subtle);
 }
 
+/* Fixed first and last columns, so the names, the copy and the buttons of
+   every row sit on the same three edges whatever each row's content is. */
 .product {
   display: grid;
-  grid-template-columns: minmax(160px, 1fr) 2fr auto;
+  grid-template-columns: var(--product-name-w) minmax(0, 1fr) var(--product-actions-w);
   gap: var(--space-6);
   align-items: center;
   padding: var(--space-6) 0;
   border-bottom: var(--border-hairline) solid var(--border-subtle);
+}
+
+.product .actions {
+  justify-self: start;
 }
 
 .product-name {
@@ -558,21 +555,6 @@ code {
   font-weight: var(--weight-display);
   font-size: var(--text-xl);
   letter-spacing: -0.01em;
-}
-
-.status {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--space-0-5) var(--space-2);
-  border-radius: var(--radius-pill);
-  border: var(--border-hairline) solid var(--border-subtle);
-  background: var(--bg-surface);
-  font-family: var(--font-title);
-  font-weight: var(--weight-medium);
-  font-size: var(--text-2xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
 }
 
 .product p {

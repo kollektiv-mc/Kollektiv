@@ -1,7 +1,7 @@
 # website
 
-Kollektiv's home page: hand-written HTML and CSS, no build step, no JavaScript.
-Open `index.html` in a browser, or serve the directory:
+Kollektiv's home page: hand-written HTML and CSS with one small script, no
+build step. Open `index.html` in a browser, or serve the directory:
 
 ```sh
 python3 -m http.server -d website
@@ -13,6 +13,7 @@ python3 -m http.server -d website
 |---|---|
 | `index.html` | The one page |
 | `styles.css` | Layout and the page vocabulary — every value the token set does not hold |
+| `main.js` | Fills each product's pill with the release GitHub reports; the page reads fine without it |
 | `tokens.css` | **Generated.** Custom properties from `design/tokens.json`. Do not edit |
 | `gen-tokens.py` | Writes `tokens.css` and `assets/img/favicon.svg` from the token source |
 | `assets/img/favicon.svg` | **Generated.** The wordmark's initial, coloured from the tokens |
@@ -49,6 +50,21 @@ makes. Two rules keep it honest:
 Two literals sit outside CSS and cannot read a custom property: the
 `theme-color` meta tag in `index.html`, which restates `bg-base`, and the
 favicon, which is why the generator writes it.
+
+## What the pills say
+
+Each product's pill ships saying only `desktop` or `web`. `main.js` then asks
+the GitHub API, per repo, for the latest release; failing that the newest
+prerelease; failing that it says `in development` with the date of the last
+commit. A request that fails leaves the pill as shipped, so the page never
+claims a version it did not fetch. The same element appears in the hero and in
+the downloads table and is filled from one answer.
+
+## Copy
+
+Short, and about what a user gets. How the suite is built — the shared tokens,
+the checks, the conventions — is this repo's README's to explain, not the
+page's.
 
 ## Checks
 

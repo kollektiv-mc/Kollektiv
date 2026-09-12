@@ -6,13 +6,13 @@
     <title>Kollektiv — tools for Minecraft servers</title>
     <meta
       name="description"
-      content="Kollektiv is a small suite of tools for Minecraft: Java Edition. Konnekt runs the server, Kommands writes the commands, and both are built to one design and one set of rules."
+      content="Kollektiv is a small suite of tools for Minecraft: Java Edition. Konnekt runs the server, Kommands writes the commands."
     />
     <meta property="og:site_name" content="Kollektiv" />
     <meta property="og:title" content="Kollektiv — tools for Minecraft servers" />
     <meta
       property="og:description"
-      content="Konnekt runs the server, Kommands writes the commands. One design, one set of rules, two apps."
+      content="Konnekt runs the server, Kommands writes the commands. Two apps, one design."
     />
     <meta property="og:type" content="website" />
     <!-- The one literal colour on the page: a meta tag cannot read a custom
@@ -27,155 +27,159 @@
   </head>
   <body>
     <!-- The hero is the whole first viewport: the wordmark top-left, and the
-         two products filling the rest as tiles. Hovering a tile (or tabbing
-         into its buttons) blurs the screenshot and brings up the name, the
-         one-line description and the actions. Where there is no hover the
-         tiles stack, picture over text, with nothing hidden. -->
+         two products filling the rest. Each is a title row — name and a pill
+         saying desktop or web, which main.js extends with the release GitHub
+         reports — over a window showing the app in black and white. Hovering
+         the window (or tabbing into its buttons) brings the colour back and
+         fades its lower half into the description and actions; the top half
+         stays as it is. Where there is no hover, or no room for two side by
+         side, the windows stack with the text laid out beneath them. -->
     <header class="hero" id="top">
-      <div class="topbar">
-        <a class="wordmark" href="#top">Kollektiv</a>
-        <nav class="topnav" aria-label="Site">
-          <a href="#about">About</a>
-          <a href="#how">How it's built</a>
-          <a href="https://github.com/kollektiv-mc" target="_blank" rel="noopener">GitHub</a>
-        </nav>
-      </div>
+      <div class="container hero-inner">
+        <div class="topbar">
+          <a class="wordmark" href="#top">Kollektiv</a>
+          <nav class="topnav" aria-label="Site">
+            <a href="#about">About</a>
+            <a href="#architecture">Architecture</a>
+            <a href="https://github.com/kollektiv-mc" target="_blank" rel="noopener">GitHub</a>
+          </nav>
+        </div>
 
-      <div class="tiles">
-        <article class="tile" aria-labelledby="konnekt-title">
-          <img
-            class="tile-shot"
-            src="assets/img/konnekt.png"
-            alt="Konnekt's dashboard: a grid of tiles over one server, among them the live console, server stats and performance history."
-            width="1440"
-            height="900"
-            decoding="async"
-          />
-          <span class="tile-tag" aria-hidden="true">Konnekt <em>desktop</em></span>
-          <div class="tile-veil">
-            <span class="eyebrow">Desktop · Windows &amp; Linux · Alpha</span>
-            <h2 class="tile-title" id="konnekt-title">Konnekt</h2>
-            <p>
-              A dashboard for Minecraft servers you host yourself. Console, scheduling, worlds and
-              backups in one local-first window.
-            </p>
-            <div class="actions">
-              <a class="btn btn-primary" href="https://konnekt.pages.dev/download.html">Download</a>
-              <a class="btn btn-secondary" href="https://konnekt.pages.dev/">Website</a>
-              <a
-                class="btn btn-secondary"
-                href="https://github.com/kollektiv-mc/Konnekt"
-                target="_blank"
-                rel="noopener"
-                >GitHub</a
-              >
+        <div class="tiles">
+          <article class="tile" aria-labelledby="konnekt-title">
+            <div class="tile-head">
+              <h2 class="tile-name" id="konnekt-title">Konnekt</h2>
+              <span class="pill" data-release="kollektiv-mc/Konnekt">desktop</span>
             </div>
-          </div>
-        </article>
-
-        <article class="tile" aria-labelledby="kommands-title">
-          <img
-            class="tile-shot tile-shot-end"
-            src="assets/img/kommands.png"
-            alt="Kommands' editor for WorldEdit's //generate: the command list, the assembled command, and a 3D preview of the shape an expression describes."
-            width="1152"
-            height="868"
-            decoding="async"
-          />
-          <span class="tile-tag" aria-hidden="true">Kommands <em>web · desktop</em></span>
-          <div class="tile-veil">
-            <span class="eyebrow">Web &amp; desktop · Java Edition 1.21.1 · In development</span>
-            <h2 class="tile-title" id="kommands-title">Kommands</h2>
-            <p>
-              A command generator for Java Edition. Build <code>/give</code>, <code>/tellraw</code>,
-              <code>/execute</code> and WorldEdit commands through a UI, with 3D previews for the
-              ones that describe shapes.
-            </p>
-            <div class="actions">
-              <a
-                class="btn btn-primary"
-                href="https://github.com/kollektiv-mc/Kommands"
-                target="_blank"
-                rel="noopener"
-                >GitHub</a
-              >
-              <a
-                class="btn btn-secondary"
-                href="https://github.com/kollektiv-mc/Kommands/tree/main/docs"
-                target="_blank"
-                rel="noopener"
-                >Docs</a
-              >
-              <a
-                class="btn btn-secondary"
-                href="https://github.com/kollektiv-mc/Kommands/blob/main/docs/roadmap.md"
-                target="_blank"
-                rel="noopener"
-                >Roadmap</a
-              >
+            <div class="tile-window">
+              <img
+                class="tile-shot"
+                src="assets/img/konnekt.png"
+                alt="Konnekt's dashboard: a grid of tiles over one server, among them the live console, server stats and performance history."
+                width="1440"
+                height="900"
+                decoding="async"
+              />
+              <div class="tile-veil">
+                <p>
+                  A dashboard for Minecraft servers you host yourself. Console, scheduling, worlds
+                  and backups in one local-first window.
+                </p>
+                <div class="actions">
+                  <a
+                    class="btn btn-primary"
+                    href="https://konnekt.pages.dev/download.html"
+                    target="_blank"
+                    rel="noopener"
+                    >Download</a
+                  >
+                  <a
+                    class="btn btn-secondary"
+                    href="https://konnekt.pages.dev/"
+                    target="_blank"
+                    rel="noopener"
+                    >Website</a
+                  >
+                  <a
+                    class="btn btn-secondary"
+                    href="https://github.com/kollektiv-mc/Konnekt"
+                    target="_blank"
+                    rel="noopener"
+                    >GitHub</a
+                  >
+                </div>
+              </div>
             </div>
-          </div>
-        </article>
-      </div>
+          </article>
 
-      <a class="hero-more" href="#about">What Kollektiv is <span aria-hidden="true">↓</span></a>
+          <article class="tile" aria-labelledby="kommands-title">
+            <div class="tile-head">
+              <h2 class="tile-name" id="kommands-title">Kommands</h2>
+              <span class="pill" data-release="kollektiv-mc/Kommands">web</span>
+            </div>
+            <div class="tile-window">
+              <img
+                class="tile-shot tile-shot-end"
+                src="assets/img/kommands.png"
+                alt="Kommands' editor for WorldEdit's //generate: the command list, the assembled command, and a 3D preview of the shape an expression describes."
+                width="948"
+                height="868"
+                decoding="async"
+              />
+              <div class="tile-veil">
+                <p>
+                  A command generator for Java Edition. Build <code>/give</code>,
+                  <code>/tellraw</code>, <code>/execute</code> and WorldEdit commands through a
+                  UI, with 3D previews for the ones that describe shapes.
+                </p>
+                <div class="actions">
+                  <a
+                    class="btn btn-primary"
+                    href="https://github.com/kollektiv-mc/Kommands"
+                    target="_blank"
+                    rel="noopener"
+                    >GitHub</a
+                  >
+                  <a
+                    class="btn btn-secondary"
+                    href="https://github.com/kollektiv-mc/Kommands/tree/main/docs"
+                    target="_blank"
+                    rel="noopener"
+                    >Docs</a
+                  >
+                  <a
+                    class="btn btn-secondary"
+                    href="https://github.com/kollektiv-mc/Kommands/blob/main/docs/roadmap.md"
+                    target="_blank"
+                    rel="noopener"
+                    >Roadmap</a
+                  >
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
     </header>
 
     <main>
       <section class="section" id="about">
-        <div class="container narrow">
+        <div class="container">
           <span class="eyebrow">[i] about</span>
-          <h2>One suite. Two tools. One set of rules.</h2>
-          <p class="lead">
-            Kollektiv is a small suite of tools for Minecraft: Java Edition. Konnekt runs the server;
-            Kommands writes the commands. They are separate apps with separate releases, built to the
-            same design and held to the same rules.
-          </p>
-          <p>
-            The name also belongs to the repository that holds what the two share: the design tokens
-            every colour, size and duration comes from, the conventions each repo follows, and the
-            tooling that checks both keep to them. It owns nothing else. Builds, CI and releases stay
-            with each product.
+          <h2>One suite. Two tools.</h2>
+          <p class="lead prose">
+            Kollektiv is a small suite of tools for Minecraft: Java Edition. Konnekt runs the
+            server; Kommands writes the commands. Separate apps, one design.
           </p>
         </div>
       </section>
 
-      <section class="section" id="how">
+      <section class="section" id="architecture">
         <div class="container">
           <div class="section-head">
-            <span class="eyebrow">[≡] how it's built</span>
-            <h2>Written once, checked everywhere</h2>
+            <span class="eyebrow">[≡] architecture</span>
+            <h2>Two apps, built alike</h2>
           </div>
           <div class="cards">
             <article class="card">
-              <h3>One source for design values</h3>
+              <h3>Separate apps</h3>
               <p>
-                Every colour, size and duration in both apps comes from a single tokens file in the
-                Kollektiv repository. The products vendor it and generate their own styles from it,
-                so no value is defined twice. This page is styled from the same file.
+                Konnekt and Kommands are two codebases with their own releases. Nothing you
+                install for one is needed by the other.
               </p>
             </article>
             <article class="card">
-              <h3>Syntax checked against pinned data</h3>
+              <h3>Local-first</h3>
               <p>
-                Minecraft command syntax changes between versions in ways that look right and
-                silently do nothing. Game values come from data pinned per version, and the
-                differences between versions are traits, not comparisons of version numbers.
+                Konnekt runs on your own machine, against server folders you already have.
+                Kommands' desktop build works with no internet at all.
               </p>
             </article>
             <article class="card">
-              <h3>Independent products</h3>
+              <h3>Versioned game data</h3>
               <p>
-                Konnekt is a Go module with a tag-driven release. Kommands derives its command data
-                from pinned snapshots. There is no monorepo: each keeps the build and release
-                pipeline that already works.
-              </p>
-            </article>
-            <article class="card">
-              <h3>Checked, not just documented</h3>
-              <p>
-                Each repo carries a manifest naming its checks and the invariants a linter cannot
-                express. A check that could not run is reported as skipped, never as passed.
+                Command syntax and game values are held per Minecraft version, so what Kommands
+                generates matches the version you target.
               </p>
             </article>
           </div>
@@ -185,21 +189,22 @@
       <section class="section" id="get">
         <div class="container">
           <div class="section-head">
-            <span class="eyebrow">[↓] get the tools</span>
-            <h2>Both are open source</h2>
+            <span class="eyebrow">[↓] downloads</span>
+            <h2>Get the tools</h2>
           </div>
           <ul class="products">
             <li class="product">
               <div class="product-name">
                 <h3>Konnekt</h3>
-                <span class="status">Alpha</span>
+                <span class="pill" data-release="kollektiv-mc/Konnekt">desktop</span>
               </div>
-              <p>
-                Desktop app for Windows and Linux. Runs on your own machine, against server folders
-                you already have.
-              </p>
+              <p>Desktop app for Windows and Linux.</p>
               <div class="actions">
-                <a class="btn btn-primary btn-sm" href="https://konnekt.pages.dev/download.html"
+                <a
+                  class="btn btn-primary btn-sm"
+                  href="https://konnekt.pages.dev/download.html"
+                  target="_blank"
+                  rel="noopener"
                   >Download</a
                 >
                 <a
@@ -207,7 +212,7 @@
                   href="https://konnekt-demo.pages.dev/"
                   target="_blank"
                   rel="noopener"
-                  >Try the demo</a
+                  >Demo</a
                 >
                 <a
                   class="btn btn-secondary btn-sm"
@@ -221,12 +226,9 @@
             <li class="product">
               <div class="product-name">
                 <h3>Kommands</h3>
-                <span class="status">In development</span>
+                <span class="pill" data-release="kollektiv-mc/Kommands">web</span>
               </div>
-              <p>
-                Web app and, from the same code, a standalone desktop app that works offline and can
-                hand commands to Konnekt. The web build is not deployed yet; run it from source.
-              </p>
+              <p>Web app, with a desktop build in development. Not deployed yet; run it from source.</p>
               <div class="actions">
                 <a
                   class="btn btn-primary btn-sm"
@@ -263,10 +265,10 @@
             >Kommands</a
           >
         </nav>
-        <p class="footer-note">
-          Not affiliated with Mojang or Microsoft. &copy; 2026 Kollektiv
-        </p>
+        <p class="footer-note">Not affiliated with Mojang or Microsoft. &copy; 2026 Kollektiv</p>
       </div>
     </footer>
+
+    <script src="main.js"></script>
   </body>
 </html>

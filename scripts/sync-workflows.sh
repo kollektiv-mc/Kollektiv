@@ -11,12 +11,15 @@
 # from diverging without anyone noticing.
 #
 # What is shared: the workflows that are the same job on every product and
-# name nothing only one product has. CodeQL over the four languages both carry,
-# and Scorecard. Not shared: each product's ci.yml, its release workflows and
-# anything that names a path or a toolchain only it has. Those stay per-repo,
-# as docs/conventions.md says. The priority workflow is not here either: it
-# moves together with a form block and a label map, and sync-priority.sh owns
-# all three so they cannot be updated apart.
+# name nothing only one product has. The aislop gate, whose policy travels
+# separately as .aislop/base.yml through sync-aislop.sh; CodeQL over the four
+# languages both products carry; the pull-request label gate; and Scorecard.
+# Not shared: each product's ci.yml, its release workflows and anything that
+# names a path or a toolchain only it has. Those stay per-repo, as
+# docs/conventions.md says. The priority workflow is not here either: it moves
+# together with the question the issue forms ask, both rendered from
+# design/labels.json, and sync-priority.sh owns them so they cannot be updated
+# apart.
 #
 #   --check             Report drift and exit non-zero without writing anything.
 #   --require-vendored  Treat a product missing a shared workflow as a failure
@@ -52,7 +55,9 @@ source_dir="plugins/suite-kit/workflows"
 # Listed rather than globbed, so a file dropped into the directory by mistake
 # does not land in every product's CI on the next sync.
 sources=(
+  "aislop.yml"
   "codeql.yml"
+  "pr-labelled.yml"
   "scorecard.yml"
 )
 

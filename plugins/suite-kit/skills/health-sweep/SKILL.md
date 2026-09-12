@@ -46,19 +46,30 @@ A repo that cannot be cloned is reported as **skipped, with the reason**, and th
 sweep continues to the next one. One unreachable product does not cancel the other
 checks.
 
-## 2. Token drift
+## 2. Drift
 
-With every product cloned, run `./scripts/sync-tokens.sh --check` from the root.
+With every product cloned, run each drift check from the root, in the order
+`.github/workflows/drift.yml` runs them, and run all of them even after one fails:
 
-This is the check `/suite-kit:health` deliberately leaves out: it needs the full
-workspace, and would fail on a bare checkout. **Here it belongs**, because assembling
-that workspace is step 1. Read the script's three outcomes carefully — it distinguishes
-"no drift", "no drift among the products present, but the workspace is incomplete", and
-actual drift, specifically so the middle one is not read as a pass. Report it the way
-the script reports it.
+```sh
+./scripts/sync-tokens.sh --check
+./scripts/sync-runner.sh --check --require-vendored
+./scripts/sync-aislop.sh --check
+./scripts/sync-priority.sh --check
+./scripts/sync-notes.sh --check
+./scripts/validate-schemas.sh --require-products
+./scripts/check-participation.sh --require-products
+```
 
-Then run `./scripts/validate-schemas.sh --require-products`. With every product
-present, an unadopted product is a finding rather than a skip.
+These are the checks `/suite-kit:health` deliberately leaves out: they need the full
+workspace, and would fail on a bare checkout. **Here they belong**, because assembling
+that workspace is step 1. Read each script's outcomes carefully — every one
+distinguishes "no drift", "no drift among the products present, but the workspace is
+incomplete", "not adopted" and actual drift, specifically so the middle two are not
+read as a pass. Report them the way the scripts report them. With every product
+present, an unadopted product is a finding for `validate-schemas.sh` and
+`check-participation.sh`, and a skip for the sync scripts run without
+`--require-vendored`.
 
 ## 3. Per-repo health
 

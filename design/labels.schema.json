@@ -52,6 +52,41 @@
       "description": "Bump only on a breaking shape change."
     },
 
+    "priorityForm": {
+      "type": "object",
+      "required": ["heading", "description", "options"],
+      "additionalProperties": false,
+      "description": "The priority question every issue form in the suite asks, and which p* label each answer becomes. scripts/sync-priority.sh renders it into the block between the `suite:priority` markers of each product's forms and into the PRIORITY_MAP of the vendored issue-priority.yml workflow, so the dropdown a reporter sees and the label the workflow applies cannot drift apart. p0 is deliberately absent: a reporter's honest read tops out at 'blocking', and 'drop everything' is a triage decision.",
+      "properties": {
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The dropdown's label. GitHub renders it as a level-3 heading in the issue body, which is how the workflow finds the answer, so it must stay identical in the form and the workflow."
+        },
+        "description": { "type": "string", "minLength": 1 },
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["text", "label"],
+            "additionalProperties": false,
+            "properties": {
+              "text": {
+                "type": "string",
+                "pattern": "^[A-Z][a-z]+: [^']+$",
+                "description": "One leading word, a colon, then the explanation. The workflow matches on the leading word alone, so no two options may share one."
+              },
+              "label": {
+                "enum": ["p1", "p2", "p3"],
+                "description": "The label the answer becomes. One of the priority labels in `github` above."
+              }
+            }
+          }
+        }
+      }
+    },
+
     "github": {
       "type": "array",
       "minItems": 1,

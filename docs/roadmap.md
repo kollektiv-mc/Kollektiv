@@ -149,12 +149,18 @@ codebase, and a generated guess at them would look reviewed without being.
 
 ## Cross-product handoff
 
-Konnekt and Kommands are growing a link between them: a command built in Kommands
-lands in Konnekt's console, and later stays bound to its Kommands original so an
-edit there propagates here. Tracked in
+Konnekt and Kommands have a link between them: a command saved in Kommands can be
+linked, one at a time, into Konnekt's Commands tile, and stays bound to its Kommands
+original so an edit there propagates. Tracked in
 [`konnekt#213`](https://github.com/kollektiv-mc/Konnekt/issues/213), with the
-blocking work filed in Kommands. **Nothing of it exists on disk yet, in any of the
-three repos.**
+blocking work filed and landed in Kommands. On disk today: Kommands' standalone
+shell writes `saved-commands.json` from the commands the user linked (its
+`shell/store`), and Konnekt's `backend/services/kommands.go` reads it and keeps a
+button per entry the user adds. Saved and linked are two acts on purpose: a saved
+command is organized in Kommands and never leaves it until it is linked; linking
+makes it visible to Konnekt, and adding it as a button there is a third act, taken
+in Konnekt. The one-shot `konnekt://` handoff (Phases 1 and 2 of that issue) is not
+built.
 
 Most of it is product work and belongs in the products. Two decisions taken while
 scoping it are this repo's, because they are cross-repo by construction and neither

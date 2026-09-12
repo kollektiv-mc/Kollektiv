@@ -156,10 +156,11 @@ original so an edit there propagates. Tracked in
 blocking work filed and landed in Kommands. On disk today: Kommands' standalone
 shell writes `saved-commands.json` from the commands the user linked (its
 `shell/store`), and Konnekt's `backend/services/kommands.go` reads it and keeps a
-button per entry. Saved and linked are two acts on purpose: a saved command is
-organized in Kommands and never leaves it until it is linked; Konnekt's list is a
-view of what was linked, not a second place to build it. The one-shot `konnekt://`
-handoff (Phases 1 and 2 of that issue) is not built.
+button per entry the user adds. Saved and linked are two acts on purpose: a saved
+command is organized in Kommands and never leaves it until it is linked; linking
+makes it visible to Konnekt, and adding it as a button there is a third act, taken
+in Konnekt. The one-shot `konnekt://` handoff (Phases 1 and 2 of that issue) is not
+built.
 
 Most of it is product work and belongs in the products. Two decisions taken while
 scoping it are this repo's, because they are cross-repo by construction and neither

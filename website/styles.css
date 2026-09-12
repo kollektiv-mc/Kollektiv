@@ -42,12 +42,19 @@
   --page-x: clamp(16px, 4vw, 40px);
   --section-y: clamp(64px, 9vh, 120px);
 
-  /* The hero's two tiles: the gap between them, the veil's inset, and how
-     far up the window the veil's fade reaches — the top half stays clear. */
+  /* The carousel. A window is 16:9 and about three quarters of the container
+     wide, so the next one peeks in from the right; --carousel-slide is one
+     move and --carousel-dwell the pause between moves, both read by main.js.
+     The veil's fade reaches --veil-idle up the window while the name alone is
+     showing and --veil-hover once the description is out. */
+  --tile-w: min(76cqi, 900px);
   --tile-gap: clamp(16px, 2vw, 28px);
   --tile-pad: clamp(20px, 2.6vw, 36px);
-  --tile-min-h: 320px;
-  --veil-top: 42%;
+  --tile-title: clamp(22px, 2.4vw, 32px);
+  --veil-idle: 38%;
+  --veil-hover: 68%;
+  --carousel-slide: 600ms;
+  --carousel-dwell: 4500ms;
 
   /* The downloads table's fixed columns. */
   --product-name-w: 240px;
@@ -225,19 +232,19 @@ code {
 }
 
 /* ── Hero ───────────────────────────────────────────────────────────────────
-   One viewport tall on anything wide enough to hover. The top bar is a fixed
-   height so the tiles can take exactly what is left. Everything sits in the
-   same .container as the sections below, so the wordmark, the tiles, every
-   heading and the footer share one left edge. */
+   Wordmark and nav in the same .container as every section, so they share
+   the page's left edge with the headings and the footer. The carousel below
+   them is the one thing that may cross the side padding. */
 .hero {
-  min-height: 100svh;
-  display: flex;
+  overflow-x: clip;
 }
 
 .hero-inner {
   display: flex;
   flex-direction: column;
   padding-bottom: var(--space-6);
+  /* So a window can be sized in cqi — a share of this container's width. */
+  container-type: inline-size;
 }
 
 .topbar {
@@ -267,70 +274,37 @@ code {
   color: var(--text-primary);
 }
 
-.tiles {
-  flex: 1 1 auto;
-  min-height: var(--tile-min-h);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+/* ── Carousel ───────────────────────────────────────────────────────────────
+   Bleeds to both viewport edges (the negative margins) and then pads its
+   start back to the container's edge, so the first window lines up with the
+   wordmark, the next one shows past the right padding, and a window on its
+   way out can cross the left padding before it is clipped. main.js moves the
+   track by whole windows and wraps it. */
+.carousel {
+  --bleed: calc(50vw - 50%);
+  margin-inline: calc(-1 * var(--bleed));
+  padding-inline-start: var(--bleed);
+  overflow: hidden;
+}
+
+.carousel-track {
+  display: flex;
   gap: var(--tile-gap);
+  transition: transform var(--carousel-slide) var(--ease-standard);
 }
 
-/* A tile is a title row over a window. The row holds the name and the pill;
-   the window holds the app. */
+.carousel-track.is-jumping {
+  transition: none;
+}
+
 .tile {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.tile-head {
-  flex-shrink: 0;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: 0 var(--space-1) var(--space-3);
-}
-
-.tile-name {
-  margin: 0;
-  font-family: var(--font-display);
-  font-weight: var(--weight-display);
-  font-size: var(--text-xl);
-  letter-spacing: -0.01em;
-}
-
-.pill {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-pill);
-  border: var(--border-hairline) solid var(--border-subtle);
-  background: var(--bg-surface);
-  font-family: var(--font-title);
-  font-weight: var(--weight-medium);
-  font-size: var(--text-xs);
-  letter-spacing: 0.04em;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-/* What main.js appends once GitHub has answered: a tag, or the fallback. */
-.pill em {
-  font-style: normal;
-  color: var(--text-muted);
-}
-
-.pill em::before {
-  content: '·';
-  margin-right: var(--space-2);
+  flex: 0 0 var(--tile-w);
+  min-width: 0;
 }
 
 .tile-window {
   position: relative;
-  flex: 1 1 auto;
-  min-height: 0;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   isolation: isolate;
   border-radius: var(--radius-xl);
@@ -374,11 +348,56 @@ code {
   object-position: right top;
 }
 
-/* The veil: what a hover reveals. The lower part of the window fades into the
-   page and carries the description and actions; above --veil-top the app stays
-   as it is. Always in the DOM so its buttons are reachable by keyboard —
-   tabbing into one is what :focus-within keys off — and only ever transparent,
-   never display: none. */
+/* A window with nothing in it yet. */
+.tile-window-blank {
+  background: var(--bg-surface);
+}
+
+.tile-blank {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: var(--veil-idle);
+  font-family: var(--font-title);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* The fade at the foot of the window, under the name while idle and under
+   the description on hover. A pseudo-element rather than a background on the
+   veil so its height can animate. */
+.tile-window::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  height: var(--veil-idle);
+  background: linear-gradient(
+    to top,
+    var(--bg-base) 0%,
+    color-mix(in srgb, var(--bg-base) 80%, transparent) 45%,
+    transparent 100%
+  );
+  transition: height var(--duration-panel) var(--ease-standard);
+}
+
+.tile-window:hover::after,
+.tile-window:focus-within::after {
+  height: var(--veil-hover);
+}
+
+/* The veil sits at the foot of the window and is always there: the name and
+   pill on top, and beneath them the description and actions, folded to
+   nothing until a hover unfolds them — which is what lifts the name. The
+   buttons stay in the DOM so keyboard focus can reach them; tabbing into one
+   is what :focus-within keys off. */
 .tile-veil {
   position: absolute;
   inset: 0;
@@ -386,54 +405,115 @@ code {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  gap: var(--space-4);
   padding: var(--tile-pad);
-  background: linear-gradient(
-    to top,
-    var(--bg-base) 0%,
-    color-mix(in srgb, var(--bg-base) 88%, transparent) 55%,
-    transparent 100%
-  );
-  background-size: 100% calc(100% - var(--veil-top));
-  background-position: bottom;
-  background-repeat: no-repeat;
+}
+
+.tile-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.tile-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-size: var(--tile-title);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  border: var(--border-hairline) solid var(--border-subtle);
+  background: var(--bg-elevated);
+  font-family: var(--font-title);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* What main.js appends once GitHub has answered: a tag, or the fallback. */
+.pill em {
+  font-style: normal;
+  color: var(--text-muted);
+}
+
+.pill em::before {
+  content: '·';
+  margin-right: var(--space-2);
+}
+
+.tile-more {
+  display: grid;
+  grid-template-rows: 0fr;
   opacity: 0;
-  transform: translateY(var(--space-3));
+  transform: translateY(var(--space-2));
   transition:
+    grid-template-rows var(--duration-panel) var(--ease-standard),
     opacity var(--duration-panel) var(--ease-standard),
     transform var(--duration-panel) var(--ease-standard);
 }
 
-.tile-window:hover .tile-veil,
-.tile-window:focus-within .tile-veil {
+.tile-more > div {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-top: var(--space-4);
+}
+
+.tile-window:hover .tile-more,
+.tile-window:focus-within .tile-more {
+  grid-template-rows: 1fr;
   opacity: 1;
   transform: none;
 }
 
-.tile-veil p {
-  max-width: 44ch;
+.tile-more p {
+  max-width: 48ch;
   color: var(--text-primary);
   font-size: var(--lead);
 }
 
-/* Stacked: where there is no hover, or no room for two tiles side by side,
-   nothing may live behind a hover. The hero stops pretending to be a viewport,
-   the tiles go one under the other, and each window becomes the picture in
-   colour with the veil laid out beneath it, all of it visible. Width is a
-   condition too, not only hover, because a narrow window on a desktop reports
-   hover and would otherwise get two cramped tiles with everything behind a
-   pointer. */
+/* Stacked: where there is no hover, or no room for the carousel, nothing may
+   live behind a hover and nothing may move on its own. The carousel becomes
+   a column inside the container, each window is the picture in colour with
+   the name, pill, description and actions laid out beneath it, and the
+   wrap-around copies main.js made are hidden. Width is a condition too, not
+   only hover, because a narrow window on a desktop reports hover. */
 @media (hover: none), (max-width: 900px) {
-  .hero {
-    min-height: 0;
+  .carousel {
+    margin-inline: 0;
+    padding-inline-start: 0;
+    overflow: visible;
   }
-  .tiles {
-    grid-template-columns: 1fr;
+  .carousel-track {
+    flex-direction: column;
+    transform: none !important;
   }
-  .tile-window {
+  .tile {
     flex: none;
   }
-  .tile-shot {
+  .tile-clone {
+    display: none;
+  }
+  .tile-window {
+    aspect-ratio: auto;
+  }
+  .tile-window::after {
+    display: none;
+  }
+  .tile-shot,
+  .tile-blank {
     position: static;
     height: auto;
     aspect-ratio: 16 / 10;
@@ -441,12 +521,17 @@ code {
     opacity: 1;
     border-bottom: var(--border-hairline) solid var(--border-subtle);
   }
+  .tile-blank {
+    padding-bottom: 0;
+  }
   .tile-veil {
     position: static;
+    padding: var(--space-6);
+  }
+  .tile-more {
+    grid-template-rows: 1fr;
     opacity: 1;
     transform: none;
-    background: none;
-    padding: var(--space-6);
   }
 }
 

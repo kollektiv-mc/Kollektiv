@@ -13,7 +13,7 @@ python3 -m http.server -d website
 |---|---|
 | `index.html` | The one page |
 | `styles.css` | Layout and the page vocabulary — every value the token set does not hold |
-| `main.js` | Fills each product's pill with the release GitHub reports; the page reads fine without it |
+| `main.js` | Runs the hero carousel and fills each product's pill with the release GitHub reports; the page reads fine without it |
 | `tokens.css` | **Generated.** Custom properties from `design/tokens.json`. Do not edit |
 | `gen-tokens.py` | Writes `tokens.css` and `assets/img/favicon.svg` from the token source |
 | `assets/img/favicon.svg` | **Generated.** The wordmark's initial, coloured from the tokens |
@@ -51,12 +51,26 @@ Two literals sit outside CSS and cannot read a custom property: the
 `theme-color` meta tag in `index.html`, which restates `bg-base`, and the
 favicon, which is why the generator writes it.
 
+## The hero
+
+The products are a carousel of 16:9 windows, Konnekt first. It is the one
+element that crosses the page's side padding: the first window starts on the
+container's left edge and the next peeks in from the right. Left alone it
+slides one window left every few seconds and wraps; hovering or focusing
+anything in it holds it still, and it never moves for a viewer who asked for
+reduced motion. On narrow screens and touch devices it is a plain column.
+
+Each window shows its app in black and white with the name and pill at its
+foot. Hovering brings the colour back and unfolds the description and actions
+beneath the name, which is what lifts it. Kube's window is blank on purpose:
+nothing is built yet, and a mock-up would say otherwise.
+
 ## What the pills say
 
 Each product's pill ships saying only `desktop` or `web`. `main.js` then asks
 the GitHub API, per repo, for the latest release; failing that the newest
 prerelease; failing that it says `in development` with the date of the last
-commit. A request that fails leaves the pill as shipped, so the page never
+commit, or without one for a repo that has no commits yet. A request that fails leaves the pill as shipped, so the page never
 claims a version it did not fetch. The same element appears in the hero and in
 the downloads table and is filled from one answer.
 

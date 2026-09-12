@@ -98,6 +98,26 @@ jobs:
         if: ${{ !cancelled() }}
         run: ./scripts/sync-notes.sh --check
 
+      # The shared workflows are vendored for the reason the runner is, plus one
+      # of their own: a `uses:` reference to this repo's main would put an
+      # unpinned dependency on another repository into every product's CI, and
+      # a change here would land in each product with no pull request there to
+      # review it. A copy is reviewed where it runs, and this is what keeps the
+      # copies from diverging. Runs on a red run, per the reasoning above, and
+      # without --require-vendored until both products carry every file.
+      - name: Shared-workflow drift
+        if: ${{ !cancelled() }}
+        run: ./scripts/sync-workflows.sh --check
+
+      # The priority workflow, the dropdown it reads and the label map they
+      # share are checked against each other first, then against each product's
+      # copies. A dropdown answer the workflow cannot read is the failure this
+      # exists to catch, and it is silent everywhere else: the issue simply
+      # mirrors into Linear at priority None.
+      - name: Priority-block drift
+        if: ${{ !cancelled() }}
+        run: ./scripts/sync-priority.sh --check
+
       # The products are cloned here anyway, so validate their manifests against
       # the schema while we have them.
       #

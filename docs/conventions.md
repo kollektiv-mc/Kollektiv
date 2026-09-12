@@ -72,6 +72,29 @@ The sweep never closes an issue. A finding that stops reproducing gets a comment
 so, because "it was fixed" and "the check stopped running" look identical from the
 outside, and only one of them is good news.
 
+## Priority
+
+Every issue carries exactly one of `p0`-`p3`, defined in `design/labels.json` and
+applied to every repo by `scripts/sync-labels.sh`:
+
+| Label | Means |
+| --- | --- |
+| `p0` | Drop everything. |
+| `p1` | High priority, next up. |
+| `p2` | Medium priority, normal queue. |
+| `p3` | Low priority, nice to have. |
+
+An issue form asks the reporter for their honest read and offers three answers,
+which the vendored `issue-priority.yml` workflow turns into a label when the
+issue opens: *Blocking* is `p1`, *Significant* is `p2`, *Minor* is `p3`. `p0` is
+never offered; it is a triage judgement, and triage may move any of the other
+three. An issue opened through the API carries no form answer, so whoever files
+it, usually an agent, applies the label in the same call; when none does, the
+workflow says so in a comment rather than guessing. If the priority is genuinely
+unclear, the answer is `p2`, never nothing: an issue without a priority mirrors
+into Linear at priority None and drops out of every ordered view, which is not
+the same as being low priority.
+
 ## PR magic words
 
 GitHub's own closing keywords in a PR title or description close the issue
@@ -281,6 +304,14 @@ becomes a line in the release notes, vendored by `scripts/sync-notes.sh`. See
 § Release notes and pull request labelling above for the split between those
 rules and each product's own `.github/changelog.json`.
 
+**Shared**, in `plugins/suite-kit/workflows/`: the workflows that are the same
+job on every product, CodeQL and Scorecard, vendored by
+`scripts/sync-workflows.sh`. And the priority dropdown every issue form carries,
+together with the workflow that reads it, in
+`plugins/suite-kit/issue-forms/priority.yml` and
+`plugins/suite-kit/workflows/issue-priority.yml`, vendored as one by
+`scripts/sync-priority.sh`. See § Priority above.
+
 **Per-repo:**
 
 - Linear project and milestone structure — documented once, for every repo,
@@ -289,7 +320,9 @@ rules and each product's own `.github/changelog.json`.
 - Cycle cadence. Cycle creation is a team-settings toggle not exposed via the
   Linear MCP; enable it once in **Team Settings → Cycles**.
 - Anything about the product's own build, CI, or release — including which of
-  its paths never reach what it ships, in `.github/changelog.json`.
+  its paths never reach what it ships, in `.github/changelog.json`. The shared
+  workflows above are the exception, and the product still owns the copy it
+  commits.
 
 ## Known Linear MCP gaps
 

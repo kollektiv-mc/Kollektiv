@@ -53,8 +53,20 @@ checked only when someone invoked `/suite-kit:health` by hand.
 `tokens.sourceFile`, every `health.commands[].cwd` — still exist. It runs in this
 repo's `.claude/suite.json` and in CI with `--require-products`.
 
+`scripts/sync-workflows.sh` vendors the workflows every product runs identically,
+CodeQL and Scorecard, into `.github/workflows/`, and `scripts/sync-priority.sh`
+vendors the priority dropdown into every issue form together with the workflow
+that reads it, checking the two against each other and against
+`design/labels.json` before it copies anything. Both run in CI's `token-drift`
+job with `--check`. They exist because Kommands' copy of the priority workflow
+said in its header that it was vendored from here by a script that did not
+exist, and Konnekt had never received it.
+
 Still open, in rough order:
 
+- Turning on `--require-vendored` for `scripts/sync-workflows.sh` and
+  `scripts/sync-priority.sh` in CI, once both products carry the files on their
+  default branches.
 - Turning on `scripts/sync-runner.sh --check --require-vendored` in CI. Both
   products carry the runner in a working tree here, but the flag can only go on
   once those commits are on their default branches — CI clones from there.

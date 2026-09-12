@@ -20,6 +20,11 @@ concurrency:
   group: drift-${{ github.ref }}
   cancel-in-progress: true
 
+# The products are cloned unauthenticated (they are public), so the token
+# only has to read this tree.
+permissions:
+  contents: read
+
 jobs:
   token-drift:
     runs-on: ubuntu-latest

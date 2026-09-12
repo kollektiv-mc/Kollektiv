@@ -104,6 +104,10 @@ VENDORED = {
     ".github/release.yml": "sync-notes.sh",
     ".github/workflows/issue-priority.yml": "sync-priority.sh",
     ".aislop/base.yml": "sync-aislop.sh",
+    ".github/workflows/aislop.yml": "sync-workflows.sh",
+    ".github/workflows/codeql.yml": "sync-workflows.sh",
+    ".github/workflows/pr-labelled.yml": "sync-workflows.sh",
+    ".github/workflows/scorecard.yml": "sync-workflows.sh",
 }
 # What each product-side tool would rewrite. aislop formats and lints Python;
 # Prettier formats JSON, YAML and Markdown. A vendored file with any other
@@ -333,9 +337,6 @@ def check_repo(label, repo_dir):
 
     path_check(suite.get("roadmap"), "roadmap")
     path_check((suite.get("tokens") or {}).get("sourceFile"), "tokens.sourceFile")
-    path_check((suite.get("distribution") or {}).get("doc"), "distribution.doc")
-    for key, rel_path in sorted((suite.get("docs") or {}).items()):
-        path_check(rel_path, "docs.%s" % key)
 
     check_style(label, repo_dir)
     check_vendored_ignores(label, repo_dir)

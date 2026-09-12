@@ -50,7 +50,8 @@ kollektiv/
 ├── scripts/validate-schemas.sh validates every manifest against its schema
 ├── .github/workflows/ci.yml    this repo's own checks, and the aislop gate
 ├── .github/workflows/drift.yml the cross-repo drift checks, on every push and nightly
-├── .github/workflows/aislop.yml the aislop gate as a reusable workflow the products call
+├── plugins/suite-kit/workflows/ the workflows every product runs identically, vendored
+│                               into each product (aislop, CodeQL, pr-labelled, Scorecard)
 ├── .github/workflows/issue-priority.yml
 │                               master copy of the workflow that turns a form answer
 │                               into a p* label, vendored into each product

@@ -203,7 +203,8 @@ tested on every push and waits for its first tag.
 
 **Every pull request carries exactly one `type:` label.** The label alone decides
 where it lands, and CI fails a pull request without one: the check is
-`.github/workflows/pr-labelled.yml` here, a reusable workflow each product calls.
+`plugins/suite-kit/workflows/pr-labelled.yml` here, vendored into each product's
+`.github/workflows/` by `scripts/sync-workflows.sh`.
 Before that gate existed, 24 of the 41 pull requests in Konnekt's first release
 window were unlabelled, the generator fell back to reading the title's leading
 verb, and "Add a Full release roadmap section and a nightly snapshot build

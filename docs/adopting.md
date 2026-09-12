@@ -81,12 +81,6 @@ inside a skill, as confusing prose.
 | `minecraft.targetVersion` | Version the repo emits for |
 | `minecraft.dataSource` | Where pinned registry data comes from |
 | `minecraft.traitMatrix` | Path to the version-trait document |
-| `distribution.current` | Builds a user can obtain today, e.g. `web`, `desktop-wails-v2`. For a product shipping more than one build from one codebase, which the single-valued `kind` cannot express. Omitted by a repo with one build |
-| `distribution.planned` | Builds in the tree with no release producing installable artefacts yet |
-| `distribution.doc` | The document describing the builds and the boundary between them. Must exist |
-| `distribution.issue` | GitHub issue URL tracking the planned build, if one is open |
-| `distribution.note` | A short pointer into `doc`, not a second copy of it |
-| `docs` | camelCase names to repo-relative paths, the named entry points a skill or a person needs without guessing: `architecture`, `persistence`, `healthChecklist`. Every path must exist |
 | `health.commands` | Ordered `{ name, run, cwd? }` list — `cwd` is relative to the repo root and defaults to it |
 | `health.invariants` | `{ name, grep, paths, exclude, expect, diagnosis, reference }` |
 | `health.generated` | List of `{ regenerate, cwd?, expectCleanDiff, requiresNetwork, diagnosis, reference }` — a repo can have more than one generator, and Kommands has two. `expectCleanDiff` is the list of repo-relative paths that must be unchanged after `regenerate` runs |
@@ -150,63 +144,24 @@ vendored file, and each `sync-*.sh --check` reports it the same way.
 ./scripts/sync-workflows.sh       # from the kollektiv root
 ```
 
-This copies `plugins/suite-kit/workflows/codeql.yml` and `scorecard.yml` into the
-repo's `.github/workflows/`. Commit them. A workflow has to be in the repo for
-GitHub to run it, and a copy is reviewed where it runs, which a `uses:` reference
-to a branch of this repo would not be.
+This copies the four workflows under `plugins/suite-kit/workflows/` into the repo's
+`.github/workflows/`: `aislop.yml`, `codeql.yml`, `pr-labelled.yml` and
+`scorecard.yml`. Commit them. A workflow has to be in the repo for GitHub to run it,
+and a copy is reviewed where it runs, which a `uses:` reference to a branch of this
+repo would not be. The aislop and label gates each need a decision before they
+pass, which is step 7.
 
 Like the other vendored files, the copies are not the place to edit: the next
-`sync-workflows.sh` overwrites them, and `scripts/sync-workflows.sh --check` in
-CI's `token-drift` job reports a copy that has drifted. A repo that has never
+`sync-workflows.sh` overwrites them, and `scripts/sync-workflows.sh --check` in the
+`Suite drift` workflow reports a copy that has drifted. A repo that has never
 carried a workflow is reported and skipped there; `--require-vendored` turns that
-into a failure once every product carries every file.
+into a failure once every product carries every file. If Prettier runs at the repo
+root, list the four files in `.prettierignore`: the sync byte-compares the copies,
+and a formatted copy is drift.
 
 Nothing product-specific belongs in a shared workflow. CodeQL's language matrix
 is the one thing in there that could tempt it, and it is the same four languages
 on both products by construction; a fifth changes the source here.
-
-## 7. Vendor the priority block
-
-Every issue form in the suite ends by asking how urgent the report is, and a
-workflow turns the answer into a `p1`-`p3` label when the issue is opened. The
-dropdown and the workflow are vendored together, because an answer the workflow
-cannot read is the silent failure this exists to prevent.
-
-Adopting takes one manual step first. In every form under
-`.github/ISSUE_TEMPLATE/`, put a pair of marker lines where the question belongs,
-normally just before the closing free-text field:
-
-```yaml
-  # >>> suite:priority. Vendored from kollektiv by scripts/sync-priority.sh. Edit it there.
-  # <<< suite:priority
-```
-
-Then:
-
-```sh
-./scripts/sync-priority.sh        # from the kollektiv root
-```
-
-This fills the space between the markers from
-`plugins/suite-kit/issue-forms/priority.yml` and copies
-`plugins/suite-kit/workflows/issue-priority.yml` to
-`.github/workflows/issue-priority.yml`. Commit both. Before copying anything it
-checks that the heading the workflow looks for is the dropdown's label, that every
-option maps to a label, and that every mapped label is one `design/labels.json`
-defines; a mismatch stops the sync.
-
-Every form must carry the markers once any does. The workflow comments on each
-issue that arrives without an answer, and a form with no dropdown produces exactly
-that issue, so `--check` fails on a form left out.
-
-## 8. Ignore the runtime state
-
-```gitignore
-.claude/settings.local.json
-```
-
-Shared config is committed so every clone and cloud agent inherits the same setup.
-Personal permission allowlists are not shared.
 
 ## 7. Adopt the shared gates
 
@@ -222,14 +177,9 @@ Your config carries only the size ratchet, `quality.maxFunctionLoc` and
 `quality.maxFileLoc`, each held at the tree's largest function and file today and
 lowered as they shrink, never raised; run `npx --yes aislop@0.16.0 scan` to find the
 numbers. Add an `.aislopignore` listing what is generated or vendored, the vendored
-Python above included. Then call the gate from CI:
-
-```yaml
-  aislop:
-    uses: kollektiv-mc/Kollektiv/.github/workflows/aislop.yml@main
-```
-
-That workflow pins aislop and ruff in one place for every repo. ruff matters: aislop's
+Python above included. The job itself is `.github/workflows/aislop.yml`, one of the shared workflows step 6
+vendored, so aislop and ruff are pinned in one place for every repo and `ci.yml`
+needs nothing more. ruff matters: aislop's
 Python engines run only when a ruff binary is on PATH, and report nothing when it is
 not.
 
@@ -241,17 +191,10 @@ lowered, with the open findings listed in its health checklist. The base's 100 i
 where the ratchet ends.
 
 **The label gate.** Every pull request carries one `type:` and one `area:` label
-(conventions.md § Release notes and pull request labelling). The check is a reusable
-workflow too:
-
-```yaml
-  pr-labelled:
-    if: github.event_name == 'pull_request'
-    uses: kollektiv-mc/Kollektiv/.github/workflows/pr-labelled.yml@main
-```
-
-with `labeled` and `unlabeled` among the caller's `pull_request` types, so adding the
-label turns the check green. The labels themselves come from `design/labels.json`
+(conventions.md § Release notes and pull request labelling). The check is
+`.github/workflows/pr-labelled.yml`, another of the shared workflows step 6 vendored;
+it triggers on `labeled` and `unlabeled` as well, so adding the label turns the check
+green. The labels themselves come from `design/labels.json`
 via `scripts/sync-labels.sh`, which needs an authenticated `gh`; a repo that has
 never had it applied fails the gate on every pull request until it does.
 
@@ -285,7 +228,15 @@ body.
 `.aislopignore` and a root `.prettierignore`, so a product gate cannot rewrite a
 vendored file and hand the nightly a drift it cannot fix.
 
----
+## 8. Ignore the runtime state
+
+```gitignore
+.claude/settings.local.json
+```
+
+Shared config is committed so every clone and cloud agent inherits the same setup.
+Personal permission allowlists are not shared.
+
 
 ## Per-repo notes
 
@@ -344,14 +295,13 @@ copy in place would have been the clearest possible example of it.
 `format:check`, the build and bundle budget) and the Go shell's checks (`go vet` and
 `go test` over `shell/`), three `invariants` and three `generated` entries, and its
 CI runs the vendored runner with `--require-runnable` on every push, so a skip there
-is a failure. Its `kind` is `vite-web+wails-desktop`, and its `distribution` block
-records that only the web build is released today, with the desktop shell under
-`planned` until a release workflow produces installable artefacts.
+is a failure. Only its web build is released today; the desktop shell waits on a release
+workflow that produces installable artefacts (Kommands #44).
 
 It carries the priority question in both forms and the vendored
 `.github/workflows/issue-priority.yml`, the aislop base with its own ratchet and,
 for now, the score it had on adoption, the release-notes generator with its
-`.github/changelog.json`, and both reusable gates in CI. Its `.prettierignore`
+`.github/changelog.json`, and the four shared workflows vendored into `.github/workflows/`. Its `.prettierignore`
 excludes every vendored YAML and JSON file, and its `.aislopignore` the vendored
 Python. It has no release workflow yet, so the generator is tested on every push
 and not yet called.

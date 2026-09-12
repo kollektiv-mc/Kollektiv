@@ -220,11 +220,6 @@ Still open here:
   issue has ever carried a priority, so the suite's own rule that a repo does not
   invent its own priority scale is currently unenforced there rather than followed.
 
-Closed: the schema now has a `distribution` block for a product that ships more than
-one build from one codebase, with `current` and `planned` lists, which is what the
-single-valued `kind` could not say; Kommands' manifest and `suite.repos.json` both
-read `vite-web+wails-desktop`.
-
 ## superpowers adoption
 
 OMC (Oh-My-ClaudeCode) is dropped suite-wide, along with its `.omc-workspace`

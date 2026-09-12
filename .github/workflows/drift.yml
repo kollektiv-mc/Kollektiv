@@ -69,6 +69,17 @@ jobs:
         if: ${{ !cancelled() }}
         run: ./scripts/sync-aislop.sh --check
 
+      # The shared workflows, vendored for the reason the runner is, plus one of
+      # their own: a `uses:` reference to this repo's main would put an unpinned
+      # dependency on another repository into every product's CI, and a change
+      # here would land in each product with no pull request there to review
+      # it. A copy is reviewed where it runs; this is what keeps the copies from
+      # diverging. Without --require-vendored until both products carry every
+      # file.
+      - name: Shared-workflow drift
+        if: ${{ !cancelled() }}
+        run: ./scripts/sync-workflows.sh --check
+
       # The issue-priority workflow and the question the forms ask, both
       # rendered from design/labels.json. Without --require-vendored while
       # Konnekt has yet to adopt it.

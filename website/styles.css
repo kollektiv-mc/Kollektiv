@@ -1,0 +1,623 @@
+/* ── Fonts ──────────────────────────────────────────────────────────────────
+   The same three faces Konnekt's website and app bundle, at the one weight
+   each is used at: Satoshi Black for display, Excon Medium for titles and
+   eyebrows, Ranade Regular for everything else. Self-hosted so the page makes
+   no third-party request. The family names match design/tokens.json →
+   type.family, which tokens.css turns into --font-display/--font-title/--font-sans. */
+@font-face {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('./assets/fonts/Satoshi-Black.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Excon';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./assets/fonts/Excon-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Ranade';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/Ranade-Regular.woff2') format('woff2');
+}
+
+/* ── Page vocabulary ────────────────────────────────────────────────────────
+   Everything in this block is a value the page needs and the token set does
+   not hold, because the token set is the *app* scale — 12px body, 24px as its
+   largest space — and a marketing page has a hero title and a section rhythm
+   no app UI has. Same split Konnekt's website makes. Two rules keep it honest:
+   nothing here is a colour, and nothing below redeclares a token. A value the
+   apps could share belongs in design/tokens.json, not here. */
+:root {
+  --max-width: 1120px;
+  --narrow-width: 720px;
+  --nav-h: 64px;
+  --page-x: clamp(16px, 4vw, 40px);
+  --section-y: clamp(64px, 9vh, 120px);
+
+  /* The hero's two tiles: the gap between them, the blur that hides the
+     screenshot while the veil is up, and the veil's inset. */
+  --tile-gap: clamp(12px, 1.5vw, 20px);
+  --tile-blur: 14px;
+  --tile-pad: clamp(20px, 3vw, 44px);
+  --tile-min-h: 360px;
+
+  /* Display sizes. The token scale tops out at --text-xl (20px), which is the
+     lead paragraph here; the headings sit above it. */
+  --display-xl: clamp(34px, 4.6vw, 60px);
+  --display-lg: clamp(28px, 3.4vw, 46px);
+  --lead: clamp(var(--text-lg), 1.4vw, var(--text-xl));
+}
+
+/* ── Base ───────────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg-base);
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-body);
+  font-size: var(--text-lg);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+}
+
+p {
+  margin: 0;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  color: var(--text-primary);
+}
+
+::selection {
+  background: rgb(var(--accent-rgb) / 0.3);
+}
+
+:focus-visible {
+  outline: var(--border-thick) solid var(--accent);
+  outline-offset: var(--space-0-5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0s !important;
+  }
+}
+
+/* ── Shared pieces ──────────────────────────────────────────────────────── */
+.container {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--page-x);
+}
+
+.container.narrow {
+  max-width: var(--narrow-width);
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-size: var(--text-xl);
+  letter-spacing: -0.01em;
+  color: var(--accent);
+  text-decoration: none;
+  /* The one glow the design language permits: accent-tinted, never a drop
+     shadow. See design/README.md § Two things not held here. */
+  text-shadow: 0 0 var(--space-4) rgb(var(--accent-rgb) / 0.35);
+}
+
+.wordmark-sm {
+  font-size: var(--text-sm);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-family: var(--font-title);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-5);
+  border: var(--border-hairline) solid var(--border-subtle);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg-base);
+  font-weight: var(--weight-semibold);
+}
+
+.btn-primary:hover {
+  /* Accent-tinted ring, the same exception the wordmark uses; not a shadow. */
+  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.4);
+}
+
+.btn-secondary {
+  background: var(--hover-surface);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-elevated);
+}
+
+.btn-sm {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-xs);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ── Hero ───────────────────────────────────────────────────────────────────
+   One viewport tall on anything wide enough to hover. The top bar is a fixed
+   height so the tiles can take exactly what is left. */
+.hero {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--page-x) var(--space-5);
+}
+
+.topbar {
+  height: var(--nav-h);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.topnav {
+  display: flex;
+  gap: var(--space-5);
+  font-family: var(--font-title);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-sm);
+}
+
+.topnav a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.topnav a:hover {
+  color: var(--text-primary);
+}
+
+.tiles {
+  flex: 1 1 auto;
+  min-height: var(--tile-min-h);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--tile-gap);
+}
+
+.tile {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: var(--radius-xl);
+  border: var(--border-hairline) solid var(--border-subtle);
+  background: var(--bg-overlay);
+  transition: border-color var(--duration-panel) var(--ease-standard);
+}
+
+.tile:hover,
+.tile:focus-within {
+  border-color: var(--border-hover);
+}
+
+/* The screenshot fills the tile from its top-left corner, the way the app's
+   own window would, so the sidebar and title bar stay legible at any tile
+   size instead of a centred crop landing on the middle of a chart. */
+.tile-shot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: left top;
+  transition:
+    filter var(--duration-panel) var(--ease-standard),
+    opacity var(--duration-panel) var(--ease-standard),
+    transform var(--duration-panel) var(--ease-standard);
+}
+
+.tile:hover .tile-shot,
+.tile:focus-within .tile-shot {
+  filter: blur(var(--tile-blur)) saturate(0.7);
+  opacity: 0.4;
+  transform: scale(1.04);
+}
+
+/* Which corner of the screenshot survives the crop. Konnekt's sidebar and
+   title bar are on the left; Kommands' editor and 3D preview are on the right,
+   and its command list is the less telling half. */
+.tile-shot-end {
+  object-position: right top;
+}
+
+/* The name in the corner while the picture is showing, so a tile is never
+   an unlabelled screenshot. It hands over to the veil's title on hover. */
+.tile-tag {
+  position: absolute;
+  left: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 1;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-1-5) var(--space-3);
+  border-radius: var(--radius-pill);
+  border: var(--border-hairline) solid var(--border-subtle);
+  background: var(--bg-elevated);
+  backdrop-filter: blur(var(--space-2));
+  font-family: var(--font-title);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.tile-tag em {
+  font-style: normal;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.tile:hover .tile-tag,
+.tile:focus-within .tile-tag {
+  opacity: 0;
+}
+
+/* The veil: what a hover reveals. It is always in the DOM so its buttons are
+   reachable by keyboard — tabbing into one is what :focus-within keys off —
+   and it is only ever transparent, never display: none. */
+.tile-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--tile-pad);
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--bg-base) 75%, transparent),
+    transparent 70%
+  );
+  opacity: 0;
+  transform: translateY(var(--space-3));
+  transition:
+    opacity var(--duration-panel) var(--ease-standard),
+    transform var(--duration-panel) var(--ease-standard);
+}
+
+.tile:hover .tile-veil,
+.tile:focus-within .tile-veil {
+  opacity: 1;
+  transform: none;
+}
+
+.tile-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-size: var(--display-lg);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+.tile-veil p {
+  max-width: 44ch;
+  color: var(--text-secondary);
+  font-size: var(--lead);
+}
+
+.tile-veil .actions {
+  margin-top: var(--space-2);
+}
+
+.hero-more {
+  align-self: center;
+  margin-top: var(--space-5);
+  font-family: var(--font-title);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.hero-more:hover {
+  color: var(--text-primary);
+}
+
+/* Stacked: where there is no hover, or no room for two tiles side by side,
+   nothing may live behind a hover. The hero stops pretending to be a viewport,
+   the tiles go one under the other, and each becomes the picture with the veil
+   laid out beneath it, all of it visible. The corner tag goes because the title
+   is right there. Width is a condition too, not only hover, because a narrow
+   window on a desktop reports hover and would otherwise get two cramped tiles
+   with everything behind a pointer. */
+@media (hover: none), (max-width: 900px) {
+  .hero {
+    min-height: 0;
+  }
+  .tiles {
+    grid-template-columns: 1fr;
+  }
+  .tile {
+    min-height: 0;
+  }
+  .tile-shot {
+    position: static;
+    height: auto;
+    aspect-ratio: 16 / 10;
+    border-bottom: var(--border-hairline) solid var(--border-subtle);
+  }
+  .tile-tag {
+    display: none;
+  }
+  .tile-veil {
+    position: static;
+    opacity: 1;
+    transform: none;
+    background: none;
+    padding: var(--space-6);
+  }
+  .tile:hover .tile-shot,
+  .tile:focus-within .tile-shot {
+    filter: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .topnav {
+    gap: var(--space-4);
+    font-size: var(--text-xs);
+  }
+}
+
+/* ── Sections ───────────────────────────────────────────────────────────── */
+.section {
+  padding: var(--section-y) 0;
+  border-top: var(--border-hairline) solid var(--border-subtle);
+}
+
+.section h2 {
+  margin: var(--space-3) 0 var(--space-5);
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-size: var(--display-xl);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+}
+
+.section-head {
+  margin-bottom: var(--space-6);
+}
+
+.section-head h2 {
+  margin-bottom: 0;
+}
+
+.lead {
+  font-size: var(--lead);
+  color: var(--text-primary);
+  margin-bottom: var(--space-5);
+}
+
+.section p + p {
+  margin-top: var(--space-4);
+}
+
+#about p:not(.lead) {
+  color: var(--text-secondary);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--tile-gap);
+}
+
+.card {
+  padding: var(--space-6);
+  border-radius: var(--radius-panel);
+  border: var(--border-hairline) solid var(--border-subtle);
+  background: var(--bg-surface);
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard);
+}
+
+.card:hover {
+  border-color: var(--border-hover);
+  background: var(--hover-surface);
+}
+
+.card h3 {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-title);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-lg);
+  line-height: 1.25;
+}
+
+.card p {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* ── Products ───────────────────────────────────────────────────────────── */
+.products {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: var(--border-hairline) solid var(--border-subtle);
+}
+
+.product {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) 2fr auto;
+  gap: var(--space-6);
+  align-items: center;
+  padding: var(--space-6) 0;
+  border-bottom: var(--border-hairline) solid var(--border-subtle);
+}
+
+.product-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.product-name h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-size: var(--text-xl);
+  letter-spacing: -0.01em;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-pill);
+  border: var(--border-hairline) solid var(--border-subtle);
+  background: var(--bg-surface);
+  font-family: var(--font-title);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.product p {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+@media (max-width: 800px) {
+  .product {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────────── */
+.footer {
+  border-top: var(--border-hairline) solid var(--border-subtle);
+  padding: var(--space-6) 0;
+}
+
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-6);
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.footer-links a {
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  color: var(--text-primary);
+}
+
+.footer-note {
+  margin-left: auto;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}

@@ -44,6 +44,13 @@ jobs:
       - name: Release-notes classifier
         run: python3 plugins/suite-kit/release-notes_test.py
 
+      # The home page is styled from design/tokens.json through a generator
+      # whose output is committed, the same shape as a product's gen:tokens.
+      # A token change that forgot the site, or a hand edit to tokens.css,
+      # shows up here as a diff.
+      - name: Website tokens
+        run: ./website/gen-tokens.py && git diff --exit-code -- website/tokens.css website/assets/img/favicon.svg
+
   token-drift:
     runs-on: ubuntu-latest
     steps:

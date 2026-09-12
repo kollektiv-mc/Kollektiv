@@ -26,6 +26,7 @@ change here that requires a product to rebuild is a change in the wrong place.
 | `scripts/sync-labels.sh` | Applies `design/labels.json`'s GitHub side via `gh` (`--check` to detect drift) |
 | `scripts/validate-schemas.sh` | Validates every manifest against its schema |
 | `scripts/check-participation.sh` | Checks each repo's permissions floor and the paths its manifest names (`--require-products` to fail on an uncloned one) |
+| `website/` | The suite's home page — hand-written HTML/CSS, styled from `design/tokens.json` through `website/gen-tokens.py` |
 | `docs/adopting.md` | How a repo adopts suite-kit |
 | `docs/conventions.md` | Cross-repo rules: tracking, PR magic words, permissions |
 | `docs/linear.md` | The Linear structure `/suite-kit:suite-sync` mirrors GitHub Issues into |

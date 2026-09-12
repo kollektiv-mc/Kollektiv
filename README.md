@@ -66,6 +66,7 @@ kollektiv/
 ├── docs/conventions.md         cross-repo rules: tracking, PRs, permissions
 ├── docs/linear.md              the Linear structure /suite-kit:suite-sync mirrors into
 ├── docs/roadmap.md             this repo's own roadmap — direction, not work items
+├── website/                    the suite's home page, styled from design/tokens.json
 ├── Konnekt/                    cloned, untracked
 └── Kommands/                   cloned, untracked
 ```

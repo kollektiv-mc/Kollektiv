@@ -28,14 +28,15 @@
     ],
     "invariants": [
       {
-        "name": "no literal colours in the website stylesheet",
+        "name": "no literal colours in the website",
         "grep": "#[0-9a-fA-F]{3,8}\\b|rgba?\\([0-9]",
         "paths": [
-          "website/styles.css"
+          "website/styles.css",
+          "website/main.js"
         ],
         "exclude": [],
         "expect": "no matches",
-        "diagnosis": "The website is a consumer of design/tokens.json: every colour it paints comes from website/tokens.css, generated from that file. A literal hex or rgb() in styles.css is a colour defined somewhere other than the source, which the next token change silently leaves behind. Sizes are deliberately not covered: the page vocabulary block at the top of styles.css holds display sizes and section rhythm the app-scale token set does not, and website/README.md says what may go there. Legitimate exception: none. The one literal colour on the site is the theme-color meta tag in index.html, which cannot read a custom property and is outside this grep's paths on purpose.",
+        "diagnosis": "The website is a consumer of design/tokens.json: every colour it paints comes from website/tokens.css, generated from that file. A literal hex or rgb() in styles.css is a colour defined somewhere other than the source, which the next token change silently leaves behind. main.js is covered too because it paints: it draws each tile's wireframe on a canvas, where a colour is needed as a value rather than as a class, and the way to get one is to read the custom property at runtime (see readGlow) \u2014 the same approach as voxelColor in Kommands. A literal there would be outside a stylesheet-only grep while being exactly the drift it exists to catch. Sizes are deliberately not covered: the page vocabulary block at the top of styles.css holds display sizes and section rhythm the app-scale token set does not, and website/README.md says what may go there. Legitimate exception: none. The one literal colour on the site is the theme-color meta tag in index.html, which cannot read a custom property, and Kommands' own ember accent on its tile, which that product deliberately keeps out of the shared token set \u2014 both are outside this grep's paths on purpose.",
         "reference": "website/README.md"
       }
     ],

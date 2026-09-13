@@ -56,21 +56,64 @@ favicon, which is why the generator writes it.
 The whole first viewport. The products are a carousel of 16:9 windows,
 Konnekt first, centred with the previous and next peeking in past the page's
 side padding; it is the one element that crosses that padding. The window in
-focus shows its app in colour with the description and actions unfolded
-beneath the name; its neighbours are black and white, text included, with the
-name and pill alone. A bar along the foot of the window in focus fills over
-five seconds and the carousel moves on when it is full. Hovering holds it
-(the bar pauses) and lights a soft glow round the window in that product's
-colour; clicking a neighbour, or an app in the nav, moves to it. It never
-moves by itself for a viewer who asked for reduced motion, and on narrow
-screens and touch devices it is a plain column.
+focus is drawn at full size and in colour, with its description and actions
+unfolded beneath the name; its neighbours are smaller, black and white, text
+included, with the name alone laid on whichever edge of them is visible. Only
+the painted window scales, never its layout box, so the carousel still moves
+by whole windows.
 
-Kommands' glow is its own ember orange, `PRODUCT_ACCENT` in that repo's
-`src/lib/theme.ts`, which is kept out of the suite tokens on purpose (see
-`design/README.md` § Two things not held here). The value is restated inline
-on its tile in `index.html`, with a comment saying where it comes from; the
-other tiles glow with the suite accent. Kube's window is blank on purpose:
-nothing is built yet, and a mock-up would say otherwise.
+The foot of the window in focus is frosted — a backdrop blur under the
+gradient, masked so it fades out rather than ending on a line across the
+picture — which is what makes the copy readable while the upper half of the
+app stays sharp. It fades in with the copy, on the same duration and easing.
+
+A bar along the foot of the window in focus fills over eight seconds and the
+carousel moves on when it is full. Hovering holds it (the bar pauses) and
+lights a soft glow round the window in that product's colour; so does opening
+the card, and so does a hidden tab. Clicking a neighbour, or an app in the
+nav, moves to it; clicking the window in focus opens its card. It never moves
+by itself for a viewer who asked for reduced motion, and on narrow screens and
+touch devices it is a plain column where every window is in focus.
+
+### The wireframes
+
+Each tile turns one shape slowly in the frosted corner of its window: a
+sphere of four bands by eight meridians for Konnekt, a torus for Kommands, a
+cube for Kube. `main.js` projects a few dozen edges onto a canvas; that needs
+no library, and a library is a dependency this page has no other use for. Each
+shape is normalised by its own reach, so a cube's corners and a sphere's
+surface end up the same size on screen.
+
+The stroke colour is read from the tile's `--tile-glow-rgb` at draw time —
+the same move Kommands makes in `voxelColor` when it needs a token as a value
+rather than as a class — so nothing in the drawing code restates a design
+value. That is why `main.js` is covered by the no-literal-colours invariant
+alongside `styles.css`.
+
+Kommands' glow and wireframe are its own ember orange, `PRODUCT_ACCENT` in
+that repo's `src/lib/theme.ts`, which is kept out of the suite tokens on
+purpose (see `design/README.md` § Two things not held here). The value is
+restated inline on its tile in `index.html`, with a comment saying where it
+comes from; the other tiles take the suite accent. Kube's window is blank on
+purpose: nothing is built yet, and a mock-up would say otherwise.
+
+### The card
+
+Clicking the window in focus, or its ⤢ button, opens a `<dialog>` over a
+scrim: one card, sized to the window, that never scrolls. Its four
+placeholders share out whatever height the text leaves rather than being
+sized in the abstract, which is what keeps that true at any window size.
+
+Everything in it is cloned from the tile it came from — the name and pill from
+the window, the detail and placeholders from that tile's `<template>`, the
+buttons from its actions — so a product is described in one place and the card
+cannot drift from the window it opened out of.
+
+A `<dialog>` rather than a div because the browser then owns the focus trap,
+Escape, and inerting the page behind it. Two things it does not own: the fade
+and scale, which is why Escape is intercepted and the close is deferred; and
+the text colour, since a dialog's UA rule sets `color: CanvasText` and wins
+over anything inherited from `body`.
 
 ## What the pills say
 

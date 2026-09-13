@@ -64,6 +64,10 @@
                   height="900"
                   decoding="async"
                 />
+                <!-- One slowly turning wireframe per app, drawn by main.js over
+                     the frosted foot of the window. The shape is the tile's
+                     own; the colour is the tile's own. -->
+                <canvas class="tile-orbit" data-shape="sphere" aria-hidden="true"></canvas>
                 <div class="tile-veil">
                   <div class="tile-head">
                     <h2 class="tile-name" id="konnekt-title">Konnekt</h2>
@@ -101,8 +105,33 @@
                     </div>
                   </div>
                 </div>
+                <!-- The keyboard's way to the card below; a click anywhere on
+                     the window in focus does the same. -->
+                <button class="tile-open" type="button" aria-label="More about Konnekt">
+                  <span aria-hidden="true">⤢</span>
+                </button>
                 <span class="tile-progress" aria-hidden="true"></span>
               </div>
+              <template class="tile-detail">
+                <div class="detail-text">
+                  <p class="detail-lead">
+                  A desktop dashboard for Minecraft servers you host yourself — one window in
+                  place of a terminal, an RCON client and a file browser side by side.
+                </p>
+                <ul class="detail-facts">
+                  <li>Windows and Linux, and macOS from source.</li>
+                  <li>A grid of tiles you arrange yourself.</li>
+                  <li>Automation as a node graph rather than a cron line.</li>
+                  <li>Runs against server folders you already have.</li>
+                  </ul>
+                </div>
+                <div class="shots">
+                  <figure class="shot"><figcaption>Console</figcaption></figure>
+                  <figure class="shot"><figcaption>Performance</figcaption></figure>
+                  <figure class="shot"><figcaption>Scheduler</figcaption></figure>
+                  <figure class="shot"><figcaption>Backups</figcaption></figure>
+                </div>
+              </template>
             </article>
 
             <!-- Kommands' accent is its own — ember, PRODUCT_ACCENT in
@@ -124,6 +153,7 @@
                   height="868"
                   decoding="async"
                 />
+                <canvas class="tile-orbit" data-shape="torus" aria-hidden="true"></canvas>
                 <div class="tile-veil">
                   <div class="tile-head">
                     <h2 class="tile-name" id="kommands-title">Kommands</h2>
@@ -162,8 +192,31 @@
                     </div>
                   </div>
                 </div>
+                <button class="tile-open" type="button" aria-label="More about Kommands">
+                  <span aria-hidden="true">⤢</span>
+                </button>
                 <span class="tile-progress" aria-hidden="true"></span>
               </div>
+              <template class="tile-detail">
+                <div class="detail-text">
+                  <p class="detail-lead">
+                  A command generator for Minecraft: Java Edition — build a command through a UI
+                  instead of memorising its syntax.
+                </p>
+                <ul class="detail-facts">
+                  <li>Targets Java Edition 1.21.1.</li>
+                  <li>Every vanilla command, plus WorldEdit.</li>
+                  <li>3D previews for the commands that describe shapes.</li>
+                  <li>A web app today; a desktop build is in development.</li>
+                  </ul>
+                </div>
+                <div class="shots">
+                  <figure class="shot"><figcaption>Command list</figcaption></figure>
+                  <figure class="shot"><figcaption>Editor</figcaption></figure>
+                  <figure class="shot"><figcaption>Shape preview</figcaption></figure>
+                  <figure class="shot"><figcaption>Saved commands</figcaption></figure>
+                </div>
+              </template>
             </article>
 
             <!-- Nothing is built yet, so the window is deliberately blank
@@ -171,6 +224,7 @@
             <article class="tile" id="kube" aria-labelledby="kube-title">
               <div class="tile-window tile-window-blank">
                 <p class="tile-blank" aria-hidden="true">Nothing to show yet</p>
+                <canvas class="tile-orbit" data-shape="cube" aria-hidden="true"></canvas>
                 <div class="tile-veil">
                   <div class="tile-head">
                     <h2 class="tile-name" id="kube-title">Kube</h2>
@@ -191,8 +245,31 @@
                     </div>
                   </div>
                 </div>
+                <button class="tile-open" type="button" aria-label="More about Kube">
+                  <span aria-hidden="true">⤢</span>
+                </button>
                 <span class="tile-progress" aria-hidden="true"></span>
               </div>
+              <template class="tile-detail">
+                <div class="detail-text">
+                  <p class="detail-lead">
+                  A visual builder for KubeJS, the scripting layer modded Minecraft is configured
+                  through.
+                </p>
+                <ul class="detail-facts">
+                  <li>A desktop app, like Konnekt.</li>
+                  <li>Nothing is built yet — the repository is empty.</li>
+                  <li>What it covers has not been decided.</li>
+                  <li>It will follow the suite's rules from its first commit.</li>
+                  </ul>
+                </div>
+                <div class="shots">
+                  <figure class="shot"><figcaption>Not designed yet</figcaption></figure>
+                  <figure class="shot"><figcaption>Not designed yet</figcaption></figure>
+                  <figure class="shot"><figcaption>Not designed yet</figcaption></figure>
+                  <figure class="shot"><figcaption>Not designed yet</figcaption></figure>
+                </div>
+              </template>
             </article>
           </div>
         </div>
@@ -341,6 +418,22 @@
         <p class="footer-note">Not affiliated with Mojang or Microsoft. &copy; 2026 Kollektiv</p>
       </div>
     </footer>
+
+    <!-- The maximized card. Empty until a tile is opened, and filled from
+         that tile's own <template>, so a product is described in one place. -->
+    <dialog class="detail" id="detail" aria-labelledby="detail-title">
+      <div class="detail-card">
+        <div class="detail-head">
+          <h2 class="detail-name" id="detail-title"></h2>
+          <span class="pill" id="detail-pill"></span>
+          <button class="detail-close" type="button" id="detail-close" aria-label="Close">
+            <span aria-hidden="true">✕</span>
+          </button>
+        </div>
+        <div class="detail-body" id="detail-body"></div>
+        <div class="actions" id="detail-actions"></div>
+      </div>
+    </dialog>
 
     <script src="main.js"></script>
   </body>

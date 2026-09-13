@@ -112,6 +112,16 @@ and what is in focus is marked on every copy of that product rather than on one
 position, so the progress bar belongs to the product and carries on running
 through the step.
 
+The wrap runs the moment the track stops, and a request that arrives while it
+is moving waits its turn rather than starting on top of it. Both matter.
+Deferring the wrap and letting each new move put it off again walked the
+position clean off the end of the row, so the slot beside the window had no
+tile in it and stayed empty until the clicking stopped. And a click is read
+from which side of the carousel it landed on rather than from the tile under
+the pointer, because mid-slide the tiles are in transit and the one under the
+pointer can be two or three products from the one in focus. Steps accumulate
+while the track is busy, so every click is honoured and none of them skips.
+
 Three copies rather than the two spare tiles this used to keep. With one spare
 at each end the position could reach that spare and find nothing beyond it, so
 the last move of a lap slid a tile in beside an empty slot and the next one

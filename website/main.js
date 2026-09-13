@@ -542,6 +542,14 @@
     // A position along the whole row, kept inside the middle copy.
     var index = count
     var settling = null
+    // What to do once the track stops, if a request arrived while it was
+    // moving. Steps accumulate so every click is honoured; a request for a
+    // particular product replaces whatever was waiting.
+    var queued = null
+
+    function atRest() {
+      return !carousel.classList.contains('is-moving')
+    }
 
     function stride() {
       return track.children[1].offsetLeft - track.children[0].offsetLeft
@@ -582,7 +590,8 @@
 
     // Back into the middle copy, one copy at a time. Identical content lands
     // in identical places, and is-jumping keeps anything from animating across
-    // the step, so there is nothing to see.
+    // the step, so there is nothing to see. Only ever called with the track at
+    // rest: mid-slide it would cancel the transition and snap to its end.
     function recentre() {
       var home = (index % count) + count
       if (home === index) return
@@ -594,34 +603,69 @@
       track.classList.remove('is-jumping')
     }
 
-    // While the track is in flight, a tile sliding under a resting pointer
-    // would light its glow on the way past. Marked here, gated in CSS.
-    function moving(forMs) {
-      carousel.classList.add('is-moving')
-      window.clearTimeout(settling)
-      settling = window.setTimeout(function () {
-        carousel.classList.remove('is-moving')
-        recentre()
-      }, forMs)
-    }
-
-    function goTo(to) {
-      if (STACKED.matches || to === index) return
+    // Start a slide. is-moving marks the track in flight, which the glow is
+    // gated on: a tile sliding under a resting pointer would otherwise light
+    // up on the way past.
+    function move(to) {
       index = to
       place(false)
       mark()
-      moving(slide)
+      carousel.classList.add('is-moving')
+      window.clearTimeout(settling)
+      settling = window.setTimeout(settled, slide)
+    }
+
+    // The track has stopped. Come home first, then honour whatever arrived
+    // while it was busy.
+    //
+    // Coming home here rather than being put off by the next request is the
+    // point. The wrap used to be deferred and re-armed by every new move, so
+    // clicking quickly walked the position clean off the end of the row: the
+    // slot beside the window had no tile in it, and stayed empty until the
+    // clicking stopped long enough for the wrap to fire.
+    function settled() {
+      carousel.classList.remove('is-moving')
+      recentre()
+      if (!queued) return
+      if (queued.product != null) {
+        var product = queued.product
+        queued = null
+        show(product)
+        return
+      }
+      var direction = queued.steps > 0 ? 1 : -1
+      queued.steps -= direction
+      if (!queued.steps) queued = null
+      move(index + direction)
+    }
+
+    // One product along. A request during a slide waits rather than stacking
+    // on top of it, so no click is lost and none of them skips a product.
+    function step(delta) {
+      if (STACKED.matches || count < 2) return
+      if (!atRest()) {
+        queued = queued && queued.steps != null ? { steps: queued.steps + delta } : { steps: delta }
+        return
+      }
+      recentre()
+      move(index + delta)
     }
 
     // The nearest position showing that product, so a move takes the short way
     // round rather than unwinding the whole row.
     function show(product) {
+      if (STACKED.matches || count < 2) return
+      if (!atRest()) {
+        queued = { product: product }
+        return
+      }
+      recentre()
       var nearest = null
       for (var pos = index - count; pos <= index + count; pos++) {
         if (pos < 0 || pos >= track.children.length || pos % count !== product) continue
         if (nearest === null || Math.abs(pos - index) < Math.abs(nearest - index)) nearest = pos
       }
-      if (nearest !== null) goTo(nearest)
+      if (nearest !== null && nearest !== index) move(nearest)
     }
 
     /* ── The indicator ───────────────────────────────────────────────────────
@@ -671,7 +715,7 @@
       if (event.animationName !== 'tile-progress') return
       var tile = event.target.closest('.tile')
       if (!tile || tile.getAttribute('data-copy') !== '1') return
-      goTo(index + 1)
+      step(1)
     })
 
     // The window in focus opens into the card; another comes into focus first.
@@ -685,8 +729,18 @@
       }
       if (STACKED.matches) return
       event.preventDefault()
-      if (tile.classList.contains('is-active')) openCard(tile)
-      else goTo(Array.prototype.indexOf.call(track.children, tile))
+      // At rest, the window in focus opens into its card.
+      if (atRest() && tile.classList.contains('is-active')) {
+        openCard(tile)
+        return
+      }
+      // Otherwise the click asks to move that way, read from which side of the
+      // carousel it landed on rather than from the tile under the pointer.
+      // Mid-slide the tiles are in transit, so the one under the pointer can be
+      // two or three products from the one in focus, and taking it at its word
+      // made a single click jump that far in one go.
+      var band = carousel.getBoundingClientRect()
+      step(event.clientX < band.left + band.width / 2 ? -1 : 1)
     })
 
     // On the windows, not on the carousel: that is a band the width of the

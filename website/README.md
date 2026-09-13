@@ -63,7 +63,8 @@ the painted window scales, never its layout box, so the carousel still moves
 by whole windows.
 
 The window in focus is ringed by a soft glow in its product's colour while the
-pointer is on it — on the window itself, not on the carousel, which is a band
+carousel is at rest and the pointer is on it — at rest, because a tile sliding
+under a resting pointer would otherwise light up on the way past — on the window itself, not on the carousel, which is a band
 the width of the viewport. The glow doubles as the reason the carousel has
 stopped. It reaches further than the carousel's clip edge, so the carousel
 clips with `overflow-clip-margin` rather than `hidden`; horizontally that
@@ -85,12 +86,19 @@ touch devices it is a plain column where every window is in focus.
 ### The wireframe
 
 The app in focus turns slowly behind the carousel, large enough to reach past
-the windows on every side: a sphere of four bands by eight meridians for
-Konnekt, a torus for Kommands, a cube for Kube. One canvas for the page rather
+the windows on every side: a geodesic sphere for Konnekt, a torus for
+Kommands, a cube for Kube. The sphere is an icosahedron with every face cut
+into four and every vertex pushed out onto the unit sphere, so every face is a
+triangle and no vertex is special — a sphere of latitude rings and meridians
+converges on a pole instead, and the pinch reads as a mistake. One canvas for the page rather
 than one per tile — it is the page's background, and the windows are opaque,
 so a shape drawn inside a tile would have been drawn on top of the app. When
 the carousel moves on, the old shape fades out and the new one fades in, and
-the swap happens at the point where neither is on screen.
+the swap happens at the point where neither is on screen. Each shape is built
+once and kept: the "already showing this" test compares by name, and when it
+compared freshly built objects instead it never matched, so every pass through
+mark — and a wrap makes two in a row — restarted the morph and the shape
+flashed.
 
 `main.js` projects a few dozen edges onto a canvas; that needs no library, and
 a library is a dependency this page has no other use for. Each shape is
@@ -124,7 +132,15 @@ carousel being held for as long as the card is open is what makes possible. Its 
 placeholders share out whatever height the text leaves rather than being
 sized in the abstract, which is what keeps that true at any window size.
 
-Everything in it is cloned from the tile it came from — the name and pill from
+The card sits on its product's own ground rather than the suite's: Kommands'
+warm canvas at its ember hue, a placeholder purple for Kube, and for Konnekt
+the suite's own `bg-overlay`, which is what that product uses. Each is the
+`overlay` of that product's skin, which `design/README.md` defines as
+`bg-elevated` composited over `bg-base`; Kube's is built the same way at a
+purple hue rather than picked by eye. They are set inline on the tiles in
+`index.html`, the same exception as Kommands' accent and for the same reason.
+
+Everything else in it is cloned from the tile it came from — the name and pill from
 the window, the detail and placeholders from that tile's `<template>`, the
 buttons from its actions — so a product is described in one place and the card
 cannot drift from the window it opened out of.

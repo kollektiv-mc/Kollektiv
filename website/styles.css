@@ -257,10 +257,10 @@ code {
   top: 50%;
   left: 50%;
   z-index: 0;
-  width: min(96vh, 1100px);
-  height: min(96vh, 1100px);
+  width: min(128vh, 1500px);
+  height: min(128vh, 1500px);
   transform: translate(-50%, -50%);
-  opacity: 0.4;
+  opacity: 0.3;
   pointer-events: none;
 }
 
@@ -378,8 +378,8 @@ code {
    it up from anywhere in that band left the glow on with the pointer nowhere
    near a window. It doubles as why the carousel has stopped. An accent-tinted
    glow is the one box-shadow the design language allows; see design/README.md. */
-.tile.is-active .tile-window:hover,
-.tile.is-active .tile-window:focus-within {
+.carousel:not(.is-moving) .tile.is-active .tile-window:hover,
+.carousel:not(.is-moving) .tile.is-active .tile-window:focus-within {
   border-color: var(--border-hover);
   box-shadow:
     0 0 0 1px rgb(var(--tile-glow-rgb) / 0.35),
@@ -790,7 +790,9 @@ code {
   padding: var(--tile-pad);
   border-radius: var(--radius-xl);
   border: var(--border-hairline) solid var(--border-subtle);
-  background: var(--bg-overlay);
+  /* Each product's own ground, set on the dialog by main.js from the tile that
+     opened it; the suite's own surface for a product that names none. */
+  background: var(--detail-bg, var(--bg-overlay));
   overflow: hidden;
   /* The transform is set by main.js: the card starts laid over the window it
      was opened from, and grows out of it. */

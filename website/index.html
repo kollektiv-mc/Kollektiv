@@ -135,16 +135,19 @@
               </template>
             </article>
 
-            <!-- Kommands' accent is its own — ember, PRODUCT_ACCENT in
-                 Kommands/src/lib/theme.ts — kept out of the suite tokens on
-                 purpose, so the glow colour is that product's value, restated
-                 here. The other tiles glow with the suite accent. -->
+            <!-- Kommands' accent and ground are its own — ember, and a warm
+                 canvas at that accent's hue — kept out of the suite tokens on
+                 purpose, so both are that product's values restated here.
+                 PRODUCT_ACCENT and productSkin() in Kommands/src/lib/theme.ts;
+                 --detail-bg is what that function calls `overlay`, which is
+                 bg-elevated over bg-base per design/README.md. The other tiles
+                 take the suite accent. -->
             <article
               class="tile"
               id="kommands"
               data-shape="torus"
               aria-labelledby="kommands-title"
-              style="--tile-glow-rgb: 251 146 60"
+              style="--tile-glow-rgb: 251 146 60; --detail-bg: #27201a"
             >
               <div class="tile-window">
                 <img
@@ -222,7 +225,17 @@
 
             <!-- Nothing is built yet, so the window is deliberately blank
                  rather than a mock-up of something that does not exist. -->
-            <article class="tile" id="kube" data-shape="cube" aria-labelledby="kube-title">
+            <!-- Kube has no identity yet. The purple is a placeholder, but it
+                 is built the way Kommands' is rather than picked by eye: the
+                 same saturation and lightness at a purple hue. Replace it when
+                 the product chooses an accent. -->
+            <article
+              class="tile"
+              id="kube"
+              data-shape="cube"
+              aria-labelledby="kube-title"
+              style="--detail-bg: #211a27"
+            >
               <div class="tile-window tile-window-blank">
                 <p class="tile-blank" aria-hidden="true">Nothing to show yet</p>
                 <div class="tile-veil">

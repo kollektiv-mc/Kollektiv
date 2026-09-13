@@ -57,6 +57,12 @@
     if (!dialog || !template) return
     window.clearTimeout(closing)
 
+    // Each product's card sits on that product's own ground. A tile that names
+    // none falls back to the suite's bg-overlay, which is what Konnekt uses.
+    var ground = getComputedStyle(tile).getPropertyValue('--detail-bg').trim()
+    if (ground) dialog.style.setProperty('--detail-bg', ground)
+    else dialog.style.removeProperty('--detail-bg')
+
     dialogName.textContent = tile.querySelector('.tile-name').textContent
     dialogPill.innerHTML = tile.querySelector('.pill').innerHTML
     dialogBody.textContent = ''
@@ -126,38 +132,70 @@
      The colour is read from the tile's --tile-glow-rgb at draw time — the
      same trick Kommands uses to get a token's value where it needs a colour
      rather than a class — so nothing here restates a design value. */
-  function sphere(bands, meridians) {
-    // bands horizontally (poles included), meridians vertically.
-    var points = [[0, 1, 0], [0, -1, 0]]
-    var edges = []
-    var rings = []
-    for (var i = 1; i < bands; i++) {
-      var phi = (Math.PI * i) / bands
-      var ring = []
-      for (var j = 0; j < meridians; j++) {
-        var theta = (2 * Math.PI * j) / meridians
-        points.push([
-          Math.sin(phi) * Math.cos(theta),
-          Math.cos(phi),
-          Math.sin(phi) * Math.sin(theta),
-        ])
-        ring.push(points.length - 1)
+  // A geodesic sphere: an icosahedron with every face cut into four, and every
+  // vertex pushed out onto the unit sphere. Every face is a triangle and no
+  // vertex is special, which is what a sphere of latitude rings and meridians
+  // cannot give — those converge on a pole, and the pinch reads as a mistake.
+  function geodesic(cuts) {
+    var t = (1 + Math.sqrt(5)) / 2
+    var points = [
+      [-1, t, 0], [1, t, 0], [-1, -t, 0], [1, -t, 0],
+      [0, -1, t], [0, 1, t], [0, -1, -t], [0, 1, -t],
+      [t, 0, -1], [t, 0, 1], [-t, 0, -1], [-t, 0, 1],
+    ]
+    var faces = [
+      [0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11],
+      [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8],
+      [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9],
+      [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1],
+    ]
+
+    function onSphere(at) {
+      var p = points[at]
+      var length = Math.sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2])
+      points[at] = [p[0] / length, p[1] / length, p[2] / length]
+    }
+    for (var i = 0; i < points.length; i++) onSphere(i)
+
+    for (var pass = 0; pass < cuts; pass++) {
+      var middles = {}
+      // One vertex per shared edge, or the two faces either side of it drift
+      // apart by a rounding error and the wireframe doubles every line.
+      function middle(a, b) {
+        var key = Math.min(a, b) + ':' + Math.max(a, b)
+        if (middles[key] === undefined) {
+          points.push([
+            (points[a][0] + points[b][0]) / 2,
+            (points[a][1] + points[b][1]) / 2,
+            (points[a][2] + points[b][2]) / 2,
+          ])
+          middles[key] = points.length - 1
+          onSphere(middles[key])
+        }
+        return middles[key]
       }
-      rings.push(ring)
-    }
-    rings.forEach(function (ring) {
-      ring.forEach(function (at, k) {
-        edges.push([at, ring[(k + 1) % ring.length]])
+      var cut = []
+      faces.forEach(function (face) {
+        var ab = middle(face[0], face[1])
+        var bc = middle(face[1], face[2])
+        var ca = middle(face[2], face[0])
+        cut.push([face[0], ab, ca], [face[1], bc, ab], [face[2], ca, bc], [ab, bc, ca])
       })
+      faces = cut
+    }
+
+    var seen = {}
+    var edges = []
+    faces.forEach(function (face) {
+      for (var e = 0; e < 3; e++) {
+        var a = face[e]
+        var b = face[(e + 1) % 3]
+        var key = Math.min(a, b) + ':' + Math.max(a, b)
+        if (seen[key]) continue
+        seen[key] = true
+        edges.push([a, b])
+      }
     })
-    for (var m = 0; m < meridians; m++) {
-      var chain = [0]
-      rings.forEach(function (ring) {
-        chain.push(ring[m])
-      })
-      chain.push(1)
-      for (var c = 0; c + 1 < chain.length; c++) edges.push([chain[c], chain[c + 1]])
-    }
     return { points: points, edges: edges }
   }
 
@@ -206,7 +244,7 @@
 
   var SHAPES = {
     sphere: function () {
-      return sphere(4, 8)
+      return geodesic(1)
     },
     torus: function () {
       return torus(14, 7, 1, 0.42)
@@ -238,9 +276,16 @@
     return value.split(/[\s,]+/).slice(0, 3).join(', ')
   }
 
+  // Built once each. shapeOf used to return a new object every call, which
+  // made the "already showing this" test below compare two fresh objects and
+  // never match — so every mark(), and a wrap runs two in a row, restarted the
+  // morph and the shape flashed.
+  var built = {}
+
   function shapeOf(name) {
     var shape = SHAPES[name]
     if (!shape) return null
+    if (built[name]) return built[name]
     var geometry = shape()
     // Normalised by its own reach, so a cube (corners at √3) and a sphere
     // (surface at 1) end up drawn the same size rather than the cube spilling
@@ -249,7 +294,8 @@
     geometry.points.forEach(function (point) {
       reach = Math.max(reach, Math.sqrt(point[0] * point[0] + point[1] * point[1] + point[2] * point[2]))
     })
-    return { geometry: geometry, reach: reach || 1, tilt: TILT[name] || 0.62 }
+    built[name] = { name: name, geometry: geometry, reach: reach || 1, tilt: TILT[name] || 0.62 }
+    return built[name]
   }
 
   function makeOrbit(canvas) {
@@ -300,7 +346,10 @@
       if (!running) paint(orbit, lastTime)
       return
     }
-    if (orbit.glow === glow && orbit.shape.geometry === shape.geometry) return
+    // Compared by name and colour against whatever is on its way in, so a
+    // second call naming what is already showing changes nothing.
+    var showing = orbit.pending || orbit
+    if (showing.shape.name === name && showing.glow === glow) return
     orbit.pending = { shape: shape, glow: glow }
     orbit.morphFrom = lastTime
   }
@@ -427,6 +476,17 @@
 
     // index counts real positions; -1 and count are the copies, briefly.
     var index = 0
+    var settling = null
+
+    // While the track is in flight, a tile sliding under a resting pointer
+    // would light its glow on the way past. Marked here, gated in CSS.
+    function moving(forMs) {
+      carousel.classList.add('is-moving')
+      window.clearTimeout(settling)
+      settling = window.setTimeout(function () {
+        carousel.classList.remove('is-moving')
+      }, forMs)
+    }
 
     function real(i) {
       return ((i % count) + count) % count
@@ -471,12 +531,16 @@
       index = i
       place(false)
       mark()
+      moving(slide)
       if (index < 0 || index >= count) {
         // Sitting on a copy: after the slide, swap to the real tile in silence.
         window.setTimeout(function () {
           index = real(index)
           place(true)
           mark()
+          // The jump is instant, but it does put a different tile under the
+          // pointer; a frame's grace keeps that from reading as a flash.
+          moving(80)
         }, slide)
       }
     }

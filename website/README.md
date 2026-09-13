@@ -1,6 +1,6 @@
 # website
 
-Kollektiv's home page: hand-written HTML and CSS with one small script, no
+Kollektiv's home page: hand-written HTML and CSS with two small scripts, no
 build step. Open `index.html` in a browser, or serve the directory:
 
 ```sh
@@ -13,7 +13,8 @@ python3 -m http.server -d website
 |---|---|
 | `index.html` | The one page |
 | `styles.css` | Layout and the page vocabulary — every value the token set does not hold |
-| `main.js` | Runs the hero carousel and fills each product's pill with the release GitHub reports; the page reads fine without it |
+| `main.js` | Runs the hero carousel, the card a tile opens into, the sections coming into focus, and each product's release pill; the page reads fine without it |
+| `shapes.js` | The wireframe that turns behind the carousel. Loaded first, and reached through `window.KollektivShapes` |
 | `tokens.css` | **Generated.** Custom properties from `design/tokens.json`. Do not edit |
 | `gen-tokens.py` | Writes `tokens.css` and `assets/img/favicon.svg` from the token source |
 | `assets/img/favicon.svg` | **Generated.** The wordmark's initial, coloured from the tokens |
@@ -193,8 +194,18 @@ compared freshly built objects instead it never matched, so every pass through
 mark — and a wrap makes two in a row — restarted the morph and the shape
 flashed.
 
-`main.js` projects the edges onto a canvas; that needs no library, and a
-library is a dependency this page has no other use for. Each shape is
+`shapes.js` projects the edges onto a canvas; that needs no library, and a
+library is a dependency this page has no other use for.
+
+**It is a separate file for a reason worth stating.** `main.js` had grown past
+`maxFileLoc` in `.aislop/config.yml`, a ratchet the repo lowers and never
+raises, so something had to come out of it. The wireframe is the piece with the
+cleanest seam: pure geometry and canvas painting, reached through five
+functions. It publishes them as `window.KollektivShapes` rather than as five
+globals, `index.html` loads it ahead of `main.js`, and `main.js` falls back to
+stubs if it is missing, so a failed script leaves an empty background rather
+than a dead page. `readGlow` went with it, which is why `.claude/suite.json`'s
+no-literal-colours invariant names `shapes.js` too. Each shape is
 normalised by its own reach, so a cube's corners and a sphere's surface come
 out the same size, and each carries its own tilt — a torus at the angle that
 suits a sphere is seen nearly edge-on and reads as an arc rather than a ring.
@@ -254,7 +265,9 @@ purple hue rather than picked by eye. They are set inline on the tiles in
 Everything else in it is cloned from the tile it came from — the name and pill from
 the window, the detail and placeholders from that tile's `<template>`, the
 buttons from its actions — so a product is described in one place and the card
-cannot drift from the window it opened out of.
+cannot drift from the window it opened out of. Cloned as nodes throughout,
+never through `innerHTML`: the pill carries a release name fetched from GitHub,
+and nothing fetched should reach the HTML parser.
 
 A `<dialog>` rather than a div because the browser then owns the focus trap,
 Escape, and inerting the page behind it. Two things it does not own: the grow

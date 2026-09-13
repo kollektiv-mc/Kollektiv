@@ -38,9 +38,21 @@ SUPPORTED_VERSION = 1
 # Generic families and system keywords are CSS-wide identifiers, not font names,
 # and must stay unquoted. Everything else is quoted.
 BARE_FAMILIES = {
-    "serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui",
-    "ui-serif", "ui-sans-serif", "ui-monospace", "ui-rounded", "math", "emoji",
-    "fangsong", "-apple-system", "BlinkMacSystemFont",
+    "serif",
+    "sans-serif",
+    "monospace",
+    "cursive",
+    "fantasy",
+    "system-ui",
+    "ui-serif",
+    "ui-sans-serif",
+    "ui-monospace",
+    "ui-rounded",
+    "math",
+    "emoji",
+    "fangsong",
+    "-apple-system",
+    "BlinkMacSystemFont",
 }
 
 BANNER = """\
@@ -92,8 +104,10 @@ def validate(src):
     # scripts/validate-schemas.sh. Repeated here are only the checks whose
     # failure would otherwise produce plausible-looking CSS with wrong values.
     if src.get("version") != SUPPORTED_VERSION:
-        fail(f"token source is version {src.get('version')}, this generator "
-             f"understands {SUPPORTED_VERSION}. Update the generator, not the source.")
+        fail(
+            f"token source is version {src.get('version')}, this generator "
+            f"understands {SUPPORTED_VERSION}. Update the generator, not the source."
+        )
     for group in ("surface", "border", "text", "status"):
         if group not in src.get("color", {}):
             fail(f"missing color.{group}")
@@ -132,7 +146,11 @@ def emit(src):
     for name, value in src["type"]["weight"].items():
         push(f"  --weight-{name}: {value};")
 
-    for group, prefix in (("space", "space"), ("radius", "radius"), ("border", "border")):
+    for group, prefix in (
+        ("space", "space"),
+        ("radius", "radius"),
+        ("border", "border"),
+    ):
         push("")
         unit = src[group]["unit"]
         for name, value in src[group]["scale"].items():
@@ -185,8 +203,11 @@ def main():
     validate(src)
 
     outputs = [(OUT, emit(src)), (FAVICON, emit_favicon(src))]
-    written = [str(path.relative_to(HERE.parent)) for path, contents in outputs
-               if write_if_changed(path, contents)]
+    written = [
+        str(path.relative_to(HERE.parent))
+        for path, contents in outputs
+        if write_if_changed(path, contents)
+    ]
     if written:
         print(f"gen-tokens: wrote {', '.join(written)}")
     else:

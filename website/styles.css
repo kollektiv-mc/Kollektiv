@@ -43,22 +43,18 @@
   --section-y: clamp(64px, 9vh, 120px);
 
   /* The carousel. A window is 16:9 and about three quarters of the container
-     wide, so the next one peeks in from the right; --carousel-slide is one
-     move and --carousel-dwell the pause between moves, both read by main.js.
-     The veil's fade reaches --veil-idle up the window while the name alone is
-     showing and --veil-hover once the description is out. */
+     wide, centred, so the neighbours peek in on both sides; --carousel-slide
+     is one move and --carousel-dwell how long a window stays in focus, both
+     read by main.js. The veil's fade reaches --veil-idle up a window that is
+     not in focus and --veil-focus up the one that is. */
   --tile-w: min(76cqi, 900px);
   --tile-gap: clamp(16px, 2vw, 28px);
   --tile-pad: clamp(20px, 2.6vw, 36px);
   --tile-title: clamp(22px, 2.4vw, 32px);
   --veil-idle: 38%;
-  --veil-hover: 68%;
+  --veil-focus: 68%;
   --carousel-slide: 600ms;
-  --carousel-dwell: 4500ms;
-
-  /* The downloads table's fixed columns. */
-  --product-name-w: 240px;
-  --product-actions-w: 300px;
+  --carousel-dwell: 5000ms;
 
   /* Display sizes. The token scale tops out at --text-xl (20px), which is the
      lead paragraph here; the headings sit above it. */
@@ -232,9 +228,10 @@ code {
 }
 
 /* ── Hero ───────────────────────────────────────────────────────────────────
-   Wordmark and nav in the same .container as every section, so they share
-   the page's left edge with the headings and the footer. The carousel below
-   them is the one thing that may cross the side padding. */
+   The whole first viewport. Wordmark and nav in the same .container as every
+   section, so they share the page's left edge with the headings and the
+   footer; the carousel centres itself in what is left and is the one thing
+   that may cross the side padding. */
 .hero {
   overflow-x: clip;
 }
@@ -242,6 +239,7 @@ code {
 .hero-inner {
   display: flex;
   flex-direction: column;
+  min-height: 100svh;
   padding-bottom: var(--space-6);
   /* So a window can be sized in cqi — a share of this container's width. */
   container-type: inline-size;
@@ -258,6 +256,7 @@ code {
 
 .topnav {
   display: flex;
+  align-items: center;
   gap: var(--space-5);
   font-family: var(--font-title);
   font-weight: var(--weight-medium);
@@ -274,16 +273,23 @@ code {
   color: var(--text-primary);
 }
 
+/* Between the apps and the page's own sections. */
+.topnav-sep {
+  width: var(--border-hairline);
+  height: var(--space-4);
+  background: var(--border-hover);
+}
+
 /* ── Carousel ───────────────────────────────────────────────────────────────
-   Bleeds to both viewport edges (the negative margins) and then pads its
-   start back to the container's edge, so the first window lines up with the
-   wordmark, the next one shows past the right padding, and a window on its
-   way out can cross the left padding before it is clipped. main.js moves the
-   track by whole windows and wraps it. */
+   Bleeds to both viewport edges so a neighbour can show past the side
+   padding. main.js keeps the window in focus centred and moves the track by
+   whole windows, wrapping through a copy of the last window placed before
+   the first and a copy of the first placed after the last. */
 .carousel {
   --bleed: calc(50vw - 50%);
   margin-inline: calc(-1 * var(--bleed));
-  padding-inline-start: var(--bleed);
+  margin-block: auto;
+  padding-block: var(--space-6);
   overflow: hidden;
 }
 
@@ -300,8 +306,13 @@ code {
 .tile {
   flex: 0 0 var(--tile-w);
   min-width: 0;
+  /* The colour its glow and progress bar take: the suite accent unless the
+     tile says otherwise (Kommands does, inline in index.html). */
+  --tile-glow-rgb: var(--accent-rgb);
 }
 
+/* A window out of focus is black and white, text included, and a click on
+   it brings it into focus. */
 .tile-window {
   position: relative;
   aspect-ratio: 16 / 9;
@@ -310,17 +321,36 @@ code {
   border-radius: var(--radius-xl);
   border: var(--border-hairline) solid var(--border-subtle);
   background: var(--bg-overlay);
-  transition: border-color var(--duration-panel) var(--ease-standard);
+  filter: grayscale(1);
+  opacity: 0.7;
+  cursor: pointer;
+  transition:
+    filter var(--carousel-slide) var(--ease-standard),
+    opacity var(--carousel-slide) var(--ease-standard),
+    border-color var(--duration-panel) var(--ease-standard),
+    box-shadow var(--duration-panel) var(--ease-standard);
 }
 
-.tile-window:hover,
-.tile-window:focus-within {
+.tile.is-active .tile-window {
+  filter: none;
+  opacity: 1;
+  cursor: auto;
+}
+
+/* Held (hovered or focused): a soft glow round the window in focus, in that
+   product's colour. An accent-tinted glow is the one box-shadow the design
+   language allows; see design/README.md. */
+.carousel.is-held .tile.is-active .tile-window {
   border-color: var(--border-hover);
+  box-shadow:
+    0 0 0 1px rgb(var(--tile-glow-rgb) / 0.35),
+    0 0 var(--space-6) rgb(var(--tile-glow-rgb) / 0.3),
+    0 0 calc(var(--space-6) * 3) rgb(var(--tile-glow-rgb) / 0.2);
 }
 
 /* The screenshot fills the window from its top corner, the way the app's own
    window would, so the chrome stays legible at any size instead of a centred
-   crop landing on the middle of a chart. Black and white until hovered. */
+   crop landing on the middle of a chart. */
 .tile-shot {
   position: absolute;
   inset: 0;
@@ -328,17 +358,6 @@ code {
   height: 100%;
   object-fit: cover;
   object-position: left top;
-  filter: grayscale(1);
-  opacity: 0.85;
-  transition:
-    filter var(--duration-panel) var(--ease-standard),
-    opacity var(--duration-panel) var(--ease-standard);
-}
-
-.tile-window:hover .tile-shot,
-.tile-window:focus-within .tile-shot {
-  filter: none;
-  opacity: 1;
 }
 
 /* Which corner of the screenshot survives the crop. Konnekt's sidebar and
@@ -356,6 +375,7 @@ code {
 .tile-blank {
   position: absolute;
   inset: 0;
+  margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -368,9 +388,9 @@ code {
   color: var(--text-faint);
 }
 
-/* The fade at the foot of the window, under the name while idle and under
-   the description on hover. A pseudo-element rather than a background on the
-   veil so its height can animate. */
+/* The fade at the foot of the window: under the name alone while out of
+   focus, under the description once in focus. A pseudo-element rather than
+   a background on the veil so its height can animate. */
 .tile-window::after {
   content: '';
   position: absolute;
@@ -388,16 +408,13 @@ code {
   transition: height var(--duration-panel) var(--ease-standard);
 }
 
-.tile-window:hover::after,
-.tile-window:focus-within::after {
-  height: var(--veil-hover);
+.tile.is-active .tile-window::after {
+  height: var(--veil-focus);
 }
 
 /* The veil sits at the foot of the window and is always there: the name and
    pill on top, and beneath them the description and actions, folded to
-   nothing until a hover unfolds them — which is what lifts the name. The
-   buttons stay in the DOM so keyboard focus can reach them; tabbing into one
-   is what :focus-within keys off. */
+   nothing until the window is in focus — which is what lifts the name. */
 .tile-veil {
   position: absolute;
   inset: 0;
@@ -408,11 +425,33 @@ code {
   padding: var(--tile-pad);
 }
 
+/* In focus: name left, pill right. Out of focus only a strip of the window
+   shows, so the name sits on the edge that is visible — the right edge of
+   the one before, the left edge of the one after — and the pill waits for
+   focus. */
 .tile-head {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: var(--space-3);
+}
+
+.tile.is-active .tile-head {
+  justify-content: space-between;
+}
+
+.tile.is-prev .tile-head {
+  justify-content: flex-end;
+}
+
+/* The pill keeps its width while transparent, so on the tile before it goes
+   first in the row, leaving the name on the visible edge. */
+.tile.is-prev .pill {
+  order: -1;
+}
+
+.tile:not(.is-active) .pill {
+  opacity: 0;
 }
 
 .tile-name {
@@ -425,6 +464,7 @@ code {
 }
 
 .pill {
+  transition: opacity var(--duration-panel) var(--ease-standard);
   display: inline-flex;
   align-items: baseline;
   gap: var(--space-2);
@@ -471,8 +511,7 @@ code {
   padding-top: var(--space-4);
 }
 
-.tile-window:hover .tile-more,
-.tile-window:focus-within .tile-more {
+.tile.is-active .tile-more {
   grid-template-rows: 1fr;
   opacity: 1;
   transform: none;
@@ -484,16 +523,58 @@ code {
   font-size: var(--lead);
 }
 
-/* Stacked: where there is no hover, or no room for the carousel, nothing may
-   live behind a hover and nothing may move on its own. The carousel becomes
-   a column inside the container, each window is the picture in colour with
-   the name, pill, description and actions laid out beneath it, and the
-   wrap-around copies main.js made are hidden. Width is a condition too, not
-   only hover, because a narrow window on a desktop reports hover. */
+/* How long until the carousel moves on: a bar along the foot of the window
+   in focus, filling over --carousel-dwell. main.js advances when the
+   animation ends, so pausing it (held) is what holds the carousel. */
+.tile-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  height: var(--space-0-5);
+  background: rgb(var(--tile-glow-rgb));
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.tile.is-active .tile-progress {
+  animation: tile-progress var(--carousel-dwell) linear forwards;
+}
+
+.carousel.is-held .tile-progress {
+  animation-play-state: paused;
+}
+
+@keyframes tile-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* No bar means no animationend, so the carousel never moves by itself. */
+  .tile-progress {
+    animation: none !important;
+  }
+}
+
+/* Stacked: where there is no hover, or no room for the carousel, nothing
+   moves on its own. The carousel becomes a column inside the container,
+   every window is in colour with the name, pill, description and actions
+   laid out beneath the picture, and the wrap-around copies main.js made are
+   hidden. Width is a condition too, not only hover, because a narrow window
+   on a desktop reports hover. */
 @media (hover: none), (max-width: 900px) {
+  .hero-inner {
+    min-height: 0;
+  }
   .carousel {
     margin-inline: 0;
-    padding-inline-start: 0;
+    padding-block: 0;
     overflow: visible;
   }
   .carousel-track {
@@ -508,17 +589,23 @@ code {
   }
   .tile-window {
     aspect-ratio: auto;
+    filter: none;
+    opacity: 1;
+    cursor: auto;
   }
-  .tile-window::after {
+  .tile-window::after,
+  .tile-progress {
     display: none;
+  }
+  .carousel.is-held .tile.is-active .tile-window {
+    box-shadow: none;
+    border-color: var(--border-subtle);
   }
   .tile-shot,
   .tile-blank {
     position: static;
     height: auto;
     aspect-ratio: 16 / 10;
-    filter: none;
-    opacity: 1;
     border-bottom: var(--border-hairline) solid var(--border-subtle);
   }
   .tile-blank {
@@ -532,6 +619,19 @@ code {
     grid-template-rows: 1fr;
     opacity: 1;
     transform: none;
+  }
+  .tile-head,
+  .tile.is-prev .tile-head {
+    justify-content: space-between;
+  }
+  .tile:not(.is-active) .pill {
+    opacity: 1;
+  }
+  /* The tiles are right below the bar, so the nav does not need to reach
+     them, and the bar would not fit them at this width. */
+  .topnav a[data-goto],
+  .topnav-sep {
+    display: none;
   }
 }
 
@@ -604,37 +704,31 @@ code {
   color: var(--text-secondary);
 }
 
-/* ── Products ───────────────────────────────────────────────────────────── */
+/* ── Downloads ──────────────────────────────────────────────────────────────
+   One card per tool, all the same height, each laid out on the same four
+   rows: name, pill, description, actions. The description row stretches, so
+   the actions sit on one line across the three cards whatever the copy. */
 .products {
   list-style: none;
   margin: 0;
   padding: 0;
-  border-top: var(--border-hairline) solid var(--border-subtle);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--tile-gap);
 }
 
-/* Fixed first and last columns, so the names, the copy and the buttons of
-   every row sit on the same three edges whatever each row's content is. */
 .product {
   display: grid;
-  grid-template-columns: var(--product-name-w) minmax(0, 1fr) var(--product-actions-w);
-  gap: var(--space-6);
-  align-items: center;
-  padding: var(--space-6) 0;
-  border-bottom: var(--border-hairline) solid var(--border-subtle);
-}
-
-.product .actions {
-  justify-self: start;
-}
-
-.product-name {
-  display: flex;
-  align-items: center;
+  grid-template-rows: auto auto 1fr auto;
+  align-items: start;
   gap: var(--space-3);
-  flex-wrap: wrap;
+  padding: var(--space-6);
+  border-radius: var(--radius-panel);
+  border: var(--border-hairline) solid var(--border-subtle);
+  background: var(--bg-surface);
 }
 
-.product-name h3 {
+.product h3 {
   margin: 0;
   font-family: var(--font-display);
   font-weight: var(--weight-display);
@@ -642,16 +736,18 @@ code {
   letter-spacing: -0.01em;
 }
 
+.product .pill {
+  justify-self: start;
+}
+
 .product p {
   font-size: var(--text-sm);
   color: var(--text-secondary);
+  padding-top: var(--space-2);
 }
 
-@media (max-width: 800px) {
-  .product {
-    grid-template-columns: 1fr;
-    gap: var(--space-3);
-  }
+.product .actions {
+  padding-top: var(--space-3);
 }
 
 /* ── Footer ─────────────────────────────────────────────────────────────── */

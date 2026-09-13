@@ -6,13 +6,13 @@
     <title>Kollektiv — tools for Minecraft servers</title>
     <meta
       name="description"
-      content="Kollektiv is a small suite of tools for Minecraft: Java Edition. Konnekt runs the server, Kommands writes the commands."
+      content="Kollektiv is a suite of tools for Minecraft: Java Edition that opens up the technical side of building and playing."
     />
     <meta property="og:site_name" content="Kollektiv" />
     <meta property="og:title" content="Kollektiv — tools for Minecraft servers" />
     <meta
       property="og:description"
-      content="Konnekt runs the server, Kommands writes the commands. One design."
+      content="Tools for the technical side of Minecraft: Java Edition, built to one design."
     />
     <meta property="og:type" content="website" />
     <!-- The one literal colour on the page: a meta tag cannot read a custom
@@ -26,24 +26,26 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <!-- The hero: the wordmark top-left, then the products as a carousel of
-         16:9 windows. The carousel is the one element allowed past the page's
-         side padding — the first window starts at the container's left edge
-         and the next peeks in from the right. Left alone, main.js slides it
-         one window to the left every few seconds and wraps; hovering or
-         focusing anything in it holds it still.
-
-         Each window shows its app in black and white with the name and a pill
-         (desktop or web, and the release GitHub reports) at its foot. Hovering
-         the window brings the colour back and fades its lower part; the name
-         and pill rise to make room for the description and actions beneath
-         them. Where there is no hover, or no room, the windows stack with all
-         of that laid out below the picture. -->
+    <!-- The hero fills the first viewport: the wordmark and nav, then the
+         products as a carousel of 16:9 windows centred on the page, with the
+         previous and next peeking in past the side padding. The window in
+         focus shows its app in colour with the description and actions
+         unfolded beneath the name; the neighbours are black and white with
+         the name alone. A bar along the foot of the window in focus fills over
+         five seconds, and when it is full the carousel moves on. Hovering
+         holds it (the bar pauses) and lights a soft glow round the window;
+         clicking a neighbour, or an app in the nav, moves to it. Where there
+         is no hover, or no room, the windows stack with everything laid out
+         below the picture. -->
     <header class="hero" id="top">
       <div class="container hero-inner">
         <div class="topbar">
           <a class="wordmark" href="#top">Kollektiv</a>
           <nav class="topnav" aria-label="Site">
+            <a href="#konnekt" data-goto="0">Konnekt</a>
+            <a href="#kommands" data-goto="1">Kommands</a>
+            <a href="#kube" data-goto="2">Kube</a>
+            <span class="topnav-sep" aria-hidden="true"></span>
             <a href="#about">About</a>
             <a href="#architecture">Architecture</a>
             <a href="https://github.com/kollektiv-mc" target="_blank" rel="noopener">GitHub</a>
@@ -52,7 +54,7 @@
 
         <div class="carousel" id="carousel">
           <div class="carousel-track">
-            <article class="tile" aria-labelledby="konnekt-title">
+            <article class="tile" id="konnekt" aria-labelledby="konnekt-title">
               <div class="tile-window">
                 <img
                   class="tile-shot"
@@ -99,10 +101,20 @@
                     </div>
                   </div>
                 </div>
+                <span class="tile-progress" aria-hidden="true"></span>
               </div>
             </article>
 
-            <article class="tile" aria-labelledby="kommands-title">
+            <!-- Kommands' accent is its own — ember, PRODUCT_ACCENT in
+                 Kommands/src/lib/theme.ts — kept out of the suite tokens on
+                 purpose, so the glow colour is that product's value, restated
+                 here. The other tiles glow with the suite accent. -->
+            <article
+              class="tile"
+              id="kommands"
+              aria-labelledby="kommands-title"
+              style="--tile-glow-rgb: 251 146 60"
+            >
               <div class="tile-window">
                 <img
                   class="tile-shot tile-shot-end"
@@ -150,12 +162,13 @@
                     </div>
                   </div>
                 </div>
+                <span class="tile-progress" aria-hidden="true"></span>
               </div>
             </article>
 
             <!-- Nothing is built yet, so the window is deliberately blank
                  rather than a mock-up of something that does not exist. -->
-            <article class="tile" aria-labelledby="kube-title">
+            <article class="tile" id="kube" aria-labelledby="kube-title">
               <div class="tile-window tile-window-blank">
                 <p class="tile-blank" aria-hidden="true">Nothing to show yet</p>
                 <div class="tile-veil">
@@ -178,6 +191,7 @@
                     </div>
                   </div>
                 </div>
+                <span class="tile-progress" aria-hidden="true"></span>
               </div>
             </article>
           </div>
@@ -189,10 +203,11 @@
       <section class="section" id="about">
         <div class="container">
           <span class="eyebrow">[i] about</span>
-          <h2>One suite. One design.</h2>
+          <h2>Build and play on your own terms.</h2>
           <p class="lead prose">
-            Kollektiv is a small suite of tools for Minecraft: Java Edition. Konnekt runs the
-            server, Kommands writes the commands, and Kube, a KubeJS builder, is next.
+            Kollektiv is a suite of tools for Minecraft: Java Edition. It opens up the technical
+            side of building and playing, and gives you the flexibility and freedom to shape it,
+            without asking you to be technical.
           </p>
         </div>
       </section>
@@ -201,29 +216,33 @@
         <div class="container">
           <div class="section-head">
             <span class="eyebrow">[≡] architecture</span>
-            <h2>Two apps, built alike</h2>
+            <h2>A few fixed ideas</h2>
           </div>
           <div class="cards">
             <article class="card">
-              <h3>Separate apps</h3>
+              <h3>Local and private</h3>
               <p>
-                Each tool is its own codebase with its own releases. Nothing you install for
-                one is needed by the other.
+                The tools run on your machine, against files you already have. No account, no
+                cloud, no telemetry.
               </p>
             </article>
             <article class="card">
-              <h3>Local-first</h3>
+              <h3>Made to work together</h3>
               <p>
-                Konnekt runs on your own machine, against server folders you already have.
-                Kommands' desktop build works with no internet at all.
+                One design language across the suite, and tools designed to hand work to each
+                other. Learning one is most of learning the next.
               </p>
             </article>
             <article class="card">
-              <h3>Versioned game data</h3>
+              <h3>A window, not a terminal</h3>
               <p>
-                Command syntax and game values are held per Minecraft version, so what Kommands
-                generates matches the version you target.
+                Every tool puts a UI in place of a console, a config file or memorised syntax,
+                and keeps the power that came with them.
               </p>
+            </article>
+            <article class="card">
+              <h3>In the open</h3>
+              <p>Source, roadmaps and issues are public on GitHub, for every tool in the suite.</p>
             </article>
           </div>
         </div>
@@ -237,11 +256,9 @@
           </div>
           <ul class="products">
             <li class="product">
-              <div class="product-name">
-                <h3>Konnekt</h3>
-                <span class="pill" data-release="kollektiv-mc/Konnekt">desktop</span>
-              </div>
-              <p>Desktop app for Windows and Linux.</p>
+              <h3>Konnekt</h3>
+              <span class="pill" data-release="kollektiv-mc/Konnekt">desktop</span>
+              <p>Desktop app for Windows and Linux. Runs against server folders you already have.</p>
               <div class="actions">
                 <a
                   class="btn btn-primary btn-sm"
@@ -267,10 +284,8 @@
               </div>
             </li>
             <li class="product">
-              <div class="product-name">
-                <h3>Kommands</h3>
-                <span class="pill" data-release="kollektiv-mc/Kommands">web</span>
-              </div>
+              <h3>Kommands</h3>
+              <span class="pill" data-release="kollektiv-mc/Kommands">web</span>
               <p>Web app, with a desktop build in development. Not deployed yet; run it from source.</p>
               <div class="actions">
                 <a
@@ -290,10 +305,8 @@
               </div>
             </li>
             <li class="product">
-              <div class="product-name">
-                <h3>Kube</h3>
-                <span class="pill" data-release="kollektiv-mc/Kube">desktop</span>
-              </div>
+              <h3>Kube</h3>
+              <span class="pill" data-release="kollektiv-mc/Kube">desktop</span>
               <p>A visual builder for KubeJS. Not started yet.</p>
               <div class="actions">
                 <a
@@ -323,6 +336,7 @@
           <a href="https://github.com/kollektiv-mc/Kommands" target="_blank" rel="noopener"
             >Kommands</a
           >
+          <a href="https://github.com/kollektiv-mc/Kube" target="_blank" rel="noopener">Kube</a>
         </nav>
         <p class="footer-note">Not affiliated with Mojang or Microsoft. &copy; 2026 Kollektiv</p>
       </div>

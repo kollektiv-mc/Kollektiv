@@ -2,45 +2,52 @@
  * what GitHub reports for that repo. The page reads fine with neither. */
 ;(function () {
   /* ── Carousel ──────────────────────────────────────────────────────────────
-     The track holds one tile per product. For a seamless wrap it gets a copy
-     of each appended, so sliding past the last real tile lands on a copy of
-     the first, and once that slide has finished the track jumps back to the
-     real first tile without a transition — nothing visible changes.
+     The track holds one tile per product, with a copy of the last placed
+     before the first and a copy of the first after the last, so the window
+     in focus always has a neighbour on each side and sliding past either end
+     lands on a copy; once that slide has finished the track jumps to the real
+     tile without a transition, and nothing visible changes.
 
-     It moves by itself only while nothing in it is hovered or focused, the
-     tab is visible, and the viewer has not asked for reduced motion. The
-     stacked layout (styles.css: no hover, or under 900px) lays the tiles in a
-     column, hides the copies and pins the track, so here that is simply "do
-     not move". */
+     What drives it is the progress bar: the tile in focus animates its bar
+     over --carousel-dwell and the carousel moves on when that animation ends.
+     Holding (hover or focus) pauses the bar in CSS, which is the whole of
+     pausing. The stacked layout (styles.css: no hover, or under 900px) lays
+     the tiles in a column and hides the bar, so there it never moves. */
   var STACKED = window.matchMedia('(hover: none), (max-width: 900px)')
-  var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)')
 
   var carousel = document.getElementById('carousel')
   var track = carousel && carousel.querySelector('.carousel-track')
   if (track) {
     var tiles = Array.prototype.slice.call(track.children)
     var count = tiles.length
-    var rootStyle = getComputedStyle(document.documentElement)
-    var slide = parseFloat(rootStyle.getPropertyValue('--carousel-slide')) || 0
-    var dwell = parseFloat(rootStyle.getPropertyValue('--carousel-dwell')) || 4500
+    var slide =
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--carousel-slide')) || 0
 
-    // The copies: not for assistive tech and not in the tab order, and their
-    // headings drop the ids the real ones are labelled by.
-    tiles.forEach(function (tile) {
-      var copy = tile.cloneNode(true)
+    // A copy: not for assistive tech, not in the tab order, and without the
+    // ids the real tile's heading is labelled by. It remembers which real
+    // tile it stands for, so it can be in focus alongside it.
+    function copyOf(at) {
+      var copy = tiles[at].cloneNode(true)
       copy.classList.add('tile-clone')
       copy.setAttribute('aria-hidden', 'true')
       copy.removeAttribute('aria-labelledby')
+      copy.removeAttribute('id')
+      copy.setAttribute('data-clone-of', String(at))
       var ids = copy.querySelectorAll('[id]')
       for (var i = 0; i < ids.length; i++) ids[i].removeAttribute('id')
       var links = copy.querySelectorAll('a')
       for (var j = 0; j < links.length; j++) links[j].tabIndex = -1
-      track.appendChild(copy)
-    })
+      return copy
+    }
+    track.insertBefore(copyOf(count - 1), track.firstChild)
+    track.appendChild(copyOf(0))
 
+    // index counts real positions; -1 and count are the copies, briefly.
     var index = 0
-    var held = false
-    var timer = null
+
+    function real(i) {
+      return ((i % count) + count) % count
+    }
 
     function stride() {
       return track.children[1].offsetLeft - track.children[0].offsetLeft
@@ -48,70 +55,113 @@
 
     function place(jump) {
       if (jump) track.classList.add('is-jumping')
-      track.style.transform = 'translateX(' + -index * stride() + 'px)'
+      var centred = (carousel.clientWidth - tiles[0].offsetWidth) / 2
+      track.style.transform = 'translateX(' + (centred - (index + 1) * stride()) + 'px)'
       if (jump) {
         void track.offsetWidth // commit the jump before transitions come back
         track.classList.remove('is-jumping')
       }
     }
 
-    function advance() {
-      if (STACKED.matches) return
-      index += 1
+    // The real tile in focus and its copy, if any, are in focus together, so
+    // their bars start at the same moment and agree after a jump. The tiles
+    // either side of the one on screen are marked too, by track position,
+    // so each can lay its name on the edge that shows.
+    function mark() {
+      var active = real(index)
+      var all = track.children
+      for (var i = 0; i < all.length; i++) {
+        var tile = all[i]
+        var stands = tile.hasAttribute('data-clone-of')
+          ? Number(tile.getAttribute('data-clone-of'))
+          : tiles.indexOf(tile)
+        tile.classList.toggle('is-active', stands === active)
+        tile.classList.toggle('is-prev', i === index)
+        tile.classList.toggle('is-next', i === index + 2)
+      }
+    }
+
+    function goTo(i) {
+      if (STACKED.matches || i === index) return
+      index = i
       place(false)
-      if (index >= count) {
+      mark()
+      if (index < 0 || index >= count) {
         // Sitting on a copy: after the slide, swap to the real tile in silence.
         window.setTimeout(function () {
-          index -= count
+          index = real(index)
           place(true)
+          mark()
         }, slide)
       }
     }
 
-    function schedule() {
-      window.clearTimeout(timer)
-      if (held || document.hidden || REDUCED.matches || STACKED.matches) return
-      timer = window.setTimeout(function () {
-        advance()
-        schedule()
-      }, dwell)
-    }
+    // The bar of the tile in focus has filled: move on. Copies animate too,
+    // in step with their real tile, and are ignored so this fires once.
+    track.addEventListener('animationend', function (event) {
+      if (event.animationName !== 'tile-progress') return
+      var tile = event.target.closest('.tile')
+      if (!tile || tile.classList.contains('tile-clone')) return
+      goTo(real(index) + 1)
+    })
+
+    // A neighbour, clicked, comes into focus; a link inside it does not fire.
+    track.addEventListener('click', function (event) {
+      var tile = event.target.closest('.tile')
+      if (!tile || STACKED.matches) return
+      var at = Array.prototype.indexOf.call(track.children, tile) - 1
+      if (at === index) return
+      event.preventDefault()
+      goTo(at)
+    })
 
     function hold() {
-      held = true
-      schedule()
+      carousel.classList.add('is-held')
     }
     function release() {
-      held = false
-      schedule()
+      carousel.classList.remove('is-held')
     }
-
     carousel.addEventListener('mouseenter', hold)
     carousel.addEventListener('mouseleave', release)
     carousel.addEventListener('focusin', function (event) {
-      // Bring a tile the keyboard has reached into view, then hold there.
-      var tile = event.target.closest('.tile')
-      var at = tiles.indexOf(tile)
-      if (at !== -1 && at !== index) {
-        index = at
-        place(false)
-      }
+      // Bring a tile the keyboard has reached into focus, then hold there.
+      var at = tiles.indexOf(event.target.closest('.tile'))
+      if (at !== -1) goTo(at)
       hold()
     })
     carousel.addEventListener('focusout', function (event) {
       if (!carousel.contains(event.relatedTarget)) release()
     })
-    document.addEventListener('visibilitychange', schedule)
+    document.addEventListener('visibilitychange', function () {
+      // A hidden tab holds too, so the bar does not fill unwatched.
+      if (document.hidden) hold()
+      else if (!carousel.matches(':hover')) release()
+    })
+
+    // The apps in the nav move the carousel and bring the hero back into
+    // view. In the stacked layout the links stay plain anchors to the tiles.
+    var gotos = document.querySelectorAll('[data-goto]')
+    for (var g = 0; g < gotos.length; g++) {
+      gotos[g].addEventListener('click', function (event) {
+        if (STACKED.matches) return
+        event.preventDefault()
+        goTo(Number(this.getAttribute('data-goto')))
+        document.getElementById('top').scrollIntoView({ behavior: 'smooth' })
+      })
+    }
+
     window.addEventListener('resize', function () {
       place(true)
     })
     STACKED.addEventListener('change', function () {
       index = 0
       track.style.transform = ''
-      schedule()
+      mark()
+      if (!STACKED.matches) place(true)
     })
 
-    schedule()
+    mark()
+    if (!STACKED.matches) place(true)
   }
 
   /* ── Release pills ─────────────────────────────────────────────────────────

@@ -53,16 +53,23 @@ favicon, which is why the generator writes it.
 
 ## The hero
 
-The products are a carousel of 16:9 windows, Konnekt first. It is the one
-element that crosses the page's side padding: the first window starts on the
-container's left edge and the next peeks in from the right. Left alone it
-slides one window left every few seconds and wraps; hovering or focusing
-anything in it holds it still, and it never moves for a viewer who asked for
-reduced motion. On narrow screens and touch devices it is a plain column.
+The whole first viewport. The products are a carousel of 16:9 windows,
+Konnekt first, centred with the previous and next peeking in past the page's
+side padding; it is the one element that crosses that padding. The window in
+focus shows its app in colour with the description and actions unfolded
+beneath the name; its neighbours are black and white, text included, with the
+name and pill alone. A bar along the foot of the window in focus fills over
+five seconds and the carousel moves on when it is full. Hovering holds it
+(the bar pauses) and lights a soft glow round the window in that product's
+colour; clicking a neighbour, or an app in the nav, moves to it. It never
+moves by itself for a viewer who asked for reduced motion, and on narrow
+screens and touch devices it is a plain column.
 
-Each window shows its app in black and white with the name and pill at its
-foot. Hovering brings the colour back and unfolds the description and actions
-beneath the name, which is what lifts it. Kube's window is blank on purpose:
+Kommands' glow is its own ember orange, `PRODUCT_ACCENT` in that repo's
+`src/lib/theme.ts`, which is kept out of the suite tokens on purpose (see
+`design/README.md` § Two things not held here). The value is restated inline
+on its tile in `index.html`, with a comment saying where it comes from; the
+other tiles glow with the suite accent. Kube's window is blank on purpose:
 nothing is built yet, and a mock-up would say otherwise.
 
 ## What the pills say
@@ -76,9 +83,12 @@ the downloads table and is filled from one answer.
 
 ## Copy
 
-Short, and about what a user gets. How the suite is built — the shared tokens,
-the checks, the conventions — is this repo's README's to explain, not the
-page's.
+Short, and about what a user gets. The sections about Kollektiv say what the
+suite is and the fixed ideas behind it — local and private, made to work
+together, a UI over a terminal, in the open — and do not name or describe
+the apps; what an app does belongs in its own tile and its own site. How the
+suite is built — the shared tokens, the checks, the conventions — is this
+repo's README's to explain, not the page's.
 
 ## Checks
 

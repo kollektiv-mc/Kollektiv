@@ -26,8 +26,39 @@
         "run": "./scripts/check-participation.sh"
       },
       {
+        "name": "public copy",
+        "run": "./scripts/check-copy.sh"
+      },
+      {
         "name": "aislop",
         "run": "npx --yes aislop@0.16.0 ci"
+      }
+    ],
+    "invariants": [
+      {
+        "name": "no literal colours in the website",
+        "grep": "#[0-9a-fA-F]{3,8}\\b|rgba?\\([0-9]",
+        "paths": [
+          "website/styles.css",
+          "website/main.js",
+          "website/shapes.js"
+        ],
+        "exclude": [],
+        "expect": "no matches",
+        "diagnosis": "The website is a consumer of design/tokens.json: every colour it paints comes from website/tokens.css, generated from that file. A literal hex or rgb() in styles.css is a colour defined somewhere other than the source, which the next token change silently leaves behind. shapes.js is covered too because it paints, and main.js because it is the other half of the same script: it draws each tile's wireframe on a canvas, where a colour is needed as a value rather than as a class, and the way to get one is to read the custom property at runtime (see readGlow) \u2014 the same approach as voxelColor in Kommands. A literal there would be outside a stylesheet-only grep while being exactly the drift it exists to catch. Sizes are deliberately not covered: the page vocabulary block at the top of styles.css holds display sizes and section rhythm the app-scale token set does not, and website/README.md says what may go there. Legitimate exception: none. The one literal colour on the site is the theme-color meta tag in index.html, which cannot read a custom property, and Kommands' own ember accent on its tile, which that product deliberately keeps out of the shared token set \u2014 both are outside this grep's paths on purpose.",
+        "reference": "website/README.md"
+      }
+    ],
+    "generated": [
+      {
+        "regenerate": "./website/gen-tokens.py",
+        "expectCleanDiff": [
+          "website/tokens.css",
+          "website/assets/img/favicon.svg"
+        ],
+        "requiresNetwork": false,
+        "diagnosis": "A non-empty diff means either website/tokens.css or the favicon was hand-edited, or design/tokens.json changed without the site being regenerated. Both are bugs: a hand edit is destroyed by the next run and the gap that prompted it survives, and a stale tokens.css is the website painting last month's palette. Regenerate and commit the output alongside the token change. The generator reads a committed local file, so it works offline and has no legitimate skip.",
+        "reference": "website/README.md"
       }
     ]
   }

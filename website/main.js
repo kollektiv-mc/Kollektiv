@@ -1,0 +1,563 @@
+/* Three jobs: the hero carousel, the card a tile opens into, and the release
+ * each pill names. The wireframe behind the carousel is the fourth, and is in
+ * shapes.js. The page reads without any of them. */
+;(function () {
+  var STACKED = window.matchMedia('(hover: none), (max-width: 900px)')
+  var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)')
+
+  // shapes.js, loaded first. Missing only if that script failed, in which case
+  // the page is still a page: every call below goes through these stubs and
+  // the background is simply empty.
+  var shapes = window.KollektivShapes || {
+    makeOrbit: function () { return null },
+    setShape: function () {},
+    readGlow: function () { return '' },
+    startOrbits: function () {},
+    stopOrbits: function () {},
+  }
+
+  var carousel = document.getElementById('carousel')
+  var hovered = false
+  var carded = false
+
+  // The carousel is held while the pointer is on it, while the card is open,
+  // and while the tab is in the background — one place, so no path can leave
+  // the bar running under something that should have stopped it.
+  function syncHeld() {
+    if (carousel) carousel.classList.toggle('is-held', hovered || carded || document.hidden)
+  }
+
+  /* ── The card a tile opens into ────────────────────────────────────────────
+     A <dialog>, so the browser owns the focus trap, Escape, and inerting the
+     page behind it. Its content is cloned from the tile's own <template> and
+     its buttons from the tile's own actions, so a product is described in one
+     place and the card cannot drift from the window it came out of. */
+  var dialog = document.getElementById('detail')
+  var dialogName = document.getElementById('detail-title')
+  var dialogPill = document.getElementById('detail-pill')
+  var dialogBody = document.getElementById('detail-body')
+  var dialogActions = document.getElementById('detail-actions')
+  var dialogCard = dialog && dialog.querySelector('.detail-card')
+  var closing = null
+  var openedFrom = null
+
+  // The transform that lays the card over the window it came from: same
+  // centre, same width. Scaled evenly rather than to the window's exact box,
+  // because a card squashed to another aspect ratio distorts every word in it
+  // on the way out.
+  function overWindow(rect) {
+    var to = dialogCard.getBoundingClientRect()
+    if (!to.width || !rect) return ''
+    var scale = rect.width / to.width
+    var dx = rect.left + rect.width / 2 - (to.left + to.width / 2)
+    var dy = rect.top + rect.height / 2 - (to.top + to.height / 2)
+    return 'translate(' + dx + 'px, ' + dy + 'px) scale(' + scale + ')'
+  }
+
+  // Set a transform without animating to it, so the next change animates from
+  // there rather than from wherever the card was.
+  function placeCard(transform) {
+    dialogCard.style.transition = 'none'
+    dialogCard.style.transform = transform
+    void dialogCard.offsetWidth
+    dialogCard.style.transition = ''
+  }
+
+  function openCard(tile) {
+    var template = tile.querySelector('.tile-detail')
+    if (!dialog || !template) return
+    window.clearTimeout(closing)
+
+    // Each product's card sits on that product's own ground. A tile that names
+    // none falls back to the suite's bg-overlay, which is what Konnekt uses.
+    var ground = getComputedStyle(tile).getPropertyValue('--detail-bg').trim()
+    if (ground) dialog.style.setProperty('--detail-bg', ground)
+    else dialog.style.removeProperty('--detail-bg')
+    dialog.style.setProperty('--product-rgb', shapes.readGlow(tile))
+
+    dialogName.textContent = tile.querySelector('.tile-name').textContent
+    // Copied as nodes rather than as markup: the pill carries a release name
+    // fetched from GitHub, and nothing fetched should reach the HTML parser.
+    var pill = tile.querySelector('.pill')
+    dialogPill.textContent = ''
+    for (var part = 0; part < pill.childNodes.length; part++) {
+      dialogPill.appendChild(pill.childNodes[part].cloneNode(true))
+    }
+    dialogBody.textContent = ''
+    dialogBody.appendChild(template.content.cloneNode(true))
+    dialogActions.textContent = ''
+    var links = tile.querySelectorAll('.tile-more .actions a')
+    for (var i = 0; i < links.length; i++) {
+      var link = links[i].cloneNode(true)
+      link.tabIndex = 0
+      dialogActions.appendChild(link)
+    }
+
+    dialog.showModal()
+    carded = true
+    syncHeld()
+
+    // Measured after showModal, when the card is where it will end up, and
+    // held there for a frame — a dialog shown and styled in the same frame
+    // just appears.
+    var opener = tile.querySelector('.tile-window')
+    openedFrom = opener ? opener.getBoundingClientRect() : null
+    // placeCard flushes that starting transform, and the scrim's opacity with
+    // it, so both have somewhere to animate from and neither needs to wait a
+    // frame — the first frame after showModal is an expensive one, and waiting
+    // for it left the card sitting on the window before it grew.
+    placeCard(overWindow(openedFrom))
+    dialog.classList.add('is-open')
+    dialogCard.style.transform = ''
+  }
+
+  function closeCard() {
+    if (!dialog || !dialog.open) return
+    dialog.classList.remove('is-open')
+    // Back into the window it came out of, which has not moved: the carousel
+    // is held for as long as the card is open.
+    dialogCard.style.transform = overWindow(openedFrom)
+    carded = false
+    syncHeld()
+    closing = window.setTimeout(
+      function () {
+        dialog.close()
+        placeCard('')
+      },
+      REDUCED.matches ? 0 : 280,
+    )
+  }
+
+  if (dialog) {
+    document.getElementById('detail-close').addEventListener('click', closeCard)
+    // Escape: taken over so the card fades out rather than vanishing.
+    dialog.addEventListener('cancel', function (event) {
+      event.preventDefault()
+      closeCard()
+    })
+    // Anywhere off the card.
+    dialog.addEventListener('click', function (event) {
+      if (!event.target.closest('.detail-card')) closeCard()
+    })
+  }
+
+
+  /* ── Carousel ──────────────────────────────────────────────────────────────
+     An endless loop over however many products the page lists. The row is laid
+     out three times over, the middle copy being the real one that assistive
+     tech and the keyboard see, and the position simply walks forward along the
+     whole thing. When it walks out of the middle copy it steps back by exactly
+     one copy, which puts identical content in identical places, so nothing
+     moves on screen.
+
+     Three copies rather than the two clones this used to keep. With one spare
+     tile at each end, the position could reach that spare and find nothing
+     beyond it, so the last move of a lap slid a tile in beside an empty slot
+     and the next one appeared out of nowhere once the wrap completed.
+
+     Nothing here counts to three. Add an <article class="tile"> to the markup
+     or take one away and the copies, the dots, the wrap and the nav all follow.
+
+     What drives it is the progress bar: the product in focus animates its bar
+     over --carousel-dwell and the carousel moves on when that animation ends.
+     Holding pauses the bar in CSS, which is the whole of pausing. The stacked
+     layout (styles.css: no hover, or under 900px) lays the tiles in a column
+     and hides the bar, so there it never moves. */
+  var COPIES = 3
+  var heroOrbit = shapes.makeOrbit(document.getElementById('hero-orbit'))
+  var track = carousel && carousel.querySelector('.carousel-track')
+  if (track) {
+    var products = Array.prototype.slice.call(track.children)
+    var count = products.length
+    var slide =
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--carousel-slide')) ||
+      0
+
+    // A copy is scenery: not for assistive tech, not in the tab order, and
+    // without the ids the real tile's heading is labelled by.
+    function asCopy(node) {
+      node.setAttribute('aria-hidden', 'true')
+      node.removeAttribute('aria-labelledby')
+      node.removeAttribute('id')
+      var ids = node.querySelectorAll('[id]')
+      for (var i = 0; i < ids.length; i++) ids[i].removeAttribute('id')
+      var stops = node.querySelectorAll('a, button')
+      for (var j = 0; j < stops.length; j++) stops[j].tabIndex = -1
+      return node
+    }
+
+    var laid = document.createDocumentFragment()
+    for (var copy = 0; copy < COPIES; copy++) {
+      for (var product = 0; product < count; product++) {
+        // The middle copy is the markup itself, moved rather than duplicated.
+        var node = copy === 1 ? products[product] : asCopy(products[product].cloneNode(true))
+        node.setAttribute('data-product', String(product))
+        node.setAttribute('data-copy', String(copy))
+        laid.appendChild(node)
+      }
+    }
+    track.appendChild(laid)
+
+    // A position along the whole row, kept inside the middle copy.
+    var index = count
+    var settling = null
+
+    function atRest() {
+      return !carousel.classList.contains('is-moving')
+    }
+
+    function stride() {
+      return track.children[1].offsetLeft - track.children[0].offsetLeft
+    }
+
+    function lay() {
+      var centred = (carousel.clientWidth - products[0].offsetWidth) / 2
+      track.style.transform = 'translateX(' + (centred - index * stride()) + 'px)'
+    }
+
+    function place(jump) {
+      if (!jump) {
+        lay()
+        return
+      }
+      track.classList.add('is-jumping')
+      lay()
+      void track.offsetWidth // commit the jump before transitions come back
+      track.classList.remove('is-jumping')
+    }
+
+    // In focus is marked on every copy of that product, so the bar it is
+    // running belongs to the product and survives the step below. Which tile
+    // is before and which after is a fact about position, not about product,
+    // so those two are marked by where they sit.
+    function mark() {
+      var product = index % count
+      var laidOut = track.children
+      for (var i = 0; i < laidOut.length; i++) {
+        var tile = laidOut[i]
+        tile.classList.toggle('is-active', Number(tile.getAttribute('data-product')) === product)
+        tile.classList.toggle('is-prev', i === index - 1)
+        tile.classList.toggle('is-next', i === index + 1)
+      }
+      shapes.setShape(heroOrbit, products[product].getAttribute('data-shape'), shapes.readGlow(products[product]))
+      pointDot(product)
+    }
+
+    // Back into the middle copy, one copy at a time. Identical content lands
+    // in identical places, and is-jumping keeps anything from animating across
+    // the step, so there is nothing to see. Only ever called with the track at
+    // rest: mid-slide it would cancel the transition and snap to its end.
+    function recentre() {
+      var home = (index % count) + count
+      if (home === index) return
+      index = home
+      track.classList.add('is-jumping')
+      lay()
+      mark()
+      void track.offsetWidth
+      track.classList.remove('is-jumping')
+    }
+
+    // Start a slide. is-moving marks the track in flight, which the glow is
+    // gated on: a tile sliding under a resting pointer would otherwise light
+    // up on the way past.
+    function move(to) {
+      index = to
+      place(false)
+      mark()
+      carousel.classList.add('is-moving')
+      window.clearTimeout(settling)
+      settling = window.setTimeout(settled, slide)
+    }
+
+    // The track has stopped, so come home. Doing it here rather than letting
+    // the next request put it off is the point: the wrap used to be deferred
+    // and re-armed by every new move, so clicking quickly walked the position
+    // clean off the end of the row, and the slot beside the window had no tile
+    // in it until the clicking stopped.
+    function settled() {
+      carousel.classList.remove('is-moving')
+      recentre()
+    }
+
+    // A move only starts from rest. A click landing during a slide is not a
+    // second instruction, it is the same one arriving twice, and acting on it
+    // ran the carousel on past where anyone asked it to go.
+    function step(delta) {
+      if (STACKED.matches || count < 2 || !atRest()) return
+      recentre()
+      move(index + delta)
+    }
+
+    // The nearest position showing that product, so a move takes the short way
+    // round rather than unwinding the whole row.
+    function show(product) {
+      if (STACKED.matches || count < 2 || !atRest()) return
+      recentre()
+      var nearest = null
+      for (var pos = index - count; pos <= index + count; pos++) {
+        if (pos < 0 || pos >= track.children.length || pos % count !== product) continue
+        if (nearest === null || Math.abs(pos - index) < Math.abs(nearest - index)) nearest = pos
+      }
+      if (nearest !== null && nearest !== index) move(nearest)
+    }
+
+    /* ── The indicator ───────────────────────────────────────────────────────
+       One dot per product, built from the tiles so the row follows the markup.
+       The travelling mark is placed by measuring the dot rather than by
+       multiplying an index, which is what lets the row be any length. */
+    var dots = document.getElementById('dots')
+    var marks = []
+    if (dots) {
+      products.forEach(function (tile, product) {
+        var name = tile.querySelector('.tile-name').textContent
+        var dot = document.createElement('button')
+        dot.type = 'button'
+        dot.className = 'dot'
+        dot.setAttribute('aria-label', name)
+        dot.style.setProperty('--dot-glow-rgb', shapes.readGlow(tile))
+        var label = document.createElement('span')
+        label.className = 'dot-label'
+        label.textContent = name
+        dot.appendChild(label)
+        dot.addEventListener('click', function () {
+          show(product)
+        })
+        dots.appendChild(dot)
+        marks.push(dot)
+      })
+    }
+
+    function pointDot(product) {
+      if (!marks.length) return
+      for (var i = 0; i < marks.length; i++) {
+        if (i === product) marks[i].setAttribute('aria-current', 'true')
+        else marks[i].removeAttribute('aria-current')
+      }
+      var dot = marks[product]
+      // The mark's own width, read rather than restated, so the token that
+      // sizes it in CSS stays the only place it is decided.
+      var width = parseFloat(getComputedStyle(dots, '::after').width) || 0
+      dots.style.setProperty('--dot-x', dot.offsetLeft + (dot.offsetWidth - width) / 2 + 'px')
+      dots.style.setProperty('--dots-glow-rgb', shapes.readGlow(products[product]))
+      dots.classList.add('is-ready')
+    }
+
+    // The bar of the product in focus has filled: move on. Every copy runs one
+    // in step, so only the middle copy's is counted.
+    track.addEventListener('animationend', function (event) {
+      if (event.animationName !== 'tile-progress') return
+      var tile = event.target.closest('.tile')
+      if (!tile || tile.getAttribute('data-copy') !== '1') return
+      step(1)
+    })
+
+    // The window in focus opens into the card; another comes into focus first.
+    // A link inside either does what it says instead.
+    track.addEventListener('click', function (event) {
+      var tile = event.target.closest('.tile')
+      if (!tile || event.target.closest('a')) return
+      if (event.target.closest('.tile-open')) {
+        openCard(tile)
+        return
+      }
+      if (STACKED.matches) return
+      event.preventDefault()
+      // At rest, the window in focus opens into its card.
+      if (atRest() && tile.classList.contains('is-active')) {
+        openCard(tile)
+        return
+      }
+      // Otherwise the click asks to move that way, read from which side of the
+      // carousel it landed on rather than from the tile under the pointer.
+      // Mid-slide the tiles are in transit, so the one under the pointer can be
+      // two or three products from the one in focus, and taking it at its word
+      // made a single click jump that far in one go.
+      var band = carousel.getBoundingClientRect()
+      step(event.clientX < band.left + band.width / 2 ? -1 : 1)
+    })
+
+    // On the windows, not on the carousel: that is a band the width of the
+    // viewport, and holding from anywhere in it stopped the carousel with the
+    // pointer nowhere near a window and nothing on screen saying why.
+    var windows = track.querySelectorAll('.tile-window')
+    function hold() {
+      hovered = true
+      syncHeld()
+    }
+    function release() {
+      hovered = false
+      syncHeld()
+    }
+    for (var wi = 0; wi < windows.length; wi++) {
+      windows[wi].addEventListener('mouseenter', hold)
+      windows[wi].addEventListener('mouseleave', release)
+    }
+
+    carousel.addEventListener('focusin', function (event) {
+      // Bring a tile the keyboard has reached into focus, then hold there.
+      var at = products.indexOf(event.target.closest('.tile'))
+      if (at !== -1) show(at)
+      hold()
+    })
+    carousel.addEventListener('focusout', function (event) {
+      if (carousel.contains(event.relatedTarget)) return
+      release()
+    })
+
+    // The apps in the nav move the carousel and bring the hero back into
+    // view. In the stacked layout the links stay plain anchors to the tiles.
+    var gotos = document.querySelectorAll('[data-goto]')
+    for (var g = 0; g < gotos.length; g++) {
+      gotos[g].addEventListener('click', function (event) {
+        if (STACKED.matches) return
+        event.preventDefault()
+        show(Number(this.getAttribute('data-goto')))
+        document.getElementById('top').scrollIntoView({ behavior: 'smooth' })
+      })
+    }
+
+    window.addEventListener('resize', function () {
+      place(true)
+      pointDot(index % count)
+    })
+    STACKED.addEventListener('change', function () {
+      index = count
+      track.style.transform = ''
+      mark()
+      if (!STACKED.matches) place(true)
+    })
+
+    mark()
+    if (!STACKED.matches) place(true)
+
+    shapes.startOrbits()
+  }
+
+  // A hidden tab holds the carousel and stops the wireframes: neither has
+  // anything to say to someone who is not looking.
+  document.addEventListener('visibilitychange', function () {
+    syncHeld()
+    if (document.hidden) shapes.stopOrbits()
+    else shapes.startOrbits()
+  })
+
+  /* ── Sections coming into focus ───────────────────────────────────────────
+     A section is sharp when it is settled in the middle of the screen and
+     softens as it leaves, on either side. styles.css reads --focus; this works
+     out what it should be.
+
+     Done here rather than with a scroll-driven animation in CSS, which is what
+     it was. animation-timeline is Chromium and Safari only, so in Firefox the
+     effect simply did not happen. The arithmetic is the same and this runs
+     everywhere.
+
+     Read on a frame and written only when the value has actually changed, so
+     a scroll neither measures more than once per frame nor repaints a blur it
+     has already painted. */
+  var sections = document.querySelectorAll('.section')
+  var pending = false
+
+  function focusSections() {
+    pending = false
+    var screen = window.innerHeight
+    for (var i = 0; i < sections.length; i++) {
+      var section = sections[i]
+      var box = section.getBoundingClientRect()
+      // How far this section's own middle is from the screen's, as a share of
+      // the distance at which it would be entirely gone.
+      var away = Math.abs(box.top + box.height / 2 - screen / 2)
+      var gone = (screen + box.height) / 2
+      var near = gone ? 1 - Math.min(away / gone, 1) : 1
+      // A wide plateau. A section is readable for most of its pass and only
+      // softens as it goes; a narrow one has the page breathing in and out
+      // while someone is trying to read it.
+      var focus = REDUCED.matches ? '1' : Math.min(near / 0.55, 1).toFixed(2)
+      if (section.style.getPropertyValue('--focus') !== focus) {
+        section.style.setProperty('--focus', focus)
+      }
+    }
+  }
+
+  function onScroll() {
+    if (pending) return
+    pending = true
+    window.requestAnimationFrame(focusSections)
+  }
+
+  if (sections.length) {
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    REDUCED.addEventListener('change', onScroll)
+    focusSections()
+  }
+
+  /* ── Release pills ─────────────────────────────────────────────────────────
+     The markup ships with the platform word alone ("desktop", "web") and
+     stays that way if the request fails, so nothing on the page ever claims
+     a version it did not fetch. Same approach as Konnekt's own site, which
+     reads its hero version from the GitHub API at load time.
+
+     Three answers, in order:
+       /releases/latest      the newest full release           → its tag
+       /releases?per_page=1  newest of any kind, prereleases included → its tag
+       neither               no release at all                → "in development",
+                                                               and the last commit's date
+     The second step matters for a project whose every release is an alpha:
+     GitHub's "latest" never returns a prerelease, and a pill that fell
+     straight to "in development" would understate a project that ships
+     builds. A repo with no commits yet answers the commits call with 409,
+     which is the same as having none. */
+  var API = 'https://api.github.com/repos/'
+
+  function get(path) {
+    return fetch(API + path, { headers: { Accept: 'application/vnd.github+json' } }).then(
+      function (res) {
+        if (res.status === 404 || res.status === 409) return null
+        if (!res.ok) throw new Error(res.status)
+        return res.json()
+      },
+    )
+  }
+
+  function formatDate(iso) {
+    var d = new Date(iso)
+    if (isNaN(d)) return ''
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+  }
+
+  function status(repo) {
+    return get(repo + '/releases/latest').then(function (latest) {
+      if (latest && latest.tag_name) return latest.tag_name
+      return get(repo + '/releases?per_page=1').then(function (list) {
+        if (list && list.length && list[0].tag_name) return list[0].tag_name
+        return get(repo + '/commits?per_page=1').then(function (commits) {
+          var when = commits && commits[0] && commits[0].commit.committer.date
+          return 'in development' + (when ? ' · ' + formatDate(when) : '')
+        })
+      })
+    })
+  }
+
+  // Queried after the carousel has made its copies, so those fill too.
+  var pills = document.querySelectorAll('[data-release]')
+  var byRepo = {}
+  for (var i = 0; i < pills.length; i++) {
+    var repo = pills[i].getAttribute('data-release')
+    ;(byRepo[repo] = byRepo[repo] || []).push(pills[i])
+  }
+
+  Object.keys(byRepo).forEach(function (repo) {
+    status(repo)
+      .then(function (text) {
+        byRepo[repo].forEach(function (pill) {
+          var em = document.createElement('em')
+          em.textContent = text
+          pill.appendChild(em)
+        })
+      })
+      .catch(function () {
+        /* offline, rate-limited, or blocked: the pill keeps its platform word */
+      })
+  })
+})()

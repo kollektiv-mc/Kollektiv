@@ -39,6 +39,8 @@ that commits the copy and runs it.
 | `scripts/sync-labels.sh` | Applies `design/labels.json`'s GitHub side via `gh` (`--check` to detect drift) |
 | `scripts/validate-schemas.sh` | Validates every manifest against its schema |
 | `scripts/check-participation.sh` | Checks each repo's permissions floor, the paths its manifest names, its formatting settings, and that every vendored file is excluded from that repo's own formatter and scanner (`--require-products` to fail on an uncloned one) |
+| `scripts/check-copy.sh` | Checks the published copy for em dashes (`docs/conventions.md` § Public copy) |
+| `website/` | The suite's home page — hand-written HTML/CSS, styled from `design/tokens.json` through `website/gen-tokens.py` |
 | `docs/adopting.md` | How a repo adopts suite-kit |
 | `docs/conventions.md` | Cross-repo rules: tracking, PR magic words, permissions |
 | `docs/linear.md` | The Linear structure `/suite-kit:suite-sync` mirrors GitHub Issues into |
@@ -75,6 +77,13 @@ copy is reviewed where it runs; `sync-workflows.sh --check` in CI is what keeps 
 
 **suite-kit ships no hooks, deliberately.** Konnekt already binds `graphify hook-guard`
 to `PreToolUse`; stacking more matchers is the fastest way to make both feel broken.
+
+**Nothing published carries an em dash.** The websites' words, issue and pull
+request titles and bodies, commit messages. Use a comma, a colon, or two
+sentences. Code, code comments and the documentation in these repos are not
+published and are unaffected, this file included. `scripts/check-copy.sh`
+checks the one surface that is in a file; the rest is review. See
+`docs/conventions.md` § Public copy.
 
 **Version bumps come in pairs.** `plugins/suite-kit/.claude-plugin/plugin.json` and
 `.claude-plugin/marketplace.json` must agree — a health check fails if they diverge.

@@ -1,0 +1,1268 @@
+/* ── Fonts ──────────────────────────────────────────────────────────────────
+   The same three faces Konnekt's website and app bundle, at the one weight
+   each is used at: Satoshi Black for display, Excon Medium for titles and
+   eyebrows, Ranade Regular for everything else. Self-hosted so the page makes
+   no third-party request. The family names match design/tokens.json →
+   type.family, which tokens.css turns into --font-display/--font-title/--font-sans. */
+@font-face {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('./assets/fonts/Satoshi-Black.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Excon';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./assets/fonts/Excon-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Ranade';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/Ranade-Regular.woff2') format('woff2');
+}
+
+/* ── Page vocabulary ────────────────────────────────────────────────────────
+   Everything in this block is a value the page needs and the token set does
+   not hold, because the token set is the *app* scale — 12px body, 24px as its
+   largest space — and a marketing page has a hero title and a section rhythm
+   no app UI has. Same split Konnekt's website makes. Two rules keep it honest:
+   nothing here is a colour, and nothing below redeclares a token. A value the
+   apps could share belongs in design/tokens.json, not here. */
+:root {
+  --max-width: 1200px;
+  --prose-width: 62ch;
+  --nav-h: 64px;
+  --page-x: clamp(16px, 4vw, 40px);
+  --section-y: clamp(64px, 9vh, 120px);
+
+  /* The carousel. A window is 16:9 and about three quarters of the container
+     wide, centred, so the neighbours peek in on both sides; --carousel-slide
+     is one move and --carousel-dwell how long a window stays in focus, both
+     read by main.js. --veil-focus is how far up the window the frosted foot
+     reaches, and --veil-blur how hard it is frosted. */
+  --tile-w: min(76cqi, 900px);
+  --tile-gap: clamp(16px, 2vw, 28px);
+  --tile-pad: clamp(20px, 2.6vw, 36px);
+  --tile-title: clamp(22px, 2.4vw, 32px);
+  --veil-focus: 68%;
+  --veil-blur: 10px;
+  /* How far out of focus a section is at the edges of the scroll. */
+  --section-blur: 10px;
+  /* How far the glow round the window in focus carries. The carousel lets its
+     content paint this far past the edge it clips at, or the glow would end
+     on a straight line above and below the window. */
+  --glow-reach: 72px;
+  /* A window out of focus sits back from the one in focus. The layout box is
+     the same either way — only the painted window scales — so the carousel's
+     arithmetic stays whole windows. */
+  --tile-scale-idle: 0.88;
+  --carousel-slide: 600ms;
+  --carousel-dwell: 8000ms;
+
+  /* The maximized card. */
+  --detail-w: min(1040px, 92vw);
+  --detail-h: min(82svh, 620px);
+
+  /* Display sizes. The token scale tops out at --text-xl (20px), which is the
+     lead paragraph here; the headings sit above it. */
+  --display-xl: clamp(34px, 4.6vw, 60px);
+  --display-lg: clamp(28px, 3.4vw, 46px);
+  --lead: clamp(var(--text-lg), 1.4vw, var(--text-xl));
+}
+
+/* ── Base ───────────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg-base);
+  scroll-behavior: smooth;
+  /* The bar is sticky, so it covers the top of whatever an anchor lands on.
+     This is what keeps a jump to #about from putting its heading under it. */
+  scroll-padding-top: var(--nav-h);
+  scrollbar-gutter: stable;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-body);
+  font-size: var(--text-lg);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+}
+
+p {
+  margin: 0;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  color: var(--text-primary);
+}
+
+::selection {
+  background: rgb(var(--accent-rgb) / 0.3);
+}
+
+:focus-visible {
+  outline: var(--border-thick) solid var(--accent);
+  outline-offset: var(--space-0-5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0s !important;
+  }
+}
+
+/* ── Shared pieces ──────────────────────────────────────────────────────── */
+.container {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--page-x);
+}
+
+.prose {
+  max-width: var(--prose-width);
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-size: var(--text-xl);
+  letter-spacing: -0.01em;
+  color: var(--accent);
+  text-decoration: none;
+  /* The one glow the design language permits: accent-tinted, never a drop
+     shadow. See design/README.md § Two things not held here. */
+  text-shadow: 0 0 var(--space-4) rgb(var(--accent-rgb) / 0.35);
+}
+
+.wordmark-sm {
+  font-size: var(--text-sm);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-family: var(--font-title);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-5);
+  border: var(--border-hairline) solid var(--border-subtle);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+/* The label stays the page's own ground rather than turning with the button,
+   because these accents are all light enough to carry it: 11.6:1 on Konnekt's
+   green, 9.0:1 on Kommands' ember. Kube's placeholder purple is 4.4:1, which
+   is under the 4.5:1 normal text wants; it has no primary button today, and
+   that is a thing to settle when the product picks a real accent rather than
+   a reason to special-case it now. */
+.btn-primary {
+  background: rgb(var(--product-rgb, var(--accent-rgb)));
+  border-color: rgb(var(--product-rgb, var(--accent-rgb)));
+  color: var(--bg-base);
+  font-weight: var(--weight-semibold);
+}
+
+.btn-primary:hover {
+  /* Accent-tinted ring, the same exception the wordmark uses; not a shadow. */
+  box-shadow: 0 0 0 1px rgb(var(--product-rgb, var(--accent-rgb)) / 0.4);
+}
+
+.btn-secondary {
+  background: var(--hover-surface);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-elevated);
+}
+
+.btn-sm {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-xs);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ── Hero ───────────────────────────────────────────────────────────────────
+   The whole first viewport. Wordmark and nav in the same .container as every
+   section, so they share the page's left edge with the headings and the
+   footer; the carousel centres itself in what is left and is the one thing
+   that may cross the side padding. */
+/* The bar stays with the page. It is sticky rather than fixed, so it takes a
+   row of its own at the top and the hero is what is left of the first screen
+   rather than starting underneath it. */
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: var(--border-hairline) solid var(--border-subtle);
+  background: var(--bg-elevated);
+  backdrop-filter: blur(var(--space-3));
+  -webkit-backdrop-filter: blur(var(--space-3));
+}
+
+.bar-inner {
+  height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.hero {
+  position: relative;
+  /* What is left of the first screen once the bar has its row. */
+  min-height: calc(100svh - var(--nav-h));
+  /* Both axes. The shape behind the carousel is taller than the viewport, so
+     clipping only the sides let it hang into the section below; the carousel
+     bleeding past the sides is the other thing this catches. */
+  overflow: clip;
+}
+
+/* Behind the carousel, and behind the windows, which are opaque: what shows
+   is the part of the shape that reaches past them. */
+.hero-orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 0;
+  width: min(128vh, 1500px);
+  height: min(128vh, 1500px);
+  transform: translate(-50%, -50%);
+  opacity: 0.3;
+  /* Softened here rather than in the drawing, which cannot stroke a line
+     softer than its own edge. The blur is why the strokes are laid down
+     thicker than a hairline: spread over several pixels, a one-pixel line
+     loses most of what makes it visible at all. */
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: inherit;
+  /* Symmetric, so justify-content lands the carousel on the hero's middle
+     rather than 24px above it, and so the dots keep clear of the edge. */
+  padding-block: var(--space-6);
+  /* So a window can be sized in cqi — a share of this container's width. */
+  container-type: inline-size;
+}
+
+.topnav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  font-family: var(--font-title);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-sm);
+}
+
+.topnav a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.topnav a:hover {
+  color: var(--text-primary);
+}
+
+/* Between the apps and the page's own sections. */
+.topnav-sep {
+  width: var(--border-hairline);
+  height: var(--space-4);
+  background: var(--border-hover);
+}
+
+/* ── Carousel ───────────────────────────────────────────────────────────────
+   Bleeds to both viewport edges so a neighbour can show past the side
+   padding. main.js keeps the window in focus centred and moves the track by
+   whole windows, wrapping through a copy of the last window placed before
+   the first and a copy of the first placed after the last. */
+.carousel {
+  --bleed: calc(50vw - 50%);
+  margin-inline: calc(-1 * var(--bleed));
+  /* No padding to hold the glow: overflow-clip-margin below lets it paint past
+     this box, so padding here would only be empty height. */
+  padding-block: 0;
+  /* clip rather than hidden, so overflow-clip-margin can let the glow paint
+     past the top and bottom edges. It lets the tiles paint past the left and
+     right edges too, which is why .hero clips the overflow on that axis. */
+  overflow: clip;
+  overflow-clip-margin: var(--glow-reach);
+}
+
+.carousel-track {
+  display: flex;
+  gap: var(--tile-gap);
+  transition: transform var(--carousel-slide) var(--ease-standard);
+}
+
+/* The track wraps by stepping back a whole copy, which puts identical content
+   in identical places. Nothing may animate across that step, or the swap plays
+   out as a transition on screen. Animations are left alone deliberately: the
+   progress bar is one, and it belongs to the product rather than to the copy,
+   so it carries on. */
+.carousel-track.is-jumping,
+.carousel-track.is-jumping *,
+.carousel-track.is-jumping *::after {
+  transition: none !important;
+}
+
+/* Everything that belongs to one product carries that product's colour, and
+   everything that paints in it reads this: the glow, the progress bar, the
+   wireframe, the dot, and the primary button. The suite accent unless the
+   markup says otherwise, which Kommands and Kube do inline in index.html. */
+.tile,
+.product,
+.detail {
+  --product-rgb: var(--accent-rgb);
+}
+
+.tile {
+  flex: 0 0 var(--tile-w);
+  min-width: 0;
+}
+
+/* A window out of focus is black and white, text included, and a click on
+   it brings it into focus. */
+.tile-window {
+  position: relative;
+  /* So the name can be laid against this window's width in CSS rather than
+     measured in script. See .tile-id. */
+  container-type: inline-size;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: var(--radius-xl);
+  border: var(--border-hairline) solid var(--border-subtle);
+  background: var(--bg-overlay);
+  filter: grayscale(1);
+  opacity: 0.7;
+  cursor: pointer;
+  transform: scale(var(--tile-scale-idle));
+  transition:
+    filter var(--carousel-slide) var(--ease-standard),
+    opacity var(--carousel-slide) var(--ease-standard),
+    transform var(--carousel-slide) var(--ease-standard),
+    border-color var(--duration-panel) var(--ease-standard),
+    box-shadow var(--duration-panel) var(--ease-standard);
+}
+
+.tile.is-active .tile-window {
+  filter: none;
+  opacity: 1;
+  transform: none;
+}
+
+/* A soft glow round the window in focus while the pointer is actually on it,
+   in that product's colour — the carousel is a viewport-wide band, and lighting
+   it up from anywhere in that band left the glow on with the pointer nowhere
+   near a window. It doubles as why the carousel has stopped. An accent-tinted
+   glow is the one box-shadow the design language allows; see design/README.md. */
+.carousel:not(.is-moving) .tile.is-active .tile-window:hover,
+.carousel:not(.is-moving) .tile.is-active .tile-window:focus-within {
+  border-color: var(--border-hover);
+  box-shadow:
+    0 0 0 1px rgb(var(--product-rgb) / 0.35),
+    0 0 var(--space-6) rgb(var(--product-rgb) / 0.3),
+    0 0 var(--glow-reach) rgb(var(--product-rgb) / 0.2);
+}
+
+/* The screenshot fills the window from its top corner, the way the app's own
+   window would, so the chrome stays legible at any size instead of a centred
+   crop landing on the middle of a chart. */
+.tile-shot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: left top;
+}
+
+/* Which corner of the screenshot survives the crop. Konnekt's sidebar and
+   title bar are on the left; Kommands' editor and 3D preview are on the right,
+   and its command list is the less telling half. */
+.tile-shot-end {
+  object-position: right top;
+}
+
+/* A window with nothing in it yet: its product's own ground, the same colour
+   its card opens onto, rather than a translucent pane the page shows through. */
+.tile-window-blank {
+  background: var(--detail-bg, var(--bg-surface));
+}
+
+/* The fade at the foot of the window: under the name alone while out of
+   focus, under the description once in focus. A pseudo-element rather than
+   a background on the veil so its height can animate. */
+.tile-window::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  /* Frosts the foot of the window so the copy over it reads without hiding the
+     app. Masked rather than cut, or the blur would end on a line across the
+     picture.
+
+     Three things this rule used to do and no longer does, because each was a
+     way of making the same effect look wrong:
+
+     It darkened. A gradient to bg-base under the blur read as the picture
+     fading to black rather than as glass over it.
+
+     It grew, from a short box to a tall one. The mask is measured against this
+     box, so a box that changes height drags its own soft edge up the picture,
+     and that sweep is what read as the blur cutting in.
+
+     It animated backdrop-filter, from blur(0) to full. Chromium interpolates
+     that poorly and tends to snap partway.
+
+     So the box is one fixed height, always blurred, and only its opacity
+     moves. An element carrying a backdrop-filter at partial opacity blends the
+     blurred backdrop with the sharp one, which is a real blur fading in, and
+     opacity is the one property that animates smoothly every time. */
+  height: var(--veil-focus);
+  backdrop-filter: blur(var(--veil-blur));
+  -webkit-backdrop-filter: blur(var(--veil-blur));
+  mask-image: linear-gradient(to top, black 45%, transparent 100%);
+  opacity: 0;
+  transition: opacity var(--duration-panel) var(--ease-standard);
+}
+
+.tile.is-active .tile-window::after {
+  opacity: 1;
+}
+
+/* The way in for a keyboard. A pointer can click the window itself. */
+.tile-open {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  padding: 0;
+  border-radius: var(--radius-md);
+  border: var(--border-hairline) solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1;
+  cursor: pointer;
+  /* Hidden rather than merely transparent, so a window out of focus holds no
+     tab stop. */
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--duration-panel) var(--ease-standard),
+    visibility var(--duration-panel) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+
+.tile.is-active .tile-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tile-open:hover {
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+}
+
+
+/* The veil sits at the foot of the window and is always there: the name and
+   pill on top, and beneath them the description and actions, folded to
+   nothing until the window is in focus — which is what lifts the name. */
+.tile-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: var(--tile-pad);
+}
+
+/* The name, with its pill beside it. Out of focus only a strip of the window
+   shows, so the name moves to the edge that is visible: the right edge of the
+   one before, the left edge of the one after.
+
+   Moved rather than re-aligned. justify-content does not interpolate, so
+   switching it made the name jump the moment a tile came into focus. A
+   translation does interpolate, and the distance is expressible without
+   measuring anything: 100cqi is the window this sits in, 100% is the unit
+   itself, and the padding is a token. */
+.tile-id {
+  position: relative;
+  width: fit-content;
+  transform: translateX(0);
+  transition: transform var(--carousel-slide) var(--ease-standard);
+}
+
+.tile.is-prev .tile-id {
+  transform: translateX(calc(100cqi - 2 * var(--tile-pad) - 100%));
+}
+
+/* Out of flow, so the name's own width is what the translation above works
+   against whether or not the pill is showing. */
+.tile-id .pill {
+  position: absolute;
+  left: calc(100% + var(--space-3));
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+}
+
+.tile.is-active .tile-id .pill {
+  opacity: 1;
+}
+
+.tile-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-size: var(--tile-title);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.pill {
+  transition: opacity var(--duration-panel) var(--ease-standard);
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  border: var(--border-hairline) solid var(--border-subtle);
+  background: var(--bg-elevated);
+  font-family: var(--font-title);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* What main.js appends once GitHub has answered: a tag, or the fallback. */
+.pill em {
+  font-style: normal;
+  color: var(--text-muted);
+}
+
+.pill em::before {
+  content: '·';
+  margin-right: var(--space-2);
+}
+
+.tile-more {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(var(--space-2));
+  transition:
+    grid-template-rows var(--duration-panel) var(--ease-standard),
+    opacity var(--duration-panel) var(--ease-standard),
+    transform var(--duration-panel) var(--ease-standard);
+}
+
+.tile-more > div {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-top: var(--space-4);
+}
+
+.tile.is-active .tile-more {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: none;
+}
+
+.tile-more p {
+  max-width: 48ch;
+  color: var(--text-primary);
+  font-size: var(--lead);
+}
+
+/* How long until the carousel moves on: a bar along the foot of the window
+   in focus, filling over --carousel-dwell. main.js advances when the
+   animation ends, so pausing it (held) is what holds the carousel. */
+.tile-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  height: var(--space-0-5);
+  background: rgb(var(--product-rgb));
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.tile.is-active .tile-progress {
+  animation: tile-progress var(--carousel-dwell) linear forwards;
+}
+
+.carousel.is-held .tile-progress {
+  animation-play-state: paused;
+}
+
+@keyframes tile-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* No bar means no animationend, so the carousel never moves by itself. */
+  .tile-progress {
+    animation: none !important;
+  }
+}
+
+/* ── The indicator ──────────────────────────────────────────────────────────
+   One dot per product under the carousel, and the way to steer it. Konnekt's
+   site carries the same idiom down its right edge for page sections: a hollow
+   dot per stop, the accent on the current one, a travelling mark, and the name
+   on hover. This is that, turned on its side.
+
+   The mark is one element for the whole row rather than a lit dot, so moving
+   between products is a slide rather than one dot going out and another coming
+   on. It rides --dot-x, which main.js measures off the current dot rather than
+   multiplying an index by a width, so the row can hold any number of dots. */
+.dots {
+  position: relative;
+  flex-shrink: 0;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  margin-top: var(--space-5);
+}
+
+.dot {
+  position: relative;
+  display: block;
+  width: var(--space-6);
+  height: var(--space-6);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.dot::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  box-sizing: border-box;
+  width: var(--space-2);
+  height: var(--space-2);
+  margin: calc(-1 * var(--space-1)) 0 0 calc(-1 * var(--space-1));
+  border-radius: var(--radius-pill);
+  /* A step brighter than a divider: this sits alone on the page background
+     rather than between two surfaces, and has to be findable. */
+  border: 1px solid var(--text-faint);
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+
+.dot:hover::before {
+  border-color: rgb(var(--dot-glow-rgb, var(--accent-rgb)));
+  transform: scale(1.25);
+}
+
+.dot:focus-visible {
+  outline: none;
+}
+
+.dot:focus-visible::before {
+  outline: var(--border-thick) solid var(--accent);
+  outline-offset: var(--space-0-5);
+}
+
+/* The travelling mark. Last, so it paints over the dots, and inert so it never
+   takes a click meant for one. */
+.dots::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: var(--space-2);
+  height: var(--space-2);
+  margin-top: calc(-1 * var(--space-1));
+  border-radius: var(--radius-pill);
+  background: rgb(var(--dots-glow-rgb, var(--accent-rgb)));
+  transform: translateX(var(--dot-x, 0px));
+  pointer-events: none;
+  transition:
+    transform var(--carousel-slide) var(--ease-standard),
+    background-color var(--carousel-slide) var(--ease-standard);
+}
+
+/* Until main.js has measured a dot there is nothing to point at. */
+.dots:not(.is-ready)::after {
+  opacity: 0;
+}
+
+.dot-label {
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  margin-bottom: var(--space-4);
+  transform: translateX(-50%);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  border: var(--border-hairline) solid var(--border-subtle);
+  background: var(--bg-overlay);
+  font-family: var(--font-title);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.dot:hover .dot-label,
+.dot:focus-visible .dot-label {
+  opacity: 1;
+}
+
+/* Stacked: where there is no hover, or no room for the carousel, nothing
+   moves on its own. The carousel becomes a column inside the container,
+   every window is in colour with the name, pill, description and actions
+   laid out beneath the picture, and the wrap-around copies main.js made are
+   hidden. Width is a condition too, not only hover, because a narrow window
+   on a desktop reports hover. */
+@media (hover: none), (max-width: 900px) {
+  .hero-inner {
+    min-height: 0;
+  }
+  .carousel {
+    margin-inline: 0;
+    padding-block: 0;
+    overflow: visible;
+  }
+  .carousel-track {
+    flex-direction: column;
+    transform: none !important;
+  }
+  .tile {
+    flex: none;
+  }
+  /* Only the real row here. The copies exist for a loop that is not running
+     in this layout, and each one would otherwise repeat the whole column. */
+  .tile:not([data-copy='1']) {
+    display: none;
+  }
+  .tile-window {
+    aspect-ratio: auto;
+    filter: none;
+    opacity: 1;
+    transform: none;
+    cursor: auto;
+  }
+  .tile-window::after,
+  .tile-progress {
+    display: none;
+  }
+  .hero-orbit {
+    display: none;
+  }
+  /* Every window is in focus here, so every one keeps its way into the card;
+     the window itself is not clickable, since nothing is hidden behind it. */
+  .tile-open {
+    opacity: 1;
+    visibility: visible;
+  }
+  .tile.is-active .tile-window:hover,
+  .tile.is-active .tile-window:focus-within {
+    box-shadow: none;
+    border-color: var(--border-subtle);
+  }
+  .tile-shot {
+    position: static;
+    height: auto;
+    aspect-ratio: 16 / 10;
+    border-bottom: var(--border-hairline) solid var(--border-subtle);
+  }
+  .tile-veil {
+    position: static;
+    padding: var(--space-6);
+  }
+  .tile-more {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transform: none;
+  }
+  /* Every window is in focus here, so every name sits where a focused one
+     does and every pill shows. */
+  .tile-id,
+  .tile.is-prev .tile-id {
+    transform: none;
+  }
+  .tile-id .pill {
+    opacity: 1;
+  }
+  /* The dots steer a carousel that is not running here. */
+  .dots {
+    display: none;
+  }
+  /* The tiles are right below the bar, so the nav does not need to reach
+     them, and the bar would not fit them at this width. */
+  .topnav a[data-goto],
+  .topnav-sep {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .topnav {
+    gap: var(--space-4);
+    font-size: var(--text-xs);
+  }
+}
+
+/* ── The maximized card ─────────────────────────────────────────────────────
+   A <dialog>, so the browser owns the focus trap, Escape and the page behind
+   it. It is deliberately one card that fits the window: the shots share out
+   whatever height is left rather than being sized in the abstract, so nothing
+   in here ever scrolls.
+
+   The scrim is painted by the dialog itself rather than ::backdrop, and is
+   composed from bg-base rather than being a colour of its own — there is no
+   scrim token and inventing one would be a design decision this page has no
+   business making (design/README.md § bg-overlay). */
+/* A closed dialog is laid out by nothing. The browser's own rule says as much,
+   but any author rule beats the user agent whatever the specificity, so the
+   display below was reviving it: the page carried an invisible full-viewport
+   block under the footer, which added a blank screen of scroll and pushed the
+   last section clean out of view at the bottom. */
+.detail:not([open]) {
+  display: none;
+}
+
+.detail {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg-base) 82%, transparent);
+  /* A dialog's own UA rule sets color: CanvasText, which wins over anything
+     inherited from body — without this the card's title paints near-black on
+     a near-black card. */
+  color: var(--text-primary);
+  opacity: 0;
+  transition: opacity var(--duration-panel) var(--ease-standard);
+}
+
+.detail.is-open {
+  opacity: 1;
+}
+
+.detail::backdrop {
+  background: transparent;
+}
+
+.detail-card {
+  width: var(--detail-w);
+  height: var(--detail-h);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--space-5);
+  padding: var(--tile-pad);
+  border-radius: var(--radius-xl);
+  border: var(--border-hairline) solid var(--border-subtle);
+  /* Each product's own ground, set on the dialog by main.js from the tile that
+     opened it; the suite's own surface for a product that names none. */
+  background: var(--detail-bg, var(--bg-overlay));
+  overflow: hidden;
+  /* The transform is set by main.js: the card starts laid over the window it
+     was opened from, and grows out of it. */
+  transform-origin: center;
+  transition: transform var(--duration-panel) var(--ease-standard);
+}
+
+.detail-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.detail-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-size: var(--tile-title);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.detail-close {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  padding: 0;
+  border-radius: var(--radius-md);
+  border: var(--border-hairline) solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+
+.detail-close:hover {
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+}
+
+.detail-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: var(--space-6);
+  min-height: 0;
+}
+
+.detail-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.detail-lead {
+  font-size: var(--lead);
+  color: var(--text-primary);
+}
+
+.detail-facts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.detail-facts li {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.detail-facts li::before {
+  content: '—';
+  color: var(--text-faint);
+}
+
+/* Four placeholders, sharing the height the text leaves. */
+.shots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-3);
+  min-height: 0;
+}
+
+.shot {
+  margin: 0;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-panel);
+  border: var(--border-hairline) solid var(--border-subtle);
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.shot figcaption {
+  font-family: var(--font-title);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  text-align: center;
+  padding: 0 var(--space-2);
+}
+
+@media (max-width: 760px) {
+  .detail-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+  }
+  /* The text takes what it needs and the shots take the rest, so the card
+     still ends at the window's edge. */
+  .detail-body {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .detail-facts li:nth-child(n + 4) {
+    display: none;
+  }
+}
+
+/* ── Sections ───────────────────────────────────────────────────────────────
+   A section is sharp when it is settled in the middle of the screen and softens
+   as it leaves, on either side. --focus is written by main.js from how far the
+   section's own middle is from the screen's: 1 settled, 0 gone.
+
+   Computed in script rather than declared as a scroll-driven animation, which
+   is what this was. animation-timeline is Chromium and Safari only, so in
+   Firefox the effect simply did not happen. The arithmetic is the same either
+   way and this runs everywhere, and where no script runs at all the fallback
+   in each var() leaves the sections sharp.
+
+   Carried by the container rather than the section, because the section is a
+   whole screen and mostly empty: blurring the panel means blurring a viewport,
+   blurring the container means blurring the words. */
+.section {
+  position: relative;
+  padding: var(--section-y) 0;
+  border-top: var(--border-hairline) solid var(--border-subtle);
+}
+
+/* A section is as tall as what is in it. It was briefly a panel of its own
+   screen, which is what made snapping to one mean anything; without the
+   snapping that only stretches short sections across a lot of nothing. */
+
+.section > .container {
+  opacity: var(--focus, 1);
+  filter: blur(calc((1 - var(--focus, 1)) * var(--section-blur)));
+}
+
+.section h2 {
+  margin: var(--space-3) 0 var(--space-5);
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-size: var(--display-xl);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+}
+
+.section-head {
+  margin-bottom: var(--space-6);
+}
+
+.section-head h2 {
+  margin-bottom: 0;
+}
+
+.lead {
+  font-size: var(--lead);
+  color: var(--text-secondary);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--tile-gap);
+}
+
+.card {
+  padding: var(--space-6);
+  border-radius: var(--radius-panel);
+  border: var(--border-hairline) solid var(--border-subtle);
+  background: var(--bg-surface);
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard);
+}
+
+.card:hover {
+  border-color: var(--border-hover);
+  background: var(--hover-surface);
+}
+
+.card h3 {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-title);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-lg);
+  line-height: 1.25;
+}
+
+.card p {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* ── Downloads ──────────────────────────────────────────────────────────────
+   One card per tool, all the same height, each laid out on the same four
+   rows: name, pill, description, actions. The description row stretches, so
+   the actions sit on one line across the three cards whatever the copy. */
+.products {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--tile-gap);
+}
+
+.product {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  align-items: start;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  border-radius: var(--radius-panel);
+  border: var(--border-hairline) solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+
+.product h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-size: var(--text-xl);
+  letter-spacing: -0.01em;
+}
+
+.product .pill {
+  justify-self: start;
+}
+
+.product p {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  padding-top: var(--space-2);
+}
+
+.product .actions {
+  padding-top: var(--space-3);
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────────── */
+.footer {
+  border-top: var(--border-hairline) solid var(--border-subtle);
+  padding: var(--space-6) 0;
+}
+
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-6);
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.footer-links a {
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  color: var(--text-primary);
+}
+
+.footer-note {
+  margin-left: auto;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}

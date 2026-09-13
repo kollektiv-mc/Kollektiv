@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kollektiv: tools for Minecraft servers</title>
+    <meta
+      name="description"
+      content="Kollektiv is a suite of tools for Minecraft: Java Edition that opens up the technical side of building and playing."
+    />
+    <meta property="og:site_name" content="Kollektiv" />
+    <meta property="og:title" content="Kollektiv: tools for Minecraft servers" />
+    <meta
+      property="og:description"
+      content="Tools for the technical side of Minecraft: Java Edition, built to one design."
+    />
+    <meta property="og:type" content="website" />
+    <!-- The one literal colour on the page: a meta tag cannot read a custom
+         property. It is design/tokens.json → color.surface.bg-base.dark. -->
+    <meta name="theme-color" content="#05060a" />
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+    <!-- tokens.css is generated from design/tokens.json by gen-tokens.py and
+         linked ahead of styles.css, which reads it and adds only the page
+         vocabulary that is not a token. See website/README.md. -->
+    <link rel="stylesheet" href="tokens.css" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- The bar stays with the page rather than scrolling away with the hero,
+         so the way back to a product is in reach from any section. -->
+    <header class="bar">
+      <div class="container bar-inner">
+        <a class="wordmark" href="#top">Kollektiv</a>
+        <nav class="topnav" aria-label="Site">
+          <a href="#konnekt" data-goto="0">Konnekt</a>
+          <a href="#kommands" data-goto="1">Kommands</a>
+          <a href="#kube" data-goto="2">Kube</a>
+          <span class="topnav-sep" aria-hidden="true"></span>
+          <a href="#about">About</a>
+          <a href="#architecture">Architecture</a>
+          <a href="https://github.com/kollektiv-mc" target="_blank" rel="noopener">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- The hero fills what is left of the first viewport: the products as a
+         carousel of 16:9 windows, the previous and next peeking in past the
+         side padding. The window in focus shows its app in colour with the
+         description and actions unfolded beneath the name; the neighbours are
+         black and white with the name alone, and its shape turns in the page
+         behind them. A bar along the foot of the window in focus fills over
+         eight seconds, and when it is full the carousel moves on. Hovering a
+         window holds it and lights a soft glow; clicking a neighbour, a dot,
+         or an app in the bar moves to it, and clicking the window in focus
+         opens its card. Where there is no hover, or no room, the windows stack
+         with everything laid out below the picture. -->
+    <section class="hero" id="top">
+      <!-- The app in focus turns slowly behind the carousel, large enough to
+           reach past the windows on every side. One canvas for the page, not
+           one per tile: it is the page's background, and it changes shape when
+           the carousel moves on. -->
+      <canvas class="hero-orbit" id="hero-orbit" aria-hidden="true"></canvas>
+      <div class="container hero-inner">
+        <div class="carousel" id="carousel">
+          <div class="carousel-track">
+            <article class="tile" id="konnekt" data-shape="sphere" aria-labelledby="konnekt-title">
+              <div class="tile-window">
+                <img
+                  class="tile-shot"
+                  src="assets/img/konnekt.png"
+                  alt="Konnekt's dashboard: a grid of tiles over one server, among them the live console, server stats and performance history."
+                  width="1440"
+                  height="900"
+                  decoding="async"
+                />
+                <div class="tile-veil">
+                  <div class="tile-id">
+                    <h2 class="tile-name" id="konnekt-title">Konnekt</h2>
+                    <span class="pill" data-release="kollektiv-mc/Konnekt">desktop</span>
+                  </div>
+                  <div class="tile-more">
+                    <div>
+                      <p>
+                        A dashboard for Minecraft servers you host yourself. Console, scheduling,
+                        worlds and backups in one local-first window.
+                      </p>
+                      <div class="actions">
+                        <a
+                          class="btn btn-primary"
+                          href="https://konnekt.pages.dev/download.html"
+                          target="_blank"
+                          rel="noopener"
+                          >Download</a
+                        >
+                        <a
+                          class="btn btn-secondary"
+                          href="https://konnekt.pages.dev/"
+                          target="_blank"
+                          rel="noopener"
+                          >Website</a
+                        >
+                        <a
+                          class="btn btn-secondary"
+                          href="https://github.com/kollektiv-mc/Konnekt"
+                          target="_blank"
+                          rel="noopener"
+                          >GitHub</a
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- The keyboard's way to the card below; a click anywhere on
+                     the window in focus does the same. -->
+                <button class="tile-open" type="button" aria-label="More about Konnekt">
+                  <span aria-hidden="true">⤢</span>
+                </button>
+                <span class="tile-progress" aria-hidden="true"></span>
+              </div>
+              <template class="tile-detail">
+                <div class="detail-text">
+                  <p class="detail-lead">
+                  A desktop dashboard for Minecraft servers you host yourself. One window in
+                  place of a terminal, an RCON client and a file browser side by side.
+                </p>
+                <ul class="detail-facts">
+                  <li>Windows and Linux, and macOS from source.</li>
+                  <li>A grid of tiles you arrange yourself.</li>
+                  <li>Automation as a node graph rather than a cron line.</li>
+                  <li>Runs against server folders you already have.</li>
+                  </ul>
+                </div>
+                <div class="shots">
+                  <figure class="shot"><figcaption>Console</figcaption></figure>
+                  <figure class="shot"><figcaption>Performance</figcaption></figure>
+                  <figure class="shot"><figcaption>Scheduler</figcaption></figure>
+                  <figure class="shot"><figcaption>Backups</figcaption></figure>
+                </div>
+              </template>
+            </article>
+
+            <!-- Kommands' accent and ground are its own — ember, and a warm
+                 canvas at that accent's hue — kept out of the suite tokens on
+                 purpose, so both are that product's values restated here.
+                 PRODUCT_ACCENT and productSkin() in Kommands/src/lib/theme.ts;
+                 --detail-bg is what that function calls `overlay`, which is
+                 bg-elevated over bg-base per design/README.md. The other tiles
+                 take the suite accent. -->
+            <article
+              class="tile"
+              id="kommands"
+              data-shape="torus"
+              aria-labelledby="kommands-title"
+              style="--product-rgb: 251 146 60; --detail-bg: #27201a"
+            >
+              <div class="tile-window">
+                <img
+                  class="tile-shot tile-shot-end"
+                  src="assets/img/kommands.png"
+                  alt="Kommands' editor for WorldEdit's //generate: the command list, the assembled command, and a 3D preview of the shape an expression describes."
+                  width="948"
+                  height="868"
+                  decoding="async"
+                />
+                <div class="tile-veil">
+                  <div class="tile-id">
+                    <h2 class="tile-name" id="kommands-title">Kommands</h2>
+                    <span class="pill" data-release="kollektiv-mc/Kommands">web</span>
+                  </div>
+                  <div class="tile-more">
+                    <div>
+                      <p>
+                        A command generator for Java Edition. Build <code>/give</code>,
+                        <code>/tellraw</code>, <code>/execute</code> and WorldEdit commands through
+                        a UI, with 3D previews for the ones that describe shapes.
+                      </p>
+                      <div class="actions">
+                        <a
+                          class="btn btn-primary"
+                          href="https://github.com/kollektiv-mc/Kommands"
+                          target="_blank"
+                          rel="noopener"
+                          >GitHub</a
+                        >
+                        <a
+                          class="btn btn-secondary"
+                          href="https://github.com/kollektiv-mc/Kommands/tree/main/docs"
+                          target="_blank"
+                          rel="noopener"
+                          >Docs</a
+                        >
+                        <a
+                          class="btn btn-secondary"
+                          href="https://github.com/kollektiv-mc/Kommands/blob/main/docs/roadmap.md"
+                          target="_blank"
+                          rel="noopener"
+                          >Roadmap</a
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button class="tile-open" type="button" aria-label="More about Kommands">
+                  <span aria-hidden="true">⤢</span>
+                </button>
+                <span class="tile-progress" aria-hidden="true"></span>
+              </div>
+              <template class="tile-detail">
+                <div class="detail-text">
+                  <p class="detail-lead">
+                  A command generator for Minecraft: Java Edition. Build a command through a UI
+                  instead of memorising its syntax.
+                </p>
+                <ul class="detail-facts">
+                  <li>Targets Java Edition 1.21.1.</li>
+                  <li>Every vanilla command, plus WorldEdit.</li>
+                  <li>3D previews for the commands that describe shapes.</li>
+                  <li>A web app today; a desktop build is in development.</li>
+                  </ul>
+                </div>
+                <div class="shots">
+                  <figure class="shot"><figcaption>Command list</figcaption></figure>
+                  <figure class="shot"><figcaption>Editor</figcaption></figure>
+                  <figure class="shot"><figcaption>Shape preview</figcaption></figure>
+                  <figure class="shot"><figcaption>Saved commands</figcaption></figure>
+                </div>
+              </template>
+            </article>
+
+            <!-- Nothing is built yet, so the window is deliberately blank
+                 rather than a mock-up of something that does not exist. -->
+            <!-- Kube has no identity yet. The purple is a placeholder, but it
+                 is built the way Kommands' is rather than picked by eye: the
+                 accent is Kommands' ember at its own saturation and lightness
+                 turned to a purple hue, and the ground is that hue through the
+                 same skin. Replace both when the product chooses an accent. -->
+            <article
+              class="tile"
+              id="kube"
+              data-shape="cube"
+              aria-labelledby="kube-title"
+              style="--product-rgb: 162 60 251; --detail-bg: #211a27"
+            >
+              <div class="tile-window tile-window-blank">
+                <div class="tile-veil">
+                  <div class="tile-id">
+                    <h2 class="tile-name" id="kube-title">Kube</h2>
+                    <span class="pill" data-release="kollektiv-mc/Kube">desktop</span>
+                  </div>
+                  <div class="tile-more">
+                    <div>
+                      <p>A visual builder for KubeJS. Not started yet.</p>
+                      <div class="actions">
+                        <a
+                          class="btn btn-secondary"
+                          href="https://github.com/kollektiv-mc/Kube"
+                          target="_blank"
+                          rel="noopener"
+                          >GitHub</a
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button class="tile-open" type="button" aria-label="More about Kube">
+                  <span aria-hidden="true">⤢</span>
+                </button>
+                <span class="tile-progress" aria-hidden="true"></span>
+              </div>
+              <template class="tile-detail">
+                <div class="detail-text">
+                  <p class="detail-lead">
+                  A visual builder for KubeJS, the scripting layer modded Minecraft is configured
+                  through.
+                </p>
+                <ul class="detail-facts">
+                  <li>A desktop app, like Konnekt.</li>
+                  <li>Nothing is built yet; the repository is empty.</li>
+                  <li>What it covers has not been decided.</li>
+                  <li>It will follow the suite's rules from its first commit.</li>
+                  </ul>
+                </div>
+                <div class="shots">
+                  <figure class="shot"><figcaption>Not designed yet</figcaption></figure>
+                  <figure class="shot"><figcaption>Not designed yet</figcaption></figure>
+                  <figure class="shot"><figcaption>Not designed yet</figcaption></figure>
+                  <figure class="shot"><figcaption>Not designed yet</figcaption></figure>
+                </div>
+              </template>
+            </article>
+          </div>
+        </div>
+
+        <!-- One dot per product, built by main.js from the tiles above so that
+             adding or removing one needs nothing here. -->
+        <div class="dots" id="dots" aria-label="Products"></div>
+      </div>
+    </section>
+
+    <main>
+      <section class="section" id="about">
+        <div class="container">
+          <span class="eyebrow">[i] about</span>
+          <h2>Build and play on your own terms.</h2>
+          <p class="lead prose">
+            Kollektiv is a suite of tools for Minecraft: Java Edition. It opens up the technical
+            side of building and playing, and gives you the flexibility and freedom to shape it,
+            without asking you to be technical.
+          </p>
+        </div>
+      </section>
+
+      <section class="section" id="architecture">
+        <div class="container">
+          <div class="section-head">
+            <span class="eyebrow">[≡] architecture</span>
+            <h2>A few fixed ideas</h2>
+          </div>
+          <div class="cards">
+            <article class="card">
+              <h3>Local and private</h3>
+              <p>
+                The tools run on your machine, against files you already have. No account, no
+                cloud, no telemetry.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Made to work together</h3>
+              <p>
+                One design language across the suite, and tools designed to hand work to each
+                other. Learning one is most of learning the next.
+              </p>
+            </article>
+            <article class="card">
+              <h3>A window, not a terminal</h3>
+              <p>
+                Every tool puts a UI in place of a console, a config file or memorised syntax,
+                and keeps the power that came with them.
+              </p>
+            </article>
+            <article class="card">
+              <h3>In the open</h3>
+              <p>Source, roadmaps and issues are public on GitHub, for every tool in the suite.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="get">
+        <div class="container">
+          <div class="section-head">
+            <span class="eyebrow">[↓] downloads</span>
+            <h2>Get the tools</h2>
+          </div>
+          <ul class="products">
+            <li class="product">
+              <h3>Konnekt</h3>
+              <span class="pill" data-release="kollektiv-mc/Konnekt">desktop</span>
+              <p>Desktop app for Windows and Linux. Runs against server folders you already have.</p>
+              <div class="actions">
+                <a
+                  class="btn btn-primary btn-sm"
+                  href="https://konnekt.pages.dev/download.html"
+                  target="_blank"
+                  rel="noopener"
+                  >Download</a
+                >
+                <a
+                  class="btn btn-secondary btn-sm"
+                  href="https://konnekt-demo.pages.dev/"
+                  target="_blank"
+                  rel="noopener"
+                  >Demo</a
+                >
+                <a
+                  class="btn btn-secondary btn-sm"
+                  href="https://github.com/kollektiv-mc/Konnekt"
+                  target="_blank"
+                  rel="noopener"
+                  >Source</a
+                >
+              </div>
+            </li>
+            <li class="product" style="--product-rgb: 251 146 60">
+              <h3>Kommands</h3>
+              <span class="pill" data-release="kollektiv-mc/Kommands">web</span>
+              <p>Web app, with a desktop build in development. Not deployed yet; run it from source.</p>
+              <div class="actions">
+                <a
+                  class="btn btn-primary btn-sm"
+                  href="https://github.com/kollektiv-mc/Kommands"
+                  target="_blank"
+                  rel="noopener"
+                  >Source</a
+                >
+                <a
+                  class="btn btn-secondary btn-sm"
+                  href="https://github.com/kollektiv-mc/Kommands/tree/main/docs"
+                  target="_blank"
+                  rel="noopener"
+                  >Docs</a
+                >
+              </div>
+            </li>
+            <li class="product" style="--product-rgb: 162 60 251">
+              <h3>Kube</h3>
+              <span class="pill" data-release="kollektiv-mc/Kube">desktop</span>
+              <p>A visual builder for KubeJS. Not started yet.</p>
+              <div class="actions">
+                <a
+                  class="btn btn-secondary btn-sm"
+                  href="https://github.com/kollektiv-mc/Kube"
+                  target="_blank"
+                  rel="noopener"
+                  >Source</a
+                >
+              </div>
+            </li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span class="wordmark wordmark-sm">Kollektiv</span>
+        <nav class="footer-links" aria-label="Footer">
+          <a href="https://github.com/kollektiv-mc/Kollektiv" target="_blank" rel="noopener"
+            >Kollektiv on GitHub</a
+          >
+          <a href="https://github.com/kollektiv-mc/Konnekt" target="_blank" rel="noopener"
+            >Konnekt</a
+          >
+          <a href="https://github.com/kollektiv-mc/Kommands" target="_blank" rel="noopener"
+            >Kommands</a
+          >
+          <a href="https://github.com/kollektiv-mc/Kube" target="_blank" rel="noopener">Kube</a>
+        </nav>
+        <p class="footer-note">Not affiliated with Mojang or Microsoft. &copy; 2026 Kollektiv</p>
+      </div>
+    </footer>
+
+    <!-- The maximized card. Empty until a tile is opened, and filled from
+         that tile's own <template>, so a product is described in one place. -->
+    <dialog class="detail" id="detail" aria-labelledby="detail-title">
+      <div class="detail-card">
+        <div class="detail-head">
+          <h2 class="detail-name" id="detail-title"></h2>
+          <span class="pill" id="detail-pill"></span>
+          <button class="detail-close" type="button" id="detail-close" aria-label="Close">
+            <span aria-hidden="true">✕</span>
+          </button>
+        </div>
+        <div class="detail-body" id="detail-body"></div>
+        <div class="actions" id="detail-actions"></div>
+      </div>
+    </dialog>
+
+    <!-- shapes.js first: it publishes window.KollektivShapes, which main.js reads. -->
+    <script src="shapes.js"></script>
+    <script src="main.js"></script>
+  </body>
+</html>

@@ -179,6 +179,53 @@ Konnekt's `.prettierrc.json` and again, by hand, in Kommands' `CLAUDE.md` prose.
 They agreed, and nothing would have said so if they stopped. One convention
 written down twice is one convention waiting to fork.
 
+## Public copy
+
+**Anything published carries no em dash.** Use a comma, a colon, or two
+sentences.
+
+Published means what a reader outside the project sees:
+
+- the websites' words, including the title, the meta description and alt text
+- issue titles and bodies
+- pull request titles and bodies
+- commit messages
+
+Everything else is unaffected, and deliberately so. Code, code comments, and
+the documentation in these repos are notes between people working on them, not
+copy. This file uses em dashes freely and is not in breach: the rule is about
+what is published, not about how the thing that publishes it is written.
+
+**Why the rule exists where it does.** A merged pull request title is a
+release-notes line, which the section below is entirely about. An issue title
+is an index entry. The website is the first thing a user reads. Those are the
+surfaces where punctuation someone has to decode costs something, and they are
+also the ones nobody revises after the fact.
+
+**What is checked.** `scripts/check-copy.sh` reads this repo's `website/*.html`
+and fails on an em dash in the copy. It blanks comments, `<script>` and
+`<style>` first, so a note to the next person working on the page is left
+alone, and it keeps the line numbers so a failure names the line.
+
+**What is not checked, and will not be.** Issue titles, pull request titles and
+bodies, and commit messages are not in a file this repo can read, so nothing
+gates them. They rest on review. Saying so is the point: the suite treats a
+check that could not run as a skip rather than a pass, and a convention that
+implies a gate it does not have is the same mistake in prose.
+
+**Where this came from.** Konnekt has stated the rule locally for some time, in
+`agent_docs/CLAUDE.md` and `CONTRIBUTING.md`, covering issue titles and pull
+request titles, bodies and commit messages. It never covered website copy, and
+Konnekt's own pages carry em dashes as a result. This is that rule hoisted to
+the suite, with the websites added, for the same reason every other rule here
+was hoisted: it was true of one repo and should be true of all of them.
+
+Its record in Konnekt is worth repeating, because it says what to expect.
+Across the last two hundred commits there, no subject line carried an em dash
+and thirteen bodies did. The half that is read on every release lands; the half
+buried in a body drifts. Only the website half of this rule has a check behind
+it, so the rest will drift the same way unless review catches it.
+
 ## Release notes and pull request labelling
 
 A merged pull request's title is public copy. It is what a person reading the

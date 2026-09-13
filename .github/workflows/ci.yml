@@ -45,6 +45,20 @@ jobs:
       - name: Release-notes classifier
         run: python3 plugins/suite-kit/release-notes_test.py
 
+      # docs/conventions.md § Public copy. The website is the only published
+      # surface that lives in a file; issue and pull request titles and commit
+      # messages are not gated anywhere, which that section says outright.
+      - name: Published copy
+        run: ./scripts/check-copy.sh
+
+      # The home page is styled from design/tokens.json through a generator
+      # whose output is committed, the same shape as a product's gen:tokens.
+      # A token change that forgot the site, or a hand edit to tokens.css,
+      # shows up here as a diff. No product is needed for it, so it belongs
+      # with this repo's own checks rather than in drift.yml.
+      - name: Website tokens
+        run: ./website/gen-tokens.py && git diff --exit-code -- website/tokens.css website/assets/img/favicon.svg
+
   # The AI-slop gate this repo asks the products to carry, applied to itself:
   # the master copies of the runner and the generator are scored here, so a
   # finding against a vendored file is always a finding against this repo.

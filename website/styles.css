@@ -340,8 +340,15 @@ code {
   transition: transform var(--carousel-slide) var(--ease-standard);
 }
 
-.carousel-track.is-jumping {
-  transition: none;
+/* The track wraps by stepping back a whole copy, which puts identical content
+   in identical places. Nothing may animate across that step, or the swap plays
+   out as a transition on screen. Animations are left alone deliberately: the
+   progress bar is one, and it belongs to the product rather than to the copy,
+   so it carries on. */
+.carousel-track.is-jumping,
+.carousel-track.is-jumping *,
+.carousel-track.is-jumping *::after {
+  transition: none !important;
 }
 
 .tile {
@@ -356,6 +363,9 @@ code {
    it brings it into focus. */
 .tile-window {
   position: relative;
+  /* So the name can be laid against this window's width in CSS rather than
+     measured in script. See .tile-id. */
+  container-type: inline-size;
   aspect-ratio: 16 / 9;
   overflow: hidden;
   isolation: isolate;
@@ -515,33 +525,38 @@ code {
   padding: var(--tile-pad);
 }
 
-/* In focus: name left, pill right. Out of focus only a strip of the window
-   shows, so the name sits on the edge that is visible — the right edge of
-   the one before, the left edge of the one after — and the pill waits for
-   focus. */
-.tile-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: flex-start;
-  gap: var(--space-3);
+/* The name, with its pill beside it. Out of focus only a strip of the window
+   shows, so the name moves to the edge that is visible: the right edge of the
+   one before, the left edge of the one after.
+
+   Moved rather than re-aligned. justify-content does not interpolate, so
+   switching it made the name jump the moment a tile came into focus. A
+   translation does interpolate, and the distance is expressible without
+   measuring anything: 100cqi is the window this sits in, 100% is the unit
+   itself, and the padding is a token. */
+.tile-id {
+  position: relative;
+  width: fit-content;
+  transform: translateX(0);
+  transition: transform var(--carousel-slide) var(--ease-standard);
 }
 
-.tile.is-active .tile-head {
-  justify-content: space-between;
+.tile.is-prev .tile-id {
+  transform: translateX(calc(100cqi - 2 * var(--tile-pad) - 100%));
 }
 
-.tile.is-prev .tile-head {
-  justify-content: flex-end;
-}
-
-/* The pill keeps its width while transparent, so on the tile before it goes
-   first in the row, leaving the name on the visible edge. */
-.tile.is-prev .pill {
-  order: -1;
-}
-
-.tile:not(.is-active) .pill {
+/* Out of flow, so the name's own width is what the translation above works
+   against whether or not the pill is showing. */
+.tile-id .pill {
+  position: absolute;
+  left: calc(100% + var(--space-3));
+  top: 50%;
+  transform: translateY(-50%);
   opacity: 0;
+}
+
+.tile.is-active .tile-id .pill {
+  opacity: 1;
 }
 
 .tile-name {
@@ -652,6 +667,117 @@ code {
   }
 }
 
+/* ── The indicator ──────────────────────────────────────────────────────────
+   One dot per product under the carousel, and the way to steer it. Konnekt's
+   site carries the same idiom down its right edge for page sections: a hollow
+   dot per stop, the accent on the current one, a travelling mark, and the name
+   on hover. This is that, turned on its side.
+
+   The mark is one element for the whole row rather than a lit dot, so moving
+   between products is a slide rather than one dot going out and another coming
+   on. It rides --dot-x, which main.js measures off the current dot rather than
+   multiplying an index by a width, so the row can hold any number of dots. */
+.dots {
+  position: relative;
+  flex-shrink: 0;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  margin-top: var(--space-5);
+}
+
+.dot {
+  position: relative;
+  display: block;
+  width: var(--space-6);
+  height: var(--space-6);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.dot::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  box-sizing: border-box;
+  width: var(--space-2);
+  height: var(--space-2);
+  margin: calc(-1 * var(--space-1)) 0 0 calc(-1 * var(--space-1));
+  border-radius: var(--radius-pill);
+  /* A step brighter than a divider: this sits alone on the page background
+     rather than between two surfaces, and has to be findable. */
+  border: 1px solid var(--text-faint);
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+
+.dot:hover::before {
+  border-color: rgb(var(--dot-glow-rgb, var(--accent-rgb)));
+  transform: scale(1.25);
+}
+
+.dot:focus-visible {
+  outline: none;
+}
+
+.dot:focus-visible::before {
+  outline: var(--border-thick) solid var(--accent);
+  outline-offset: var(--space-0-5);
+}
+
+/* The travelling mark. Last, so it paints over the dots, and inert so it never
+   takes a click meant for one. */
+.dots::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: var(--space-2);
+  height: var(--space-2);
+  margin-top: calc(-1 * var(--space-1));
+  border-radius: var(--radius-pill);
+  background: rgb(var(--dots-glow-rgb, var(--accent-rgb)));
+  transform: translateX(var(--dot-x, 0px));
+  pointer-events: none;
+  transition:
+    transform var(--carousel-slide) var(--ease-standard),
+    background-color var(--carousel-slide) var(--ease-standard);
+}
+
+/* Until main.js has measured a dot there is nothing to point at. */
+.dots:not(.is-ready)::after {
+  opacity: 0;
+}
+
+.dot-label {
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  margin-bottom: var(--space-4);
+  transform: translateX(-50%);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  border: var(--border-hairline) solid var(--border-subtle);
+  background: var(--bg-overlay);
+  font-family: var(--font-title);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.dot:hover .dot-label,
+.dot:focus-visible .dot-label {
+  opacity: 1;
+}
+
 /* Stacked: where there is no hover, or no room for the carousel, nothing
    moves on its own. The carousel becomes a column inside the container,
    every window is in colour with the name, pill, description and actions
@@ -674,7 +800,9 @@ code {
   .tile {
     flex: none;
   }
-  .tile-clone {
+  /* Only the real row here. The copies exist for a loop that is not running
+     in this layout, and each one would otherwise repeat the whole column. */
+  .tile:not([data-copy='1']) {
     display: none;
   }
   .tile-window {
@@ -717,12 +845,18 @@ code {
     opacity: 1;
     transform: none;
   }
-  .tile-head,
-  .tile.is-prev .tile-head {
-    justify-content: space-between;
+  /* Every window is in focus here, so every name sits where a focused one
+     does and every pill shows. */
+  .tile-id,
+  .tile.is-prev .tile-id {
+    transform: none;
   }
-  .tile:not(.is-active) .pill {
+  .tile-id .pill {
     opacity: 1;
+  }
+  /* The dots steer a carousel that is not running here. */
+  .dots {
+    display: none;
   }
   /* The tiles are right below the bar, so the nav does not need to reach
      them, and the bar would not fit them at this width. */

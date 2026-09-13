@@ -58,9 +58,17 @@ Konnekt first, centred with the previous and next peeking in past the page's
 side padding; it is the one element that crosses that padding. The window in
 focus is drawn at full size and in colour, with its description and actions
 unfolded beneath the name; its neighbours are smaller, black and white, text
-included, with the name alone laid on whichever edge of them is visible. Only
-the painted window scales, never its layout box, so the carousel still moves
-by whole windows.
+included, with the name alone laid on whichever edge of them is visible: the
+right edge of the one before, the left edge of the one after. Only the painted
+window scales, never its layout box, so the carousel still moves by whole
+windows.
+
+The name moves rather than re-aligns. `justify-content` does not interpolate,
+so switching it made the name jump the moment a tile came into focus; a
+translation does interpolate, and the distance needs no measuring because
+`100cqi` is the window it sits in and `100%` is the name itself. The pill sits
+beside the name and is taken out of flow, so the name's own width is what that
+translation works against whether or not the pill is showing.
 
 The window in focus is ringed by a soft glow in its product's colour while the
 carousel is at rest and the pointer is on it — at rest, because a tile sliding
@@ -92,6 +100,39 @@ bar; so does opening the card, and so does a hidden tab. Clicking a neighbour, o
 nav, moves to it; clicking the window in focus opens its card. It never moves
 by itself for a viewer who asked for reduced motion, and on narrow screens and
 touch devices it is a plain column where every window is in focus.
+
+### Going round
+
+The row is laid out three times over. The middle copy is the markup itself and
+is the one assistive tech and the keyboard see; the other two are scenery. A
+position walks forward along the whole thing, and when it walks out of the
+middle copy it steps back by exactly one copy, which puts identical content in
+identical places. `is-jumping` keeps anything from animating across that step,
+and what is in focus is marked on every copy of that product rather than on one
+position, so the progress bar belongs to the product and carries on running
+through the step.
+
+Three copies rather than the two spare tiles this used to keep. With one spare
+at each end the position could reach that spare and find nothing beyond it, so
+the last move of a lap slid a tile in beside an empty slot and the next one
+appeared out of nowhere once the wrap completed.
+
+**Nothing counts to three.** Add an `<article class="tile">` to the markup or
+take one away, and the copies, the dots, the wrap, the nav links and the
+shapes all follow. The only thing a new tile needs is its own `data-shape`,
+and its colours if it is not taking the suite accent.
+
+### The dots
+
+One per product under the carousel, built from the tiles, showing which is up
+and steering it. Konnekt's site carries the same idiom down its right edge for
+page sections: a hollow dot per stop, the accent on the current one, a
+travelling mark, and the name on hover. This is that, turned on its side.
+
+The mark is one element for the whole row rather than a lit dot, so moving
+between products is a slide rather than one dot going out and another coming
+on. It rides `--dot-x`, which `main.js` measures off the current dot rather
+than multiplying an index by a width, and it takes that product's colour.
 
 ### The wireframe
 
@@ -139,9 +180,12 @@ alongside `styles.css`.
 
 Kommands' glow and shape are its own ember orange, `PRODUCT_ACCENT` in
 that repo's `src/lib/theme.ts`, which is kept out of the suite tokens on
-purpose (see `design/README.md` § Two things not held here). The value is
-restated inline on its tile in `index.html`, with a comment saying where it
-comes from; the other tiles take the suite accent. Kube's window is blank on
+purpose (see `design/README.md` § Two things not held here). Kube's are a
+placeholder purple, built the way Kommands' is rather than picked by eye: the
+ember at its own saturation and lightness turned to a purple hue, and the
+ground is that same hue through the same skin. Both are restated inline on
+their tiles in `index.html`, with a comment saying where they come from.
+Konnekt takes the suite accent, which is what that product uses. Kube's window is blank on
 purpose: nothing is built yet, and a mock-up would say otherwise. It is filled
 with that product's own ground, the same colour its card opens onto, rather
 than left translucent for the page to show through.

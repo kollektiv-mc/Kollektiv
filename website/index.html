@@ -70,7 +70,7 @@
                   decoding="async"
                 />
                 <div class="tile-veil">
-                  <div class="tile-head">
+                  <div class="tile-id">
                     <h2 class="tile-name" id="konnekt-title">Konnekt</h2>
                     <span class="pill" data-release="kollektiv-mc/Konnekt">desktop</span>
                   </div>
@@ -159,7 +159,7 @@
                   decoding="async"
                 />
                 <div class="tile-veil">
-                  <div class="tile-head">
+                  <div class="tile-id">
                     <h2 class="tile-name" id="kommands-title">Kommands</h2>
                     <span class="pill" data-release="kollektiv-mc/Kommands">web</span>
                   </div>
@@ -227,18 +227,19 @@
                  rather than a mock-up of something that does not exist. -->
             <!-- Kube has no identity yet. The purple is a placeholder, but it
                  is built the way Kommands' is rather than picked by eye: the
-                 same saturation and lightness at a purple hue. Replace it when
-                 the product chooses an accent. -->
+                 accent is Kommands' ember at its own saturation and lightness
+                 turned to a purple hue, and the ground is that hue through the
+                 same skin. Replace both when the product chooses an accent. -->
             <article
               class="tile"
               id="kube"
               data-shape="cube"
               aria-labelledby="kube-title"
-              style="--detail-bg: #211a27"
+              style="--tile-glow-rgb: 162 60 251; --detail-bg: #211a27"
             >
               <div class="tile-window tile-window-blank">
                 <div class="tile-veil">
-                  <div class="tile-head">
+                  <div class="tile-id">
                     <h2 class="tile-name" id="kube-title">Kube</h2>
                     <span class="pill" data-release="kollektiv-mc/Kube">desktop</span>
                   </div>
@@ -285,6 +286,10 @@
             </article>
           </div>
         </div>
+
+        <!-- One dot per product, built by main.js from the tiles above so that
+             adding or removing one needs nothing here. -->
+        <div class="dots" id="dots" aria-label="Products"></div>
       </div>
     </header>
 

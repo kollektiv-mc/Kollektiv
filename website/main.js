@@ -484,48 +484,115 @@
   }
 
   /* ── Carousel ──────────────────────────────────────────────────────────────
-     The track holds one tile per product, with a copy of the last placed
-     before the first and a copy of the first after the last, so the window in
-     focus always has a neighbour on each side and sliding past either end
-     lands on a copy; once that slide has finished the track jumps to the real
-     tile without a transition, and nothing visible changes.
+     An endless loop over however many products the page lists. The row is laid
+     out three times over, the middle copy being the real one that assistive
+     tech and the keyboard see, and the position simply walks forward along the
+     whole thing. When it walks out of the middle copy it steps back by exactly
+     one copy, which puts identical content in identical places, so nothing
+     moves on screen.
 
-     What drives it is the progress bar: the tile in focus animates its bar
+     Three copies rather than the two clones this used to keep. With one spare
+     tile at each end, the position could reach that spare and find nothing
+     beyond it, so the last move of a lap slid a tile in beside an empty slot
+     and the next one appeared out of nowhere once the wrap completed.
+
+     Nothing here counts to three. Add an <article class="tile"> to the markup
+     or take one away and the copies, the dots, the wrap and the nav all follow.
+
+     What drives it is the progress bar: the product in focus animates its bar
      over --carousel-dwell and the carousel moves on when that animation ends.
      Holding pauses the bar in CSS, which is the whole of pausing. The stacked
      layout (styles.css: no hover, or under 900px) lays the tiles in a column
      and hides the bar, so there it never moves. */
+  var COPIES = 3
   var heroOrbit = makeOrbit(document.getElementById('hero-orbit'))
   var track = carousel && carousel.querySelector('.carousel-track')
   if (track) {
-    var tiles = Array.prototype.slice.call(track.children)
-    var count = tiles.length
+    var products = Array.prototype.slice.call(track.children)
+    var count = products.length
     var slide =
       parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--carousel-slide')) ||
       0
 
-    // A copy: not for assistive tech, not in the tab order, and without the
-    // ids the real tile's heading is labelled by. It remembers which real
-    // tile it stands for, so it can be in focus alongside it.
-    function copyOf(at) {
-      var copy = tiles[at].cloneNode(true)
-      copy.classList.add('tile-clone')
-      copy.setAttribute('aria-hidden', 'true')
-      copy.removeAttribute('aria-labelledby')
-      copy.removeAttribute('id')
-      copy.setAttribute('data-clone-of', String(at))
-      var ids = copy.querySelectorAll('[id]')
+    // A copy is scenery: not for assistive tech, not in the tab order, and
+    // without the ids the real tile's heading is labelled by.
+    function asCopy(node) {
+      node.setAttribute('aria-hidden', 'true')
+      node.removeAttribute('aria-labelledby')
+      node.removeAttribute('id')
+      var ids = node.querySelectorAll('[id]')
       for (var i = 0; i < ids.length; i++) ids[i].removeAttribute('id')
-      var stops = copy.querySelectorAll('a, button')
+      var stops = node.querySelectorAll('a, button')
       for (var j = 0; j < stops.length; j++) stops[j].tabIndex = -1
-      return copy
+      return node
     }
-    track.insertBefore(copyOf(count - 1), track.firstChild)
-    track.appendChild(copyOf(0))
 
-    // index counts real positions; -1 and count are the copies, briefly.
-    var index = 0
+    var laid = document.createDocumentFragment()
+    for (var copy = 0; copy < COPIES; copy++) {
+      for (var product = 0; product < count; product++) {
+        // The middle copy is the markup itself, moved rather than duplicated.
+        var node = copy === 1 ? products[product] : asCopy(products[product].cloneNode(true))
+        node.setAttribute('data-product', String(product))
+        node.setAttribute('data-copy', String(copy))
+        laid.appendChild(node)
+      }
+    }
+    track.appendChild(laid)
+
+    // A position along the whole row, kept inside the middle copy.
+    var index = count
     var settling = null
+
+    function stride() {
+      return track.children[1].offsetLeft - track.children[0].offsetLeft
+    }
+
+    function lay() {
+      var centred = (carousel.clientWidth - products[0].offsetWidth) / 2
+      track.style.transform = 'translateX(' + (centred - index * stride()) + 'px)'
+    }
+
+    function place(jump) {
+      if (!jump) {
+        lay()
+        return
+      }
+      track.classList.add('is-jumping')
+      lay()
+      void track.offsetWidth // commit the jump before transitions come back
+      track.classList.remove('is-jumping')
+    }
+
+    // In focus is marked on every copy of that product, so the bar it is
+    // running belongs to the product and survives the step below. Which tile
+    // is before and which after is a fact about position, not about product,
+    // so those two are marked by where they sit.
+    function mark() {
+      var product = index % count
+      var laidOut = track.children
+      for (var i = 0; i < laidOut.length; i++) {
+        var tile = laidOut[i]
+        tile.classList.toggle('is-active', Number(tile.getAttribute('data-product')) === product)
+        tile.classList.toggle('is-prev', i === index - 1)
+        tile.classList.toggle('is-next', i === index + 1)
+      }
+      setShape(heroOrbit, products[product].getAttribute('data-shape'), readGlow(products[product]))
+      pointDot(product)
+    }
+
+    // Back into the middle copy, one copy at a time. Identical content lands
+    // in identical places, and is-jumping keeps anything from animating across
+    // the step, so there is nothing to see.
+    function recentre() {
+      var home = (index % count) + count
+      if (home === index) return
+      index = home
+      track.classList.add('is-jumping')
+      lay()
+      mark()
+      void track.offsetWidth
+      track.classList.remove('is-jumping')
+    }
 
     // While the track is in flight, a tile sliding under a resting pointer
     // would light its glow on the way past. Marked here, gated in CSS.
@@ -534,77 +601,81 @@
       window.clearTimeout(settling)
       settling = window.setTimeout(function () {
         carousel.classList.remove('is-moving')
+        recentre()
       }, forMs)
     }
 
-    function real(i) {
-      return ((i % count) + count) % count
-    }
-
-    function stride() {
-      return track.children[1].offsetLeft - track.children[0].offsetLeft
-    }
-
-    function place(jump) {
-      if (jump) track.classList.add('is-jumping')
-      var centred = (carousel.clientWidth - tiles[0].offsetWidth) / 2
-      track.style.transform = 'translateX(' + (centred - (index + 1) * stride()) + 'px)'
-      if (jump) {
-        void track.offsetWidth // commit the jump before transitions come back
-        track.classList.remove('is-jumping')
-      }
-    }
-
-    // The real tile in focus and its copy, if any, are in focus together, so
-    // their bars start at the same moment and agree after a jump. The tiles
-    // either side of the one on screen are marked too, by track position, so
-    // each can lay its name on the edge that shows.
-    function mark() {
-      var active = real(index)
-      var all = track.children
-      for (var i = 0; i < all.length; i++) {
-        var tile = all[i]
-        var stands = tile.hasAttribute('data-clone-of')
-          ? Number(tile.getAttribute('data-clone-of'))
-          : tiles.indexOf(tile)
-        tile.classList.toggle('is-active', stands === active)
-        tile.classList.toggle('is-prev', i === index)
-        tile.classList.toggle('is-next', i === index + 2)
-      }
-      // The shape behind the page is the shape of the app in focus.
-      setShape(heroOrbit, tiles[active].getAttribute('data-shape'), readGlow(tiles[active]))
-    }
-
-    function goTo(i) {
-      if (STACKED.matches || i === index) return
-      index = i
+    function goTo(to) {
+      if (STACKED.matches || to === index) return
+      index = to
       place(false)
       mark()
       moving(slide)
-      if (index < 0 || index >= count) {
-        // Sitting on a copy: after the slide, swap to the real tile in silence.
-        window.setTimeout(function () {
-          index = real(index)
-          place(true)
-          mark()
-          // The jump is instant, but it does put a different tile under the
-          // pointer; a frame's grace keeps that from reading as a flash.
-          moving(80)
-        }, slide)
-      }
     }
 
-    // The bar of the tile in focus has filled: move on. Copies animate too,
-    // in step with their real tile, and are ignored so this fires once.
+    // The nearest position showing that product, so a move takes the short way
+    // round rather than unwinding the whole row.
+    function show(product) {
+      var nearest = null
+      for (var pos = index - count; pos <= index + count; pos++) {
+        if (pos < 0 || pos >= track.children.length || pos % count !== product) continue
+        if (nearest === null || Math.abs(pos - index) < Math.abs(nearest - index)) nearest = pos
+      }
+      if (nearest !== null) goTo(nearest)
+    }
+
+    /* ── The indicator ───────────────────────────────────────────────────────
+       One dot per product, built from the tiles so the row follows the markup.
+       The travelling mark is placed by measuring the dot rather than by
+       multiplying an index, which is what lets the row be any length. */
+    var dots = document.getElementById('dots')
+    var marks = []
+    if (dots) {
+      products.forEach(function (tile, product) {
+        var name = tile.querySelector('.tile-name').textContent
+        var dot = document.createElement('button')
+        dot.type = 'button'
+        dot.className = 'dot'
+        dot.setAttribute('aria-label', name)
+        dot.style.setProperty('--dot-glow-rgb', readGlow(tile))
+        var label = document.createElement('span')
+        label.className = 'dot-label'
+        label.textContent = name
+        dot.appendChild(label)
+        dot.addEventListener('click', function () {
+          show(product)
+        })
+        dots.appendChild(dot)
+        marks.push(dot)
+      })
+    }
+
+    function pointDot(product) {
+      if (!marks.length) return
+      for (var i = 0; i < marks.length; i++) {
+        if (i === product) marks[i].setAttribute('aria-current', 'true')
+        else marks[i].removeAttribute('aria-current')
+      }
+      var dot = marks[product]
+      // The mark's own width, read rather than restated, so the token that
+      // sizes it in CSS stays the only place it is decided.
+      var width = parseFloat(getComputedStyle(dots, '::after').width) || 0
+      dots.style.setProperty('--dot-x', dot.offsetLeft + (dot.offsetWidth - width) / 2 + 'px')
+      dots.style.setProperty('--dots-glow-rgb', readGlow(products[product]))
+      dots.classList.add('is-ready')
+    }
+
+    // The bar of the product in focus has filled: move on. Every copy runs one
+    // in step, so only the middle copy's is counted.
     track.addEventListener('animationend', function (event) {
       if (event.animationName !== 'tile-progress') return
       var tile = event.target.closest('.tile')
-      if (!tile || tile.classList.contains('tile-clone')) return
-      goTo(real(index) + 1)
+      if (!tile || tile.getAttribute('data-copy') !== '1') return
+      goTo(index + 1)
     })
 
-    // The window in focus opens into the card; a neighbour comes into focus
-    // first. A link inside either does what it says instead.
+    // The window in focus opens into the card; another comes into focus first.
+    // A link inside either does what it says instead.
     track.addEventListener('click', function (event) {
       var tile = event.target.closest('.tile')
       if (!tile || event.target.closest('a')) return
@@ -615,7 +686,7 @@
       if (STACKED.matches) return
       event.preventDefault()
       if (tile.classList.contains('is-active')) openCard(tile)
-      else goTo(Array.prototype.indexOf.call(track.children, tile) - 1)
+      else goTo(Array.prototype.indexOf.call(track.children, tile))
     })
 
     // On the windows, not on the carousel: that is a band the width of the
@@ -634,10 +705,11 @@
       windows[wi].addEventListener('mouseenter', hold)
       windows[wi].addEventListener('mouseleave', release)
     }
+
     carousel.addEventListener('focusin', function (event) {
       // Bring a tile the keyboard has reached into focus, then hold there.
-      var at = tiles.indexOf(event.target.closest('.tile'))
-      if (at !== -1) goTo(at)
+      var at = products.indexOf(event.target.closest('.tile'))
+      if (at !== -1) show(at)
       hold()
     })
     carousel.addEventListener('focusout', function (event) {
@@ -652,16 +724,17 @@
       gotos[g].addEventListener('click', function (event) {
         if (STACKED.matches) return
         event.preventDefault()
-        goTo(Number(this.getAttribute('data-goto')))
+        show(Number(this.getAttribute('data-goto')))
         document.getElementById('top').scrollIntoView({ behavior: 'smooth' })
       })
     }
 
     window.addEventListener('resize', function () {
       place(true)
+      pointDot(index % count)
     })
     STACKED.addEventListener('change', function () {
-      index = 0
+      index = count
       track.style.transform = ''
       mark()
       if (!STACKED.matches) place(true)

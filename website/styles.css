@@ -85,6 +85,9 @@
 html {
   background: var(--bg-base);
   scroll-behavior: smooth;
+  /* The bar is sticky, so it covers the top of whatever an anchor lands on.
+     This is what keeps a jump to #about from putting its heading under it. */
+  scroll-padding-top: var(--nav-h);
   scrollbar-gutter: stable;
 }
 
@@ -1119,67 +1122,13 @@ code {
   border-top: var(--border-hairline) solid var(--border-subtle);
 }
 
+/* A section is as tall as what is in it. It was briefly a panel of its own
+   screen, which is what made snapping to one mean anything; without the
+   snapping that only stretches short sections across a lot of nothing. */
+
 .section > .container {
   opacity: var(--focus, 1);
   filter: blur(calc((1 - var(--focus, 1)) * var(--section-blur)));
-}
-
-/* Every block below the hero is a panel of its own screen, so the page keeps
-   one rhythm instead of each section carrying its own height, and so there is
-   something for the scroll to settle on. The top padding is asymmetric because
-   the bar is sticky and overlays whatever passes beneath it: box-sizing is
-   border-box, so that padding sits inside the 100svh and the one rule both
-   clears the bar and holds for a section that outgrows the screen.
-
-   Above the width where the carousel stops being a carousel, and no lower: a
-   short section stretched to a phone screen is a lot of nothing to scroll past.
-   The idiom is Konnekt's .section-full, and so is the snapping below. */
-@media (min-width: 901px) {
-  .section {
-    min-height: 100svh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: calc(var(--nav-h) + var(--section-y)) 0 var(--section-y);
-  }
-}
-
-/* Settling on a section. proximity rather than mandatory: a section that
-   outgrows the screen would otherwise be yanked away from the part being read.
-   Pointer-gated as well as width-gated, because on a touch screen snapping
-   fights the flick.
-
-   The footer needs saving twice over. The last section gives up exactly the
-   footer's height, so that section's snap point and the end of the document
-   are one position rather than sitting a footer apart, which is close enough
-   that the scroll is pulled between the two and never settles. And the footer
-   takes a snap point of its own so it stays reachable at all: without one the
-   proximity radius pulls every attempt to reach it back up to the section
-   above, and the links in it cannot be clicked. --footer-h is measured by
-   main.js; the floor keeps the panel from being squeezed if the footer ever
-   wraps tall. Both of these are Konnekt's, learned there the hard way. */
-@media (min-width: 901px) and (pointer: fine) {
-  html {
-    scroll-snap-type: y proximity;
-  }
-
-  .section {
-    scroll-snap-align: start;
-  }
-
-  .section:last-of-type {
-    min-height: max(420px, calc(100svh - var(--footer-h, 0px)));
-  }
-
-  .footer {
-    scroll-snap-align: end;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-snap-type: none;
-  }
 }
 
 .section h2 {

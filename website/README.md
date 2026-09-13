@@ -265,34 +265,13 @@ commit, or without one for a repo that has no commits yet. A request that fails 
 claims a version it did not fetch. The same element appears in the hero and in
 the downloads table and is filled from one answer.
 
-## Sections coming into focus, and settling on one
+## Sections coming into focus
 
-Each section below the hero is a panel of its own screen, so the page keeps one
-rhythm rather than each section carrying its own height, and so there is
-something for the scroll to settle on. The idiom is Konnekt's `.section-full`,
-and so is the snapping. Both apply above the width where the carousel stops
-being a carousel and no lower: a short section stretched to a phone screen is a
-lot of nothing to scroll past.
-
-**Settling** is `scroll-snap-type: y proximity`, not `mandatory`, so a section
-that outgrows the screen is never yanked away from the part being read. It is
-pointer-gated as well as width-gated, because on a touch screen snapping fights
-the flick, and it is off entirely under reduced motion.
-
-The footer needs saving twice over, and both fixes are Konnekt's, learned there
-the hard way. The last section gives up exactly the footer's height, so that
-section's snap point and the end of the document are one position rather than
-sitting a footer apart, which is close enough that the scroll is pulled between
-the two and never settles. And the footer takes a snap point of its own so it
-stays reachable at all: without one the proximity radius pulls every attempt to
-reach it back up to the section above, and the links in it cannot be clicked.
-`--footer-h` is measured by `main.js`.
-
-**Focus** is the blur and fade: a section is sharp when it is settled in the
-middle of the screen and softens as it leaves, on either side. `main.js` writes
-`--focus` from how far the section's own middle is from the screen's, 1 settled
-and 0 gone, and the stylesheet reads it. The plateau is wide on purpose, since
-a section is readable for most of its pass and only softens as it goes.
+A section is sharp when it is in the middle of the screen and softens as it
+leaves, on either side. `main.js` writes `--focus` from how far the section's
+own middle is from the screen's, 1 in the middle and 0 gone, and the stylesheet
+reads it. The plateau is wide on purpose, since a section is readable for most
+of its pass and only softens as it goes.
 
 This was a scroll-driven animation in CSS, which was the wrong choice for one
 reason: `animation-timeline` is Chromium and Safari only, so in Firefox the
@@ -300,9 +279,20 @@ effect simply did not happen. The arithmetic is the same either way and script
 runs everywhere. Where no script runs at all, the fallback in each `var()`
 leaves the sections sharp.
 
-It is carried by the container rather than the section, because the section is
-a whole screen and mostly empty: blurring the panel means blurring a viewport,
-blurring the container means blurring the words.
+It is carried by the container rather than the section, because blurring a
+section means blurring its whole box where blurring the container means
+blurring the words.
+
+**The scroll does not lock to a section.** It briefly did, on Konnekt's model:
+each section a panel of its own screen with `scroll-snap-type: y proximity`,
+and the last section giving up the footer's height so their snap points
+coincided. That is a good pattern and it worked, but it is not wanted here, and
+a section is only a whole screen tall in service of it. Both are gone, which is
+why sections are as tall as what is in them again.
+
+What the sticky bar still needs is `scroll-padding-top` on the page, or a jump
+to an anchor puts that section's heading underneath it. The panel's own top
+padding used to do that job.
 
 ## Colour per product
 

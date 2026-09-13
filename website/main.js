@@ -798,7 +798,6 @@
      a scroll neither measures more than once per frame nor repaints a blur it
      has already painted. */
   var sections = document.querySelectorAll('.section')
-  var footer = document.querySelector('.footer')
   var pending = false
 
   function focusSections() {
@@ -828,22 +827,10 @@
     window.requestAnimationFrame(focusSections)
   }
 
-  // The last section gives up the footer's height so the two share a snap
-  // point; styles.css § Sections explains what that saves.
-  function measureFooter() {
-    if (!footer) return
-    var height = Math.ceil(footer.getBoundingClientRect().height)
-    document.documentElement.style.setProperty('--footer-h', height + 'px')
-  }
-
   if (sections.length) {
     window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', function () {
-      measureFooter()
-      onScroll()
-    })
+    window.addEventListener('resize', onScroll)
     REDUCED.addEventListener('change', onScroll)
-    measureFooter()
     focusSections()
   }
 

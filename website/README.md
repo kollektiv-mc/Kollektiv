@@ -175,16 +175,13 @@ than multiplying an index by a width, and it takes that product's colour.
 ### The wireframe
 
 The app in focus turns slowly behind the carousel, large enough to reach past
-the windows on every side: a geodesic sphere for Konnekt, a torus for
-Kommands, a cube for Kube. The sphere is a geodesic: a regular solid with
-every face cut into four as many times as asked and every vertex pushed out
-onto the unit sphere, so every face is a triangle and no vertex is special — a
-sphere of latitude rings and meridians converges on a pole instead, and the
-pinch reads as a mistake. Each cut quadruples the face count, which makes the
-seed the only other lever on how dense the wireframe is: an octahedron carries
-12 edges to an icosahedron's 30, so one cut of an octahedron lands at 48, in
-between the two solids and their four-fold subdivisions. Konnekt's is that
-one. One canvas for the page rather
+the windows on every side: a globe for Konnekt, a torus for Kommands, a cube
+for Kube. The globe is drawn the way a globe is drawn, in parallels and
+meridians: `globe(6, 8, 48)` slices it into six bands pole to pole, which
+leaves five parallels with one of them on the equator, and joins the poles with
+eight meridians. This replaced a geodesic sphere, whose triangles gave no
+vertex any special role and so had no pole to pinch at. The pinch turns out to
+be what makes a globe read as a globe. One canvas for the page rather
 than one per tile — it is the page's background, and the windows are opaque,
 so a shape drawn inside a tile would have been drawn on top of the app. When
 the carousel moves on, the old shape fades out and the new one fades in, and
@@ -211,13 +208,20 @@ out the same size, and each carries its own tilt — a torus at the angle that
 suits a sphere is seen nearly edge-on and reads as an arc rather than a ring.
 
 **The edges are curves, not chords.** An edge of a curved surface drawn as one
-straight line cuts the corner, and a ball of cut corners is a polyhedron rather
-than a sphere. So each shape says how to put a point back onto itself: a
-sphere's surface is any point's own direction, a torus's is out to the ring and
-then out from the ring. Each edge is walked in eight steps with every step put
-back on the surface before it is projected, which is what makes the sphere read
-as a sphere and the torus as a tube. A cube has no curve to follow and keeps
-its two ends.
+straight line cuts the corner, and a ring of cut corners is a polygon rather
+than a circle. A shape can say so two ways, and both are in use.
+
+The torus publishes a `surface()`: how to put any point back onto itself, out
+to the ring and then out from the ring. Each of its edges is then walked in
+eight steps with every step put back on the surface before it is projected,
+which is what makes it read as a tube rather than as a cage of flat panels.
+
+The globe instead emits its curves already divided, at 48 segments each, and
+publishes no `surface()`. It would be the wrong tool for it: that walk pushes
+every midpoint out to radius 1, which is right for a meridian, because a
+meridian is a great circle, and wrong for a parallel, because a parallel is a
+small circle and its midpoints would be lifted off it towards the pole. A cube
+has no curve to follow either, and keeps its two ends.
 
 It is drawn faintly and blurred in CSS, and the strokes are laid down wider
 than a hairline because of it: spread over several pixels, a one-pixel line

@@ -19,103 +19,47 @@
      The colour is read from the tile's --product-rgb at draw time — the
      same trick Kommands uses to get a token's value where it needs a colour
      rather than a class — so nothing here restates a design value. */
-  // The solids a geodesic can be grown from. Each cut quadruples the face
-  // count, so the seed is the only other lever on density: an octahedron
-  // carries 12 edges to an icosahedron's 30, and one cut of it lands between
-  // the two solids and their four-fold subdivisions.
-  var SEEDS = {
-    icosahedron: function () {
-      var t = (1 + Math.sqrt(5)) / 2
-      return {
-        points: [
-          [-1, t, 0], [1, t, 0], [-1, -t, 0], [1, -t, 0],
-          [0, -1, t], [0, 1, t], [0, -1, -t], [0, 1, -t],
-          [t, 0, -1], [t, 0, 1], [-t, 0, -1], [-t, 0, 1],
-        ],
-        faces: [
-          [0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11],
-          [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8],
-          [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9],
-          [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1],
-        ],
-      }
-    },
-    octahedron: function () {
-      return {
-        points: [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]],
-        faces: [
-          [2, 0, 4], [2, 4, 1], [2, 1, 5], [2, 5, 0],
-          [3, 4, 0], [3, 1, 4], [3, 5, 1], [3, 0, 5],
-        ],
-      }
-    },
-  }
-
-  // A geodesic sphere: one of those solids with every face cut into four as
-  // many times as asked, and every vertex pushed out onto the unit sphere.
-  // Every face is a triangle and no vertex is special, which is what a sphere
-  // of latitude rings and meridians cannot give — those converge on a pole,
-  // and the pinch reads as a mistake.
-  function geodesic(cuts, seed) {
-    var solid = SEEDS[seed || 'icosahedron']()
-    var points = solid.points
-    var faces = solid.faces
-
-    function onSphere(at) {
-      var p = points[at]
-      var length = Math.sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2])
-      points[at] = [p[0] / length, p[1] / length, p[2] / length]
-    }
-    for (var i = 0; i < points.length; i++) onSphere(i)
-
-    for (var pass = 0; pass < cuts; pass++) {
-      var middles = {}
-      // One vertex per shared edge, or the two faces either side of it drift
-      // apart by a rounding error and the wireframe doubles every line.
-      function middle(a, b) {
-        var key = Math.min(a, b) + ':' + Math.max(a, b)
-        if (middles[key] === undefined) {
-          points.push([
-            (points[a][0] + points[b][0]) / 2,
-            (points[a][1] + points[b][1]) / 2,
-            (points[a][2] + points[b][2]) / 2,
-          ])
-          middles[key] = points.length - 1
-          onSphere(middles[key])
-        }
-        return middles[key]
-      }
-      var cut = []
-      faces.forEach(function (face) {
-        var ab = middle(face[0], face[1])
-        var bc = middle(face[1], face[2])
-        var ca = middle(face[2], face[0])
-        cut.push([face[0], ab, ca], [face[1], bc, ab], [face[2], ca, bc], [ab, bc, ca])
-      })
-      faces = cut
-    }
-
-    var seen = {}
+  // A wireframe globe: parallels and meridians, the way a globe is drawn.
+  // `bands` is how many slices pole to pole, so it leaves bands - 1 parallels
+  // and puts one on the equator whenever it is even. `meridians` are the
+  // half circles joining the poles.
+  //
+  // Both are emitted already curved, at `steps` segments each, rather than as
+  // a few long edges bent later by surface(). That walk pushes every midpoint
+  // out to radius 1, which is right for a meridian, since a meridian is a
+  // great circle, and wrong for a parallel: a parallel is a small circle, and
+  // its midpoints would be pushed off it towards the pole. Drawing the curve
+  // directly is both correct and simpler, and it is why this shape publishes
+  // no surface().
+  function globe(bands, meridians, steps) {
+    var points = []
     var edges = []
-    faces.forEach(function (face) {
-      for (var e = 0; e < 3; e++) {
-        var a = face[e]
-        var b = face[(e + 1) % 3]
-        var key = Math.min(a, b) + ':' + Math.max(a, b)
-        if (seen[key]) continue
-        seen[key] = true
-        edges.push([a, b])
-      }
-    })
-    return {
-      points: points,
-      edges: edges,
-      // Anywhere near the sphere, the sphere is the point's own direction.
-      surface: function (p) {
-        var d = Math.sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]) || 1
-        return [p[0] / d, p[1] / d, p[2] / d]
-      },
+
+    function at(lat, lon) {
+      points.push([Math.cos(lat) * Math.sin(lon), Math.sin(lat), Math.cos(lat) * Math.cos(lon)])
+      return points.length - 1
     }
+
+    for (var band = 1; band < bands; band++) {
+      var lat = Math.PI * (band / bands - 0.5)
+      var first = points.length
+      for (var s = 0; s < steps; s++) {
+        var here = at(lat, (2 * Math.PI * s) / steps)
+        // The ring closes: the last segment runs back to where it started.
+        if (s > 0) edges.push([here - 1, here])
+      }
+      edges.push([points.length - 1, first])
+    }
+
+    for (var m = 0; m < meridians; m++) {
+      var lon = (2 * Math.PI * m) / meridians
+      for (var t = 0; t <= steps; t++) {
+        var down = at(Math.PI * (t / steps - 0.5), lon)
+        if (t > 0) edges.push([down - 1, down])
+      }
+    }
+
+    return { points: points, edges: edges }
   }
 
   function torus(major, minor, R, r) {
@@ -176,7 +120,7 @@
 
   var SHAPES = {
     sphere: function () {
-      return geodesic(1, 'octahedron')
+      return globe(6, 8, 48)
     },
     torus: function () {
       return torus(10, 5, 1, 0.42)

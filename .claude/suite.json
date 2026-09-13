@@ -28,6 +28,10 @@
       {
         "name": "public copy",
         "run": "./scripts/check-copy.sh"
+      },
+      {
+        "name": "aislop",
+        "run": "npx --yes aislop@0.16.0 ci"
       }
     ],
     "invariants": [

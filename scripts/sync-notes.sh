@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #
-# Copy the release-notes generator and its tests into each cloned product.
+# Copy the release-notes generator, its tests and GitHub's fallback layout into
+# each cloned product.
 #
 # Same shape as sync-runner.sh, for a related reason. A product cuts its own
 # releases, in its own workflow, in a container that has this repo nowhere on
@@ -51,10 +52,13 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 manifest="$root/suite.repos.json"
 
 # Script and tests move together. A generator whose tests were left behind is
-# worse than one with none: the stale file passes, and says so.
+# worse than one with none: the stale file passes, and says so. release.yml is
+# the layout GitHub's own generator uses when the script cannot produce a body;
+# its headings mirror the script's, so it travels with it.
 sources=(
   "plugins/suite-kit/release-notes.py:.github/scripts/release-notes.py"
   "plugins/suite-kit/release-notes_test.py:.github/scripts/release-notes_test.py"
+  "plugins/suite-kit/release.yml:.github/release.yml"
 )
 
 [ -f "$manifest" ] || { echo "no suite.repos.json at $root" >&2; exit 1; }
@@ -65,6 +69,7 @@ require_python
 for pair in "${sources[@]}"; do
   src="$root/${pair%%:*}"
   [ -f "$src" ] || { echo "no ${pair%%:*} at $root" >&2; exit 1; }
+  case "$src" in *.py) ;; *) continue ;; esac
   # Checked once here rather than discovered in a product's release job, which
   # is the worst place to find out: the notes fall back to a commit link and
   # the release is already published by the time anyone reads it.

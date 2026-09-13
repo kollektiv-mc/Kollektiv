@@ -10,3 +10,6 @@ __pycache__/
 
 # OS
 .DS_Store
+
+# aislop writes a scan history beside its config on every run.
+.aislop/history.jsonl

@@ -5,7 +5,7 @@ The umbrella for a small suite of Minecraft tools:
 | Product | What it is | Stack |
 |---|---|---|
 | [Konnekt](https://github.com/kollektiv-mc/Konnekt) | Desktop dashboard for Minecraft servers | Wails v2 · Go · React 19 |
-| [Kommands](https://github.com/kollektiv-mc/Kommands) | Command generator for Java Edition | Vite · React 19 |
+| [Kommands](https://github.com/kollektiv-mc/Kommands) | Command generator for Java Edition | Vite · React 19, and a Wails v2 · Go desktop shell |
 
 This repo owns **conventions, domain knowledge, and agent tooling**. It does not
 own builds, CI, or releases — each product keeps its own.
@@ -17,20 +17,21 @@ own builds, CI, or releases — each product keeps its own.
 The two products share a design language, a domain, and a set of working rules,
 and each of those was written down twice. Kommands' `docs/design-tokens.md`
 restated Konnekt's entire palette by hand. That palette now lives in
-[`design/tokens.json`](design/tokens.json); Kommands stops restating it and
-generates from the vendored copy when its adoption lands, on
-`kommands@claude/adopt-suite-kit`. Both repos carry their own health-check prose.
-Both are exposed to the same failure mode:
+[`design/tokens.json`](design/tokens.json), and both products generate from
+their vendored copy of it. Both repos carry their own health-check prose. Both are
+exposed to the same failure mode:
 Minecraft syntax changes between versions in ways that produce commands which look
 correct and silently do nothing, and model training data on that syntax is
 frequently stale.
 
 Written twice, those rules drift. Held here as a plugin, they do not.
 
-A monorepo would be the wrong shape. Konnekt is a Go module with generated Wails
-bindings, a gzip bundle budget, and a `v*` tag-driven release that publishes
-binaries and an `.rpm`; Kommands derives its data from pinned mcmeta tags. Merging
-them buys nothing and breaks a working release pipeline.
+A monorepo would be the wrong shape. The products have separate release cycles
+and unrelated failure modes: Konnekt publishes binaries and an `.rpm` off `v*`
+tags, Kommands deploys a web build continuously and derives its data from pinned
+mcmeta tags. Both are now a Go shell around a React frontend, and that is a reason
+to share more, not to merge: what converged is the shell, what stayed separate is
+everything either product releases.
 
 ---
 
@@ -47,7 +48,14 @@ kollektiv/
 ├── scripts/sync-tokens.sh      vendors design/tokens.json into each product
 │                               (--check reports drift and writes nothing)
 ├── scripts/validate-schemas.sh validates every manifest against its schema
-├── .github/workflows/ci.yml    hub checks + scheduled token-drift detection
+├── .github/workflows/ci.yml    this repo's own checks, and the aislop gate
+├── .github/workflows/drift.yml the cross-repo drift checks, on every push and nightly
+├── plugins/suite-kit/workflows/ the workflows every product runs identically, vendored
+│                               into each product (aislop, CodeQL, pr-labelled, Scorecard)
+├── .github/workflows/issue-priority.yml
+│                               master copy of the workflow that turns a form answer
+│                               into a p* label, vendored into each product
+├── .aislop/base.yml            the suite's aislop policy, vendored into each product
 ├── .claude-plugin/             marketplace manifest
 ├── design/tokens.json          the shared design-token source
 ├── design/tokens.schema.json   its schema
@@ -58,6 +66,12 @@ kollektiv/
 │                               (--check reports drift and writes nothing)
 ├── scripts/sync-runner.sh      vendors suite-check.py into each product
 │                               (--check reports drift and writes nothing)
+├── scripts/sync-notes.sh       vendors the release-notes generator into each product
+├── scripts/sync-aislop.sh      vendors .aislop/base.yml into each product
+├── scripts/sync-priority.sh    vendors the priority workflow and the forms' question
+├── scripts/check-participation.sh
+│                               permissions floor, manifest paths, formatting settings,
+│                               and that vendored files are excluded from product tools
 ├── scripts/adopt.sh            scaffolds a repo's suite.json, settings block,
 │                               .gitignore lines and both vendored files
 ├── plugins/suite-kit/          the shared plugin

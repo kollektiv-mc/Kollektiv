@@ -18,6 +18,16 @@
 #                 cwd is gone is reported by the runner as a skip, and a skip
 #                 nobody reads is how a check stops running without anyone
 #                 noticing.
+#   vendored      every file this repo vendors into a product is excluded from
+#                 that product's own formatter and scanner. A vendored file is
+#                 byte-compared against its master, so a product gate that
+#                 rewrites one creates drift that nothing here can fix. That
+#                 happened: Konnekt's aislop gate ran ruff format over its copy
+#                 of release-notes.py, and the nightly was red for a week.
+#                 Each product had already learned this once for one file
+#                 (.claude/suite-check.py in Konnekt's .aislopignore, the
+#                 priority workflow in Kommands' .prettierignore); this is the
+#                 rule those two lines were instances of.
 #
 # Deliberately not re-checked here, because each already has an owner: manifest
 # presence and schema validity (validate-schemas.sh), runner presence and drift
@@ -81,6 +91,29 @@ STYLE_FILES_UNREADABLE = (".prettierrc.js", ".prettierrc.mjs", ".prettierrc.cjs"
                           ".prettierrc.yaml", ".prettierrc.yml", ".prettierrc.toml",
                           "prettier.config.js", "prettier.config.mjs",
                           "prettier.config.cjs")
+
+# What this repo vendors into a product, and which script owns each. A product
+# gate must never rewrite one of these; the sync script that owns it byte-compares
+# the two copies. Kept here rather than read out of the scripts because each of
+# them knows only its own file, and this is the one place that needs the list.
+VENDORED = {
+    "tokens.source.json": "sync-tokens.sh",
+    ".claude/suite-check.py": "sync-runner.sh",
+    ".github/scripts/release-notes.py": "sync-notes.sh",
+    ".github/scripts/release-notes_test.py": "sync-notes.sh",
+    ".github/release.yml": "sync-notes.sh",
+    ".github/workflows/issue-priority.yml": "sync-priority.sh",
+    ".aislop/base.yml": "sync-aislop.sh",
+    ".github/workflows/aislop.yml": "sync-workflows.sh",
+    ".github/workflows/codeql.yml": "sync-workflows.sh",
+    ".github/workflows/pr-labelled.yml": "sync-workflows.sh",
+    ".github/workflows/scorecard.yml": "sync-workflows.sh",
+}
+# What each product-side tool would rewrite. aislop formats and lints Python;
+# Prettier formats JSON, YAML and Markdown. A vendored file with any other
+# extension is not something either tool touches.
+AISLOP_EXTS = (".py",)
+PRETTIER_EXTS = (".json", ".yml", ".yaml", ".md")
 
 status = 0
 skipped = 0
@@ -203,6 +236,65 @@ def check_style(label, repo_dir):
         print("= %s formatting settings (%s)" % (label, where))
 
 
+def ignore_lines(path):
+    """The non-comment entries of an ignore file, trailing slashes dropped."""
+    out = []
+    try:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    out.append(line.rstrip("/"))
+    except OSError:
+        pass
+    return out
+
+
+def covered(rel_path, lines):
+    """Whether an ignore file's entries cover rel_path: exactly, as a parent
+    directory, or as a glob."""
+    import fnmatch
+    for entry in lines:
+        if rel_path == entry or rel_path.startswith(entry + "/"):
+            return True
+        if fnmatch.fnmatch(rel_path, entry):
+            return True
+    return False
+
+
+def check_vendored_ignores(label, repo_dir):
+    """Every vendored file present is excluded from the product's own tools."""
+    present = sorted(p for p in VENDORED if os.path.isfile(os.path.join(repo_dir, p)))
+
+    if os.path.isfile(os.path.join(repo_dir, ".aislop", "config.yml")):
+        lines = ignore_lines(os.path.join(repo_dir, ".aislopignore"))
+        for p in present:
+            if not p.endswith(AISLOP_EXTS):
+                continue
+            if covered(p, lines):
+                print("= %s .aislopignore covers %s" % (label, p))
+            else:
+                fail("%s .aislopignore does not cover %s, which %s vendors; aislop "
+                     "would reformat it and the next sync would report drift"
+                     % (label, p, VENDORED[p]))
+
+    # Only a root-level Prettier config reaches the vendored files, which all
+    # sit at the root or under .github/ and .claude/. Konnekt runs Prettier from
+    # frontend/ and website/, and neither pass can see them.
+    kind, path, _ = find_style_config(repo_dir)
+    if kind in ("json", "unreadable") and os.path.dirname(path.split(" ")[0]) == repo_dir:
+        lines = ignore_lines(os.path.join(repo_dir, ".prettierignore"))
+        for p in present:
+            if not p.endswith(PRETTIER_EXTS):
+                continue
+            if covered(p, lines):
+                print("= %s .prettierignore covers %s" % (label, p))
+            else:
+                fail("%s .prettierignore does not cover %s, which %s vendors; Prettier "
+                     "would reformat it and the next sync would report drift"
+                     % (label, p, VENDORED[p]))
+
+
 def check_repo(label, repo_dir):
     """Every check runs. One failure does not cancel the rest — health/SKILL.md's
     rule, for the same reason: they are independent findings."""
@@ -247,6 +339,7 @@ def check_repo(label, repo_dir):
     path_check((suite.get("tokens") or {}).get("sourceFile"), "tokens.sourceFile")
 
     check_style(label, repo_dir)
+    check_vendored_ignores(label, repo_dir)
 
     for cmd in suite.get("health", {}).get("commands", []):
         cwd = cmd.get("cwd")

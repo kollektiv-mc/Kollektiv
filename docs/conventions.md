@@ -72,6 +72,29 @@ The sweep never closes an issue. A finding that stops reproducing gets a comment
 so, because "it was fixed" and "the check stopped running" look identical from the
 outside, and only one of them is good news.
 
+## Priority
+
+Every issue carries exactly one of `p0`-`p3`, defined in `design/labels.json` and
+applied to every repo by `scripts/sync-labels.sh`:
+
+| Label | Means |
+| --- | --- |
+| `p0` | Drop everything. |
+| `p1` | High priority, next up. |
+| `p2` | Medium priority, normal queue. |
+| `p3` | Low priority, nice to have. |
+
+An issue form asks the reporter for their honest read and offers three answers,
+which the vendored `issue-priority.yml` workflow turns into a label when the
+issue opens: *Blocking* is `p1`, *Significant* is `p2`, *Minor* is `p3`. `p0` is
+never offered; it is a triage judgement, and triage may move any of the other
+three. An issue opened through the API carries no form answer, so whoever files
+it, usually an agent, applies the label in the same call; when none does, the
+workflow says so in a comment rather than guessing. If the priority is genuinely
+unclear, the answer is `p2`, never nothing: an issue without a priority mirrors
+into Linear at priority None and drops out of every ordered view, which is not
+the same as being low priority.
+
 ## PR magic words
 
 GitHub's own closing keywords in a PR title or description close the issue
@@ -217,17 +240,18 @@ A product that has adopted this builds its notes with
 product's own container, with this repo nowhere on disk and no plugin installed,
 so the generator has to be *in* the product.
 
-**Adoption is per product, and only Konnekt has adopted it.** The marker is a
-product's own `.github/changelog.json`, holding the non-app path list the
-generator cannot run without; `sync-notes.sh` skips a product that has none and
-reports it as not adopted rather than as drift. Kommands has no
-`.github/changelog.json`, so it has neither the generator nor the label gate
-below, and that is the expected state rather than a gap to close. Whether it
-should adopt is a separate decision about whether that repo wants generated
-release notes at all, and it starts by writing a `changelog.json`.
+**Both products carry it.** The marker is a product's own
+`.github/changelog.json`, holding the non-app path list the generator cannot run
+without; `sync-notes.sh` vendors the generator, its tests and GitHub's fallback
+layout (`.github/release.yml`) beside it, and the drift check runs with
+`--require-vendored`. Konnekt's release workflow calls the generator when it cuts
+a release; Kommands has no release workflow yet, so there the generator is
+tested on every push and waits for its first tag.
 
 **Every pull request carries exactly one `type:` label.** The label alone decides
-where it lands, and in an adopting product CI fails a pull request without one.
+where it lands, and CI fails a pull request without one: the check is
+`plugins/suite-kit/workflows/pr-labelled.yml` here, vendored into each product's
+`.github/workflows/` by `scripts/sync-workflows.sh`.
 Before that gate existed, 24 of the 41 pull requests in Konnekt's first release
 window were unlabelled, the generator fell back to reading the title's leading
 verb, and "Add a Full release roadmap section and a nightly snapshot build
@@ -328,6 +352,31 @@ becomes a line in the release notes, vendored by `scripts/sync-notes.sh`. See
 § Release notes and pull request labelling above for the split between those
 rules and each product's own `.github/changelog.json`.
 
+**Shared**, in `plugins/suite-kit/workflows/`: the workflows that are the same
+job on every product, the aislop gate, CodeQL, the pull-request label gate and
+Scorecard, vendored by `scripts/sync-workflows.sh`. A job body lives here once,
+so the aislop and ruff versions it pins change everywhere on the next sync;
+nothing calls a workflow in this repo by reference.
+
+**Shared**, in `.aislop/base.yml`: the aislop policy, vendored by
+`scripts/sync-aislop.sh`. Per-repo: the size ratchet in each `.aislop/config.yml`,
+held at that tree's largest function and file, and the `.aislopignore` naming
+what that tree generates or vendors.
+
+**Shared**, in `design/labels.json`'s `priorityForm`: the question every issue
+form asks and the `p*` label each answer becomes, rendered into the forms and
+into the vendored `.github/workflows/issue-priority.yml` by
+`scripts/sync-priority.sh`. Per-repo: everything else in the forms. See
+§ Priority above.
+
+**A vendored file is never touched by a product's own tools.** Every sync script
+byte-compares its master against the product's copy, so a product formatter or
+scanner that rewrites one hands the nightly a drift only the next sync can undo.
+The masters here are held to the same aislop gate the products run, so they
+arrive clean, and `scripts/check-participation.sh` checks that each product's
+`.aislopignore`, and its root `.prettierignore` where Prettier runs at the root,
+list what it vendors.
+
 **Per-repo:**
 
 - Linear project and milestone structure — documented once, for every repo,
@@ -336,7 +385,9 @@ rules and each product's own `.github/changelog.json`.
 - Cycle cadence. Cycle creation is a team-settings toggle not exposed via the
   Linear MCP; enable it once in **Team Settings → Cycles**.
 - Anything about the product's own build, CI, or release — including which of
-  its paths never reach what it ships, in `.github/changelog.json`.
+  its paths never reach what it ships, in `.github/changelog.json`. The shared
+  workflows above are the exception, and the product still owns the copy it
+  commits.
 
 ## Known Linear MCP gaps
 

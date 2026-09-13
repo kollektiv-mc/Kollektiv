@@ -542,10 +542,6 @@
     // A position along the whole row, kept inside the middle copy.
     var index = count
     var settling = null
-    // What to do once the track stops, if a request arrived while it was
-    // moving. Steps accumulate so every click is honoured; a request for a
-    // particular product replaces whatever was waiting.
-    var queued = null
 
     function atRest() {
       return !carousel.classList.contains('is-moving')
@@ -615,38 +611,21 @@
       settling = window.setTimeout(settled, slide)
     }
 
-    // The track has stopped. Come home first, then honour whatever arrived
-    // while it was busy.
-    //
-    // Coming home here rather than being put off by the next request is the
-    // point. The wrap used to be deferred and re-armed by every new move, so
-    // clicking quickly walked the position clean off the end of the row: the
-    // slot beside the window had no tile in it, and stayed empty until the
-    // clicking stopped long enough for the wrap to fire.
+    // The track has stopped, so come home. Doing it here rather than letting
+    // the next request put it off is the point: the wrap used to be deferred
+    // and re-armed by every new move, so clicking quickly walked the position
+    // clean off the end of the row, and the slot beside the window had no tile
+    // in it until the clicking stopped.
     function settled() {
       carousel.classList.remove('is-moving')
       recentre()
-      if (!queued) return
-      if (queued.product != null) {
-        var product = queued.product
-        queued = null
-        show(product)
-        return
-      }
-      var direction = queued.steps > 0 ? 1 : -1
-      queued.steps -= direction
-      if (!queued.steps) queued = null
-      move(index + direction)
     }
 
-    // One product along. A request during a slide waits rather than stacking
-    // on top of it, so no click is lost and none of them skips a product.
+    // A move only starts from rest. A click landing during a slide is not a
+    // second instruction, it is the same one arriving twice, and acting on it
+    // ran the carousel on past where anyone asked it to go.
     function step(delta) {
-      if (STACKED.matches || count < 2) return
-      if (!atRest()) {
-        queued = queued && queued.steps != null ? { steps: queued.steps + delta } : { steps: delta }
-        return
-      }
+      if (STACKED.matches || count < 2 || !atRest()) return
       recentre()
       move(index + delta)
     }
@@ -654,11 +633,7 @@
     // The nearest position showing that product, so a move takes the short way
     // round rather than unwinding the whole row.
     function show(product) {
-      if (STACKED.matches || count < 2) return
-      if (!atRest()) {
-        queued = { product: product }
-        return
-      }
+      if (STACKED.matches || count < 2 || !atRest()) return
       recentre()
       var nearest = null
       for (var pos = index - count; pos <= index + count; pos++) {

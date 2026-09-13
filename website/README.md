@@ -112,15 +112,28 @@ and what is in focus is marked on every copy of that product rather than on one
 position, so the progress bar belongs to the product and carries on running
 through the step.
 
-The wrap runs the moment the track stops, and a request that arrives while it
-is moving waits its turn rather than starting on top of it. Both matter.
-Deferring the wrap and letting each new move put it off again walked the
-position clean off the end of the row, so the slot beside the window had no
-tile in it and stayed empty until the clicking stopped. And a click is read
-from which side of the carousel it landed on rather than from the tile under
-the pointer, because mid-slide the tiles are in transit and the one under the
-pointer can be two or three products from the one in focus. Steps accumulate
-while the track is busy, so every click is honoured and none of them skips.
+**A move only ever starts from rest.** A click landing during a slide is
+ignored rather than queued or acted on, so the carousel never runs on past
+where it was asked to go. The wrap back to the middle copy happens the moment
+the track stops, which is what keeps the position from drifting: deferring it
+and letting each new move put it off again walked the position clean off the
+end of the row, and the slot beside the window then had no tile in it until
+the clicking stopped. A click is also read from which side of the carousel it
+landed on rather than from the tile under the pointer, since mid-slide the
+tiles are in transit and the one under the pointer can be several products
+from the one in focus.
+
+A third option exists and is not taken: re-targeting the motion mid-flight, the
+way Embla does, so a click during a slide bends the animation towards a new
+destination instead of being dropped. That wants a physics-driven scroll rather
+than a CSS transition, which is more machinery than this page needs.
+
+Copies rather than teleporting a single row of tiles from one end to the
+other, which is what Embla does and what avoids duplicating any DOM. That is
+the better trade at scale; here it is the more machinery, not less, and the
+copies make the loop work for any number of tiles, down to one, where the
+teleport needs enough tiles left over to cover the view before it can happen
+at all.
 
 Three copies rather than the two spare tiles this used to keep. With one spare
 at each end the position could reach that spare and find nothing beyond it, so

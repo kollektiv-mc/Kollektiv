@@ -53,6 +53,8 @@
   --tile-title: clamp(22px, 2.4vw, 32px);
   --veil-focus: 68%;
   --veil-blur: 10px;
+  /* How far out of focus a section is at the edges of the scroll. */
+  --section-blur: 10px;
   /* How far the glow round the window in focus carries. The carousel lets its
      content paint this far past the edge it clips at, or the glow would end
      on a straight line above and below the window. */
@@ -206,16 +208,22 @@ code {
   transform: translateY(0);
 }
 
+/* The label stays the page's own ground rather than turning with the button,
+   because these accents are all light enough to carry it: 11.6:1 on Konnekt's
+   green, 9.0:1 on Kommands' ember. Kube's placeholder purple is 4.4:1, which
+   is under the 4.5:1 normal text wants; it has no primary button today, and
+   that is a thing to settle when the product picks a real accent rather than
+   a reason to special-case it now. */
 .btn-primary {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: rgb(var(--product-rgb, var(--accent-rgb)));
+  border-color: rgb(var(--product-rgb, var(--accent-rgb)));
   color: var(--bg-base);
   font-weight: var(--weight-semibold);
 }
 
 .btn-primary:hover {
   /* Accent-tinted ring, the same exception the wordmark uses; not a shadow. */
-  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.4);
+  box-shadow: 0 0 0 1px rgb(var(--product-rgb, var(--accent-rgb)) / 0.4);
 }
 
 .btn-secondary {
@@ -244,8 +252,31 @@ code {
    section, so they share the page's left edge with the headings and the
    footer; the carousel centres itself in what is left and is the one thing
    that may cross the side padding. */
+/* The bar stays with the page. It is sticky rather than fixed, so it takes a
+   row of its own at the top and the hero is what is left of the first screen
+   rather than starting underneath it. */
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: var(--border-hairline) solid var(--border-subtle);
+  background: var(--bg-elevated);
+  backdrop-filter: blur(var(--space-3));
+  -webkit-backdrop-filter: blur(var(--space-3));
+}
+
+.bar-inner {
+  height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
 .hero {
   position: relative;
+  /* What is left of the first screen once the bar has its row. */
+  min-height: calc(100svh - var(--nav-h));
   /* Both axes. The shape behind the carousel is taller than the viewport, so
      clipping only the sides let it hang into the section below; the carousel
      bleeding past the sides is the other thing this catches. */
@@ -276,19 +307,14 @@ code {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  min-height: 100svh;
-  padding-bottom: var(--space-6);
+  justify-content: center;
+  min-height: inherit;
+  /* Sits the carousel above the middle rather than on it. Centred exactly, the
+     slack split evenly and left a wide band of nothing under the bar; the room
+     is better spent below, where it reads as the page carrying on. */
+  padding-bottom: clamp(var(--space-6), 14vh, 150px);
   /* So a window can be sized in cqi — a share of this container's width. */
   container-type: inline-size;
-}
-
-.topbar {
-  height: var(--nav-h);
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
 }
 
 .topnav {
@@ -325,8 +351,9 @@ code {
 .carousel {
   --bleed: calc(50vw - 50%);
   margin-inline: calc(-1 * var(--bleed));
-  margin-block: auto;
-  padding-block: var(--space-6);
+  /* No padding to hold the glow: overflow-clip-margin below lets it paint past
+     this box, so padding here would only be empty height. */
+  padding-block: 0;
   /* clip rather than hidden, so overflow-clip-margin can let the glow paint
      past the top and bottom edges. It lets the tiles paint past the left and
      right edges too, which is why .hero clips the overflow on that axis. */
@@ -351,12 +378,19 @@ code {
   transition: none !important;
 }
 
+/* Everything that belongs to one product carries that product's colour, and
+   everything that paints in it reads this: the glow, the progress bar, the
+   wireframe, the dot, and the primary button. The suite accent unless the
+   markup says otherwise, which Kommands and Kube do inline in index.html. */
+.tile,
+.product,
+.detail {
+  --product-rgb: var(--accent-rgb);
+}
+
 .tile {
   flex: 0 0 var(--tile-w);
   min-width: 0;
-  /* The colour its glow and progress bar take: the suite accent unless the
-     tile says otherwise (Kommands does, inline in index.html). */
-  --tile-glow-rgb: var(--accent-rgb);
 }
 
 /* A window out of focus is black and white, text included, and a click on
@@ -399,9 +433,9 @@ code {
 .carousel:not(.is-moving) .tile.is-active .tile-window:focus-within {
   border-color: var(--border-hover);
   box-shadow:
-    0 0 0 1px rgb(var(--tile-glow-rgb) / 0.35),
-    0 0 var(--space-6) rgb(var(--tile-glow-rgb) / 0.3),
-    0 0 var(--glow-reach) rgb(var(--tile-glow-rgb) / 0.2);
+    0 0 0 1px rgb(var(--product-rgb) / 0.35),
+    0 0 var(--space-6) rgb(var(--product-rgb) / 0.3),
+    0 0 var(--glow-reach) rgb(var(--product-rgb) / 0.2);
 }
 
 /* The screenshot fills the window from its top corner, the way the app's own
@@ -638,7 +672,7 @@ code {
   bottom: 0;
   z-index: 4;
   height: var(--space-0-5);
-  background: rgb(var(--tile-glow-rgb));
+  background: rgb(var(--product-rgb));
   transform: scaleX(0);
   transform-origin: left;
 }
@@ -883,6 +917,15 @@ code {
    composed from bg-base rather than being a colour of its own — there is no
    scrim token and inventing one would be a design decision this page has no
    business making (design/README.md § bg-overlay). */
+/* A closed dialog is laid out by nothing. The browser's own rule says as much,
+   but any author rule beats the user agent whatever the specificity, so the
+   display below was reviving it: the page carried an invisible full-viewport
+   block under the footer, which added a blank screen of scroll and pushed the
+   last section clean out of view at the bottom. */
+.detail:not([open]) {
+  display: none;
+}
+
 .detail {
   width: 100%;
   height: 100%;
@@ -1060,6 +1103,58 @@ code {
 .section {
   padding: var(--section-y) 0;
   border-top: var(--border-hairline) solid var(--border-subtle);
+}
+
+/* A section comes into focus as it crosses the viewport: out of focus and
+   faint at either edge, sharp through the middle. Driven by where the reader
+   has scrolled rather than by a clock, so it follows them instead of playing
+   at them.
+
+   Two animations over two ranges rather than one over the whole pass, and the
+   fills are the reason. Arriving fills both ways, so a section below the fold
+   is already faint before it starts. Leaving fills forwards only, so it
+   contributes nothing until it actually begins: with one animation across the
+   whole pass, the last section on the page ended fully blurred and invisible,
+   because the page runs out of scroll before that pass can finish. Split this
+   way, a section that never reaches its exit simply stays sharp, which is
+   what the foot of a page should do.
+
+   Guarded twice. @supports because without a scroll timeline these would fall
+   back to the document timeline and run on a clock, fading every section out a
+   second after load and leaving it there. And the base rule above is the
+   sharp, visible state, so anywhere this does not apply the sections stay put. */
+@keyframes section-arriving {
+  from {
+    opacity: 0;
+    filter: blur(var(--section-blur));
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes section-leaving {
+  from {
+    opacity: 1;
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    filter: blur(var(--section-blur));
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .section {
+      animation:
+        section-arriving linear both,
+        section-leaving linear forwards;
+      animation-timeline: view(), view();
+      animation-range: entry, exit;
+    }
+  }
 }
 
 .section h2 {

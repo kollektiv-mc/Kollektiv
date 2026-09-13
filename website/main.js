@@ -62,6 +62,7 @@
     var ground = getComputedStyle(tile).getPropertyValue('--detail-bg').trim()
     if (ground) dialog.style.setProperty('--detail-bg', ground)
     else dialog.style.removeProperty('--detail-bg')
+    dialog.style.setProperty('--product-rgb', readGlow(tile))
 
     dialogName.textContent = tile.querySelector('.tile-name').textContent
     dialogPill.innerHTML = tile.querySelector('.pill').innerHTML
@@ -129,7 +130,7 @@
      onto a canvas needs no library, and a library is a dependency this page
      has no other use for.
 
-     The colour is read from the tile's --tile-glow-rgb at draw time — the
+     The colour is read from the tile's --product-rgb at draw time — the
      same trick Kommands uses to get a token's value where it needs a colour
      rather than a class — so nothing here restates a design value. */
   // A geodesic sphere: an icosahedron with every face cut into four, and every
@@ -291,7 +292,7 @@
   var lastTime = 0
 
   function readGlow(element) {
-    var value = getComputedStyle(element).getPropertyValue('--tile-glow-rgb').trim()
+    var value = getComputedStyle(element).getPropertyValue('--product-rgb').trim()
     // A tile that inherits the suite accent reports the reference on some
     // engines rather than the value; resolve it the one way that always works.
     if (!value || value.indexOf('var(') === 0) {

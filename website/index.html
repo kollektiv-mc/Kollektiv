@@ -26,37 +26,41 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <!-- The hero fills the first viewport: the wordmark and nav, then the
-         products as a carousel of 16:9 windows centred on the page, with the
-         previous and next peeking in past the side padding. The window in
-         focus shows its app in colour with the description and actions
-         unfolded beneath the name; the neighbours are black and white with
-         the name alone. A bar along the foot of the window in focus fills over
-         five seconds, and when it is full the carousel moves on. Hovering
-         holds it (the bar pauses) and lights a soft glow round the window;
-         clicking a neighbour, or an app in the nav, moves to it. Where there
-         is no hover, or no room, the windows stack with everything laid out
-         below the picture. -->
-    <header class="hero" id="top">
+    <!-- The bar stays with the page rather than scrolling away with the hero,
+         so the way back to a product is in reach from any section. -->
+    <header class="bar">
+      <div class="container bar-inner">
+        <a class="wordmark" href="#top">Kollektiv</a>
+        <nav class="topnav" aria-label="Site">
+          <a href="#konnekt" data-goto="0">Konnekt</a>
+          <a href="#kommands" data-goto="1">Kommands</a>
+          <a href="#kube" data-goto="2">Kube</a>
+          <span class="topnav-sep" aria-hidden="true"></span>
+          <a href="#about">About</a>
+          <a href="#architecture">Architecture</a>
+          <a href="https://github.com/kollektiv-mc" target="_blank" rel="noopener">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- The hero fills what is left of the first viewport: the products as a
+         carousel of 16:9 windows, the previous and next peeking in past the
+         side padding. The window in focus shows its app in colour with the
+         description and actions unfolded beneath the name; the neighbours are
+         black and white with the name alone, and its shape turns in the page
+         behind them. A bar along the foot of the window in focus fills over
+         eight seconds, and when it is full the carousel moves on. Hovering a
+         window holds it and lights a soft glow; clicking a neighbour, a dot,
+         or an app in the bar moves to it, and clicking the window in focus
+         opens its card. Where there is no hover, or no room, the windows stack
+         with everything laid out below the picture. -->
+    <section class="hero" id="top">
       <!-- The app in focus turns slowly behind the carousel, large enough to
            reach past the windows on every side. One canvas for the page, not
            one per tile: it is the page's background, and it changes shape when
            the carousel moves on. -->
       <canvas class="hero-orbit" id="hero-orbit" aria-hidden="true"></canvas>
       <div class="container hero-inner">
-        <div class="topbar">
-          <a class="wordmark" href="#top">Kollektiv</a>
-          <nav class="topnav" aria-label="Site">
-            <a href="#konnekt" data-goto="0">Konnekt</a>
-            <a href="#kommands" data-goto="1">Kommands</a>
-            <a href="#kube" data-goto="2">Kube</a>
-            <span class="topnav-sep" aria-hidden="true"></span>
-            <a href="#about">About</a>
-            <a href="#architecture">Architecture</a>
-            <a href="https://github.com/kollektiv-mc" target="_blank" rel="noopener">GitHub</a>
-          </nav>
-        </div>
-
         <div class="carousel" id="carousel">
           <div class="carousel-track">
             <article class="tile" id="konnekt" data-shape="sphere" aria-labelledby="konnekt-title">
@@ -147,7 +151,7 @@
               id="kommands"
               data-shape="torus"
               aria-labelledby="kommands-title"
-              style="--tile-glow-rgb: 251 146 60; --detail-bg: #27201a"
+              style="--product-rgb: 251 146 60; --detail-bg: #27201a"
             >
               <div class="tile-window">
                 <img
@@ -235,7 +239,7 @@
               id="kube"
               data-shape="cube"
               aria-labelledby="kube-title"
-              style="--tile-glow-rgb: 162 60 251; --detail-bg: #211a27"
+              style="--product-rgb: 162 60 251; --detail-bg: #211a27"
             >
               <div class="tile-window tile-window-blank">
                 <div class="tile-veil">
@@ -291,7 +295,7 @@
              adding or removing one needs nothing here. -->
         <div class="dots" id="dots" aria-label="Products"></div>
       </div>
-    </header>
+    </section>
 
     <main>
       <section class="section" id="about">
@@ -377,7 +381,7 @@
                 >
               </div>
             </li>
-            <li class="product">
+            <li class="product" style="--product-rgb: 251 146 60">
               <h3>Kommands</h3>
               <span class="pill" data-release="kollektiv-mc/Kommands">web</span>
               <p>Web app, with a desktop build in development. Not deployed yet; run it from source.</p>
@@ -398,7 +402,7 @@
                 >
               </div>
             </li>
-            <li class="product">
+            <li class="product" style="--product-rgb: 162 60 251">
               <h3>Kube</h3>
               <span class="pill" data-release="kollektiv-mc/Kube">desktop</span>
               <p>A visual builder for KubeJS. Not started yet.</p>

@@ -51,12 +51,22 @@ Two literals sit outside CSS and cannot read a custom property: the
 `theme-color` meta tag in `index.html`, which restates `bg-base`, and the
 favicon, which is why the generator writes it.
 
+## The bar
+
+Sticky, so the way back to a product is in reach from any section rather than
+scrolling away with the hero. It takes a row of its own at the top of the page,
+which is why the hero is sized to what is left of the first screen rather than
+to the whole of it.
+
 ## The hero
 
-The whole first viewport. The products are a carousel of 16:9 windows,
+What is left of the first screen once the bar has its row. The products are a carousel of 16:9 windows,
 Konnekt first, centred with the previous and next peeking in past the page's
-side padding; it is the one element that crosses that padding. The window in
-focus is drawn at full size and in colour, with its description and actions
+side padding; it is the one element that crosses that padding. The carousel sits above the middle rather than on it: centred exactly, the
+slack split evenly and left a wide band of nothing under the bar, and the room
+is better spent below where it reads as the page carrying on.
+
+The window in focus is drawn at full size and in colour, with its description and actions
 unfolded beneath the name; its neighbours are smaller, black and white, text
 included, with the name alone laid on whichever edge of them is visible: the
 right edge of the one before, the left edge of the one after. Only the painted
@@ -254,6 +264,39 @@ prerelease; failing that it says `in development` with the date of the last
 commit, or without one for a repo that has no commits yet. A request that fails leaves the pill as shipped, so the page never
 claims a version it did not fetch. The same element appears in the hero and in
 the downloads table and is filled from one answer.
+
+## Sections coming into focus
+
+Each section below the hero is out of focus and faint at either edge of its
+pass through the viewport, and sharp through the middle. It is driven by where
+the reader has scrolled rather than by a clock, so it follows them instead of
+playing at them.
+
+Two animations over two ranges rather than one over the whole pass, and the
+fills are the reason. Arriving fills both ways, so a section below the fold is
+already faint before it starts. Leaving fills forwards only, so it contributes
+nothing until it actually begins. With one animation across the whole pass the
+last section on the page ended fully blurred and invisible, because the page
+runs out of scroll before that pass can finish; split this way, a section that
+never reaches its exit simply stays sharp, which is what the foot of a page
+should do. That is also what puts the downloads and the bar on screen together
+at the bottom.
+
+Guarded by `@supports`, because without a scroll timeline the same animations
+fall back to the document timeline and run on a clock, fading every section out
+a second after load and leaving it there. The base rule is the sharp, visible
+state, so anywhere this does not apply the sections stay put.
+
+## Colour per product
+
+One custom property, `--product-rgb`, is what everything belonging to a product
+reads: its glow, its progress bar, its wireframe, its dot, and its primary
+button. The suite accent unless the markup says otherwise, which Kommands and
+Kube do inline. The label on a primary button stays the page's own ground
+rather than turning with it, which those accents are light enough to carry:
+11.6:1 on Konnekt's green and 9.0:1 on Kommands' ember. Kube's placeholder
+purple is 4.4:1, under what normal text wants; it has no primary button today,
+and that is a thing to settle when the product picks a real accent.
 
 ## Copy
 

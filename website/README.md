@@ -165,6 +165,11 @@ the downloads table and is filled from one answer.
 
 ## Copy
 
+**No em dashes.** Everything on this page is published, so it falls under
+`docs/conventions.md` § Public copy: use a comma, a colon, or two sentences.
+The comments in these files are not published and are unaffected.
+`scripts/check-copy.sh` checks the page and reports the line.
+
 Short, and about what a user gets. The sections about Kollektiv say what the
 suite is and the fixed ideas behind it — local and private, made to work
 together, a UI over a terminal, in the open — and do not name or describe

@@ -24,6 +24,10 @@
       {
         "name": "participation",
         "run": "./scripts/check-participation.sh"
+      },
+      {
+        "name": "public copy",
+        "run": "./scripts/check-copy.sh"
       }
     ],
     "invariants": [

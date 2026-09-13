@@ -48,6 +48,12 @@ jobs:
       # whose output is committed, the same shape as a product's gen:tokens.
       # A token change that forgot the site, or a hand edit to tokens.css,
       # shows up here as a diff.
+      # docs/conventions.md § Public copy. The website is the only published
+      # surface that lives in a file; issue and pull request titles and commit
+      # messages are not gated anywhere, which that section says outright.
+      - name: Published copy
+        run: ./scripts/check-copy.sh
+
       - name: Website tokens
         run: ./website/gen-tokens.py && git diff --exit-code -- website/tokens.css website/assets/img/favicon.svg
 

@@ -62,9 +62,13 @@ to the whole of it.
 
 What is left of the first screen once the bar has its row. The products are a carousel of 16:9 windows,
 Konnekt first, centred with the previous and next peeking in past the page's
-side padding; it is the one element that crosses that padding. The carousel sits above the middle rather than on it: centred exactly, the
-slack split evenly and left a wide band of nothing under the bar, and the room
-is better spent below where it reads as the page carrying on.
+side padding; it is the one element that crosses that padding. Window and dots
+together sit on the hero's middle, which the hero's own padding is symmetric
+for: with room only at the bottom, flex centring landed the pair half that
+padding above the middle. Centring costs a wide band of nothing under the bar,
+which is what the space left over on a tall screen has to become somewhere; the
+lever on it is the window's width, since the window is 16:9 and its height
+follows.
 
 The window in focus is drawn at full size and in colour, with its description and actions
 unfolded beneath the name; its neighbours are smaller, black and white, text
@@ -171,10 +175,15 @@ than multiplying an index by a width, and it takes that product's colour.
 
 The app in focus turns slowly behind the carousel, large enough to reach past
 the windows on every side: a geodesic sphere for Konnekt, a torus for
-Kommands, a cube for Kube. The sphere is an icosahedron with every face cut
-into four and every vertex pushed out onto the unit sphere, so every face is a
-triangle and no vertex is special — a sphere of latitude rings and meridians
-converges on a pole instead, and the pinch reads as a mistake. One canvas for the page rather
+Kommands, a cube for Kube. The sphere is a geodesic: a regular solid with
+every face cut into four as many times as asked and every vertex pushed out
+onto the unit sphere, so every face is a triangle and no vertex is special — a
+sphere of latitude rings and meridians converges on a pole instead, and the
+pinch reads as a mistake. Each cut quadruples the face count, which makes the
+seed the only other lever on how dense the wireframe is: an octahedron carries
+12 edges to an icosahedron's 30, so one cut of an octahedron lands at 48, in
+between the two solids and their four-fold subdivisions. Konnekt's is that
+one. One canvas for the page rather
 than one per tile — it is the page's background, and the windows are opaque,
 so a shape drawn inside a tile would have been drawn on top of the app. When
 the carousel moves on, the old shape fades out and the new one fades in, and
@@ -205,7 +214,7 @@ loses most of what makes it visible. The canvas is clipped to the hero, which
 is why `.hero` clips both axes rather than only the sides. The shape is taller
 than the viewport and used to hang into the section below.
 
-The stroke colour is read from the tile's `--tile-glow-rgb` at draw time —
+The stroke colour is read from the tile's `--product-rgb` at draw time —
 the same move Kommands makes in `voxelColor` when it needs a token as a value
 rather than as a class — so nothing in the drawing code restates a design
 value. That is why `main.js` is covered by the no-literal-colours invariant

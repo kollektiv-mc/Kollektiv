@@ -312,10 +312,9 @@ code {
   flex-direction: column;
   justify-content: center;
   min-height: inherit;
-  /* Sits the carousel above the middle rather than on it. Centred exactly, the
-     slack split evenly and left a wide band of nothing under the bar; the room
-     is better spent below, where it reads as the page carrying on. */
-  padding-bottom: clamp(var(--space-6), 14vh, 150px);
+  /* Symmetric, so justify-content lands the carousel on the hero's middle
+     rather than 24px above it, and so the dots keep clear of the edge. */
+  padding-block: var(--space-6);
   /* So a window can be sized in cqi — a share of this container's width. */
   container-type: inline-size;
 }

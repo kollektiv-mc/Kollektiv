@@ -62,27 +62,41 @@ included, with the name alone laid on whichever edge of them is visible. Only
 the painted window scales, never its layout box, so the carousel still moves
 by whole windows.
 
+The window in focus is ringed by a soft glow in its product's colour while the
+pointer is on it — on the window itself, not on the carousel, which is a band
+the width of the viewport. The glow doubles as the reason the carousel has
+stopped. It reaches further than the carousel's clip edge, so the carousel
+clips with `overflow-clip-margin` rather than `hidden`; horizontally that
+lets the tiles paint past the viewport, which is what `.hero`'s own
+`overflow-x: clip` is for.
+
 The foot of the window in focus is frosted — a backdrop blur under the
 gradient, masked so it fades out rather than ending on a line across the
 picture — which is what makes the copy readable while the upper half of the
 app stays sharp. It fades in with the copy, on the same duration and easing.
 
 A bar along the foot of the window in focus fills over eight seconds and the
-carousel moves on when it is full. Hovering holds it (the bar pauses) and
-lights a soft glow round the window in that product's colour; so does opening
-the card, and so does a hidden tab. Clicking a neighbour, or an app in the
+carousel moves on when it is full. Hovering a window holds it and pauses the
+bar; so does opening the card, and so does a hidden tab. Clicking a neighbour, or an app in the
 nav, moves to it; clicking the window in focus opens its card. It never moves
 by itself for a viewer who asked for reduced motion, and on narrow screens and
 touch devices it is a plain column where every window is in focus.
 
-### The wireframes
+### The wireframe
 
-Each tile turns one shape slowly in the frosted corner of its window: a
-sphere of four bands by eight meridians for Konnekt, a torus for Kommands, a
-cube for Kube. `main.js` projects a few dozen edges onto a canvas; that needs
-no library, and a library is a dependency this page has no other use for. Each
-shape is normalised by its own reach, so a cube's corners and a sphere's
-surface end up the same size on screen.
+The app in focus turns slowly behind the carousel, large enough to reach past
+the windows on every side: a sphere of four bands by eight meridians for
+Konnekt, a torus for Kommands, a cube for Kube. One canvas for the page rather
+than one per tile — it is the page's background, and the windows are opaque,
+so a shape drawn inside a tile would have been drawn on top of the app. When
+the carousel moves on, the old shape fades out and the new one fades in, and
+the swap happens at the point where neither is on screen.
+
+`main.js` projects a few dozen edges onto a canvas; that needs no library, and
+a library is a dependency this page has no other use for. Each shape is
+normalised by its own reach, so a cube's corners and a sphere's surface come
+out the same size, and each carries its own tilt — a torus at the angle that
+suits a sphere is seen nearly edge-on and reads as an arc rather than a ring.
 
 The stroke colour is read from the tile's `--tile-glow-rgb` at draw time —
 the same move Kommands makes in `voxelColor` when it needs a token as a value
@@ -90,17 +104,23 @@ rather than as a class — so nothing in the drawing code restates a design
 value. That is why `main.js` is covered by the no-literal-colours invariant
 alongside `styles.css`.
 
-Kommands' glow and wireframe are its own ember orange, `PRODUCT_ACCENT` in
+Kommands' glow and shape are its own ember orange, `PRODUCT_ACCENT` in
 that repo's `src/lib/theme.ts`, which is kept out of the suite tokens on
 purpose (see `design/README.md` § Two things not held here). The value is
 restated inline on its tile in `index.html`, with a comment saying where it
 comes from; the other tiles take the suite accent. Kube's window is blank on
-purpose: nothing is built yet, and a mock-up would say otherwise.
+purpose: nothing is built yet, and a mock-up would say otherwise — and because
+that window is the one translucent surface in the carousel, its cube shows
+through it rather than only around it.
 
 ### The card
 
-Clicking the window in focus, or its ⤢ button, opens a `<dialog>` over a
-scrim: one card, sized to the window, that never scrolls. Its four
+Clicking the window in focus, or its ⤢ button, grows it into a `<dialog>` over
+a scrim: one card, sized to the window, that never scrolls. It starts laid
+over the window it came from — same centre, same width, scaled evenly rather
+than to that window's exact box, since a card squashed to another aspect ratio
+distorts every word in it on the way out — and closing reverses it, which the
+carousel being held for as long as the card is open is what makes possible. Its four
 placeholders share out whatever height the text leaves rather than being
 sized in the abstract, which is what keeps that true at any window size.
 
@@ -110,10 +130,13 @@ buttons from its actions — so a product is described in one place and the card
 cannot drift from the window it opened out of.
 
 A `<dialog>` rather than a div because the browser then owns the focus trap,
-Escape, and inerting the page behind it. Two things it does not own: the fade
-and scale, which is why Escape is intercepted and the close is deferred; and
-the text colour, since a dialog's UA rule sets `color: CanvasText` and wins
-over anything inherited from `body`.
+Escape, and inerting the page behind it. Two things it does not own: the grow
+and the fade, which is why Escape is intercepted and the close is deferred;
+and the text colour, since a dialog's UA rule sets `color: CanvasText` and
+wins over anything inherited from `body`. The starting transform is flushed
+with a forced reflow rather than waited for over a frame — the first frame
+after `showModal` is an expensive one, and waiting for it left the card
+sitting on the window before it grew.
 
 ## What the pills say
 

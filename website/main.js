@@ -26,7 +26,31 @@
   var dialogPill = document.getElementById('detail-pill')
   var dialogBody = document.getElementById('detail-body')
   var dialogActions = document.getElementById('detail-actions')
+  var dialogCard = dialog && dialog.querySelector('.detail-card')
   var closing = null
+  var openedFrom = null
+
+  // The transform that lays the card over the window it came from: same
+  // centre, same width. Scaled evenly rather than to the window's exact box,
+  // because a card squashed to another aspect ratio distorts every word in it
+  // on the way out.
+  function overWindow(rect) {
+    var to = dialogCard.getBoundingClientRect()
+    if (!to.width || !rect) return ''
+    var scale = rect.width / to.width
+    var dx = rect.left + rect.width / 2 - (to.left + to.width / 2)
+    var dy = rect.top + rect.height / 2 - (to.top + to.height / 2)
+    return 'translate(' + dx + 'px, ' + dy + 'px) scale(' + scale + ')'
+  }
+
+  // Set a transform without animating to it, so the next change animates from
+  // there rather than from wherever the card was.
+  function placeCard(transform) {
+    dialogCard.style.transition = 'none'
+    dialogCard.style.transform = transform
+    void dialogCard.offsetWidth
+    dialogCard.style.transition = ''
+  }
 
   function openCard(tile) {
     var template = tile.querySelector('.tile-detail')
@@ -48,21 +72,36 @@
     dialog.showModal()
     carded = true
     syncHeld()
-    // Painted closed, then opened, so the scale and fade have a frame to
-    // start from — a dialog shown and styled in the same frame just appears.
-    window.requestAnimationFrame(function () {
-      dialog.classList.add('is-open')
-    })
+
+    // Measured after showModal, when the card is where it will end up, and
+    // held there for a frame — a dialog shown and styled in the same frame
+    // just appears.
+    var opener = tile.querySelector('.tile-window')
+    openedFrom = opener ? opener.getBoundingClientRect() : null
+    // placeCard flushes that starting transform, and the scrim's opacity with
+    // it, so both have somewhere to animate from and neither needs to wait a
+    // frame — the first frame after showModal is an expensive one, and waiting
+    // for it left the card sitting on the window before it grew.
+    placeCard(overWindow(openedFrom))
+    dialog.classList.add('is-open')
+    dialogCard.style.transform = ''
   }
 
   function closeCard() {
     if (!dialog || !dialog.open) return
     dialog.classList.remove('is-open')
+    // Back into the window it came out of, which has not moved: the carousel
+    // is held for as long as the card is open.
+    dialogCard.style.transform = overWindow(openedFrom)
     carded = false
     syncHeld()
-    closing = window.setTimeout(function () {
-      dialog.close()
-    }, REDUCED.matches ? 0 : 280)
+    closing = window.setTimeout(
+      function () {
+        dialog.close()
+        placeCard('')
+      },
+      REDUCED.matches ? 0 : 280,
+    )
   }
 
   if (dialog) {
@@ -180,7 +219,12 @@
   // Radians per millisecond. A turn takes about a minute: present, but never
   // the thing being looked at.
   var SPIN = 0.0001
-  var TILT = 0.5
+  // How far each shape is tipped towards the viewer. Per shape rather than
+  // one for all: a torus at the angle that suits a sphere is seen nearly
+  // edge-on, and reads as an arc rather than as a ring.
+  var TILT = { sphere: 0.62, torus: 1, cube: 0.62 }
+  // How long the old shape takes to go and the new one to arrive, together.
+  var MORPH = 600
   var orbits = []
   var lastTime = 0
 
@@ -194,9 +238,9 @@
     return value.split(/[\s,]+/).slice(0, 3).join(', ')
   }
 
-  function makeOrbit(canvas) {
-    var shape = SHAPES[canvas.getAttribute('data-shape')]
-    if (!shape || !canvas.getContext) return
+  function shapeOf(name) {
+    var shape = SHAPES[name]
+    if (!shape) return null
     var geometry = shape()
     // Normalised by its own reach, so a cube (corners at √3) and a sphere
     // (surface at 1) end up drawn the same size rather than the cube spilling
@@ -205,12 +249,18 @@
     geometry.points.forEach(function (point) {
       reach = Math.max(reach, Math.sqrt(point[0] * point[0] + point[1] * point[1] + point[2] * point[2]))
     })
+    return { geometry: geometry, reach: reach || 1, tilt: TILT[name] || 0.62 }
+  }
+
+  function makeOrbit(canvas) {
+    if (!canvas || !canvas.getContext) return null
     var orbit = {
       canvas: canvas,
       ctx: canvas.getContext('2d'),
-      geometry: geometry,
-      reach: reach || 1,
-      glow: readGlow(canvas.closest('.tile') || canvas),
+      shape: null,
+      glow: readGlow(document.documentElement),
+      pending: null,
+      morphFrom: 0,
       w: 0,
       h: 0,
     }
@@ -233,22 +283,61 @@
     size()
     if (window.ResizeObserver) new ResizeObserver(size).observe(canvas)
     orbits.push(orbit)
+    return orbit
+  }
+
+  // Swap in another app's shape and colour. The old one fades out, the new one
+  // fades in, and the change happens at the point where neither is on screen.
+  function setShape(orbit, name, glow) {
+    if (!orbit) return
+    var shape = shapeOf(name)
+    if (!shape) return
+    if (!orbit.shape || REDUCED.matches) {
+      orbit.shape = shape
+      orbit.glow = glow
+      orbit.pending = null
+      orbit.morphFrom = 0
+      if (!running) paint(orbit, lastTime)
+      return
+    }
+    if (orbit.glow === glow && orbit.shape.geometry === shape.geometry) return
+    orbit.pending = { shape: shape, glow: glow }
+    orbit.morphFrom = lastTime
   }
 
   function paint(orbit, time) {
     var ctx = orbit.ctx
     var w = orbit.w
     var h = orbit.h
-    if (!w || !h) return
+    if (!w || !h || !orbit.shape) return
     ctx.clearRect(0, 0, w, h)
+
+    // Out over the first half of the morph, in over the second, with the swap
+    // itself at the bottom of the dip.
+    var fade = 1
+    if (orbit.morphFrom) {
+      var through = (time - orbit.morphFrom) / MORPH
+      if (through >= 1) {
+        orbit.morphFrom = 0
+      } else if (through < 0.5) {
+        fade = 1 - through * 2
+      } else {
+        if (orbit.pending) {
+          orbit.shape = orbit.pending.shape
+          orbit.glow = orbit.pending.glow
+          orbit.pending = null
+        }
+        fade = (through - 0.5) * 2
+      }
+    }
 
     var angle = time * SPIN
     var cos = Math.cos(angle)
     var sin = Math.sin(angle)
-    var tiltCos = Math.cos(TILT)
-    var tiltSin = Math.sin(TILT)
-    var scale = (Math.min(w, h) * 0.42) / orbit.reach
-    var screen = orbit.geometry.points.map(function (point) {
+    var tiltCos = Math.cos(orbit.shape.tilt)
+    var tiltSin = Math.sin(orbit.shape.tilt)
+    var scale = (Math.min(w, h) * 0.42) / orbit.shape.reach
+    var screen = orbit.shape.geometry.points.map(function (point) {
       // Spin about the vertical axis, then tip the whole thing towards us.
       var x = point[0] * cos + point[2] * sin
       var z = point[2] * cos - point[0] * sin
@@ -259,12 +348,13 @@
     })
 
     ctx.lineWidth = 1
-    orbit.geometry.edges.forEach(function (edge) {
+    orbit.shape.geometry.edges.forEach(function (edge) {
       var a = screen[edge[0]]
       var b = screen[edge[1]]
       // Nearer edges draw stronger, which is the whole of the depth cue.
       var near = (a[2] + b[2]) / 2
-      ctx.strokeStyle = 'rgba(' + orbit.glow + ', ' + (0.18 + 0.5 * ((near + 1) / 2)) + ')'
+      ctx.strokeStyle =
+        'rgba(' + orbit.glow + ', ' + fade * (0.18 + 0.5 * ((near + 1) / 2)) + ')'
       ctx.beginPath()
       ctx.moveTo(a[0], a[1])
       ctx.lineTo(b[0], b[1])
@@ -307,6 +397,7 @@
      Holding pauses the bar in CSS, which is the whole of pausing. The stacked
      layout (styles.css: no hover, or under 900px) lays the tiles in a column
      and hides the bar, so there it never moves. */
+  var heroOrbit = makeOrbit(document.getElementById('hero-orbit'))
   var track = carousel && carousel.querySelector('.carousel-track')
   if (track) {
     var tiles = Array.prototype.slice.call(track.children)
@@ -371,6 +462,8 @@
         tile.classList.toggle('is-prev', i === index)
         tile.classList.toggle('is-next', i === index + 2)
       }
+      // The shape behind the page is the shape of the app in focus.
+      setShape(heroOrbit, tiles[active].getAttribute('data-shape'), readGlow(tiles[active]))
     }
 
     function goTo(i) {
@@ -412,25 +505,31 @@
       else goTo(Array.prototype.indexOf.call(track.children, tile) - 1)
     })
 
-    carousel.addEventListener('mouseenter', function () {
+    // On the windows, not on the carousel: that is a band the width of the
+    // viewport, and holding from anywhere in it stopped the carousel with the
+    // pointer nowhere near a window and nothing on screen saying why.
+    var windows = track.querySelectorAll('.tile-window')
+    function hold() {
       hovered = true
       syncHeld()
-    })
-    carousel.addEventListener('mouseleave', function () {
+    }
+    function release() {
       hovered = false
       syncHeld()
-    })
+    }
+    for (var wi = 0; wi < windows.length; wi++) {
+      windows[wi].addEventListener('mouseenter', hold)
+      windows[wi].addEventListener('mouseleave', release)
+    }
     carousel.addEventListener('focusin', function (event) {
       // Bring a tile the keyboard has reached into focus, then hold there.
       var at = tiles.indexOf(event.target.closest('.tile'))
       if (at !== -1) goTo(at)
-      hovered = true
-      syncHeld()
+      hold()
     })
     carousel.addEventListener('focusout', function (event) {
       if (carousel.contains(event.relatedTarget)) return
-      hovered = false
-      syncHeld()
+      release()
     })
 
     // The apps in the nav move the carousel and bring the hero back into
@@ -458,9 +557,6 @@
     mark()
     if (!STACKED.matches) place(true)
 
-    // After the copies exist, so they turn too.
-    var canvases = track.querySelectorAll('.tile-orbit')
-    for (var c = 0; c < canvases.length; c++) makeOrbit(canvases[c])
     startOrbits()
   }
 

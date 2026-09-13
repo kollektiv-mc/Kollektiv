@@ -54,6 +54,10 @@
   --veil-idle: 38%;
   --veil-focus: 68%;
   --veil-blur: 10px;
+  /* How far the glow round the window in focus carries. The carousel lets its
+     content paint this far past the edge it clips at, or the glow would end
+     on a straight line above and below the window. */
+  --glow-reach: 72px;
   /* A window out of focus sits back from the one in focus. The layout box is
      the same either way — only the painted window scales — so the carousel's
      arithmetic stays whole windows. */
@@ -242,10 +246,27 @@ code {
    footer; the carousel centres itself in what is left and is the one thing
    that may cross the side padding. */
 .hero {
+  position: relative;
   overflow-x: clip;
 }
 
+/* Behind the carousel, and behind the windows, which are opaque: what shows
+   is the part of the shape that reaches past them. */
+.hero-orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 0;
+  width: min(96vh, 1100px);
+  height: min(96vh, 1100px);
+  transform: translate(-50%, -50%);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 .hero-inner {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   min-height: 100svh;
@@ -299,7 +320,11 @@ code {
   margin-inline: calc(-1 * var(--bleed));
   margin-block: auto;
   padding-block: var(--space-6);
-  overflow: hidden;
+  /* clip rather than hidden, so overflow-clip-margin can let the glow paint
+     past the top and bottom edges. It lets the tiles paint past the left and
+     right edges too, which is why .hero clips the overflow on that axis. */
+  overflow: clip;
+  overflow-clip-margin: var(--glow-reach);
 }
 
 .carousel-track {
@@ -348,15 +373,18 @@ code {
   transform: none;
 }
 
-/* Held (hovered or focused): a soft glow round the window in focus, in that
-   product's colour. An accent-tinted glow is the one box-shadow the design
-   language allows; see design/README.md. */
-.carousel.is-held .tile.is-active .tile-window {
+/* A soft glow round the window in focus while the pointer is actually on it,
+   in that product's colour — the carousel is a viewport-wide band, and lighting
+   it up from anywhere in that band left the glow on with the pointer nowhere
+   near a window. It doubles as why the carousel has stopped. An accent-tinted
+   glow is the one box-shadow the design language allows; see design/README.md. */
+.tile.is-active .tile-window:hover,
+.tile.is-active .tile-window:focus-within {
   border-color: var(--border-hover);
   box-shadow:
     0 0 0 1px rgb(var(--tile-glow-rgb) / 0.35),
     0 0 var(--space-6) rgb(var(--tile-glow-rgb) / 0.3),
-    0 0 calc(var(--space-6) * 3) rgb(var(--tile-glow-rgb) / 0.2);
+    0 0 var(--glow-reach) rgb(var(--tile-glow-rgb) / 0.2);
 }
 
 /* The screenshot fills the window from its top corner, the way the app's own
@@ -432,28 +460,6 @@ code {
   height: var(--veil-focus);
   backdrop-filter: blur(var(--veil-blur));
   -webkit-backdrop-filter: blur(var(--veil-blur));
-}
-
-/* The wireframe: over the frost, under the copy, held to the right of the
-   window where the copy is not. Drawn by main.js in the tile's own colour;
-   see website/README.md. */
-.tile-orbit {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  z-index: 2;
-  /* Held to the frosted corner: out over the sharp half of the window it
-     would be drawing on top of the app rather than behind the copy. */
-  width: 42%;
-  height: 62%;
-  opacity: 0.26;
-  pointer-events: none;
-  mask-image: radial-gradient(closest-side, black 50%, transparent 100%);
-  transition: opacity var(--duration-panel) var(--ease-standard);
-}
-
-.tile.is-active .tile-orbit {
-  opacity: 0.5;
 }
 
 /* The way in for a keyboard. A pointer can click the window itself. */
@@ -679,8 +685,10 @@ code {
     cursor: auto;
   }
   .tile-window::after,
-  .tile-progress,
-  .tile-orbit {
+  .tile-progress {
+    display: none;
+  }
+  .hero-orbit {
     display: none;
   }
   /* Every window is in focus here, so every one keeps its way into the card;
@@ -689,7 +697,8 @@ code {
     opacity: 1;
     visibility: visible;
   }
-  .carousel.is-held .tile.is-active .tile-window {
+  .tile.is-active .tile-window:hover,
+  .tile.is-active .tile-window:focus-within {
     box-shadow: none;
     border-color: var(--border-subtle);
   }
@@ -783,12 +792,10 @@ code {
   border: var(--border-hairline) solid var(--border-subtle);
   background: var(--bg-overlay);
   overflow: hidden;
-  transform: scale(0.96);
+  /* The transform is set by main.js: the card starts laid over the window it
+     was opened from, and grows out of it. */
+  transform-origin: center;
   transition: transform var(--duration-panel) var(--ease-standard);
-}
-
-.detail.is-open .detail-card {
-  transform: none;
 }
 
 .detail-head {

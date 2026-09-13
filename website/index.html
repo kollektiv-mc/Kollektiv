@@ -38,6 +38,11 @@
          is no hover, or no room, the windows stack with everything laid out
          below the picture. -->
     <header class="hero" id="top">
+      <!-- The app in focus turns slowly behind the carousel, large enough to
+           reach past the windows on every side. One canvas for the page, not
+           one per tile: it is the page's background, and it changes shape when
+           the carousel moves on. -->
+      <canvas class="hero-orbit" id="hero-orbit" aria-hidden="true"></canvas>
       <div class="container hero-inner">
         <div class="topbar">
           <a class="wordmark" href="#top">Kollektiv</a>
@@ -54,7 +59,7 @@
 
         <div class="carousel" id="carousel">
           <div class="carousel-track">
-            <article class="tile" id="konnekt" aria-labelledby="konnekt-title">
+            <article class="tile" id="konnekt" data-shape="sphere" aria-labelledby="konnekt-title">
               <div class="tile-window">
                 <img
                   class="tile-shot"
@@ -64,10 +69,6 @@
                   height="900"
                   decoding="async"
                 />
-                <!-- One slowly turning wireframe per app, drawn by main.js over
-                     the frosted foot of the window. The shape is the tile's
-                     own; the colour is the tile's own. -->
-                <canvas class="tile-orbit" data-shape="sphere" aria-hidden="true"></canvas>
                 <div class="tile-veil">
                   <div class="tile-head">
                     <h2 class="tile-name" id="konnekt-title">Konnekt</h2>
@@ -141,6 +142,7 @@
             <article
               class="tile"
               id="kommands"
+              data-shape="torus"
               aria-labelledby="kommands-title"
               style="--tile-glow-rgb: 251 146 60"
             >
@@ -153,7 +155,6 @@
                   height="868"
                   decoding="async"
                 />
-                <canvas class="tile-orbit" data-shape="torus" aria-hidden="true"></canvas>
                 <div class="tile-veil">
                   <div class="tile-head">
                     <h2 class="tile-name" id="kommands-title">Kommands</h2>
@@ -221,10 +222,9 @@
 
             <!-- Nothing is built yet, so the window is deliberately blank
                  rather than a mock-up of something that does not exist. -->
-            <article class="tile" id="kube" aria-labelledby="kube-title">
+            <article class="tile" id="kube" data-shape="cube" aria-labelledby="kube-title">
               <div class="tile-window tile-window-blank">
                 <p class="tile-blank" aria-hidden="true">Nothing to show yet</p>
-                <canvas class="tile-orbit" data-shape="cube" aria-hidden="true"></canvas>
                 <div class="tile-veil">
                   <div class="tile-head">
                     <h2 class="tile-name" id="kube-title">Kube</h2>

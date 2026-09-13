@@ -784,6 +784,69 @@
     else startOrbits()
   })
 
+  /* ── Sections coming into focus ───────────────────────────────────────────
+     A section is sharp when it is settled in the middle of the screen and
+     softens as it leaves, on either side. styles.css reads --focus; this works
+     out what it should be.
+
+     Done here rather than with a scroll-driven animation in CSS, which is what
+     it was. animation-timeline is Chromium and Safari only, so in Firefox the
+     effect simply did not happen. The arithmetic is the same and this runs
+     everywhere.
+
+     Read on a frame and written only when the value has actually changed, so
+     a scroll neither measures more than once per frame nor repaints a blur it
+     has already painted. */
+  var sections = document.querySelectorAll('.section')
+  var footer = document.querySelector('.footer')
+  var pending = false
+
+  function focusSections() {
+    pending = false
+    var screen = window.innerHeight
+    for (var i = 0; i < sections.length; i++) {
+      var section = sections[i]
+      var box = section.getBoundingClientRect()
+      // How far this section's own middle is from the screen's, as a share of
+      // the distance at which it would be entirely gone.
+      var away = Math.abs(box.top + box.height / 2 - screen / 2)
+      var gone = (screen + box.height) / 2
+      var near = gone ? 1 - Math.min(away / gone, 1) : 1
+      // A wide plateau. A section is readable for most of its pass and only
+      // softens as it goes; a narrow one has the page breathing in and out
+      // while someone is trying to read it.
+      var focus = REDUCED.matches ? '1' : Math.min(near / 0.55, 1).toFixed(2)
+      if (section.style.getPropertyValue('--focus') !== focus) {
+        section.style.setProperty('--focus', focus)
+      }
+    }
+  }
+
+  function onScroll() {
+    if (pending) return
+    pending = true
+    window.requestAnimationFrame(focusSections)
+  }
+
+  // The last section gives up the footer's height so the two share a snap
+  // point; styles.css § Sections explains what that saves.
+  function measureFooter() {
+    if (!footer) return
+    var height = Math.ceil(footer.getBoundingClientRect().height)
+    document.documentElement.style.setProperty('--footer-h', height + 'px')
+  }
+
+  if (sections.length) {
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', function () {
+      measureFooter()
+      onScroll()
+    })
+    REDUCED.addEventListener('change', onScroll)
+    measureFooter()
+    focusSections()
+  }
+
   /* ── Release pills ─────────────────────────────────────────────────────────
      The markup ships with the platform word alone ("desktop", "web") and
      stays that way if the request fails, so nothing on the page ever claims

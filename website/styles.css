@@ -1099,61 +1099,86 @@ code {
   }
 }
 
-/* ── Sections ───────────────────────────────────────────────────────────── */
+/* ── Sections ───────────────────────────────────────────────────────────────
+   A section is sharp when it is settled in the middle of the screen and softens
+   as it leaves, on either side. --focus is written by main.js from how far the
+   section's own middle is from the screen's: 1 settled, 0 gone.
+
+   Computed in script rather than declared as a scroll-driven animation, which
+   is what this was. animation-timeline is Chromium and Safari only, so in
+   Firefox the effect simply did not happen. The arithmetic is the same either
+   way and this runs everywhere, and where no script runs at all the fallback
+   in each var() leaves the sections sharp.
+
+   Carried by the container rather than the section, because the section is a
+   whole screen and mostly empty: blurring the panel means blurring a viewport,
+   blurring the container means blurring the words. */
 .section {
+  position: relative;
   padding: var(--section-y) 0;
   border-top: var(--border-hairline) solid var(--border-subtle);
 }
 
-/* A section comes into focus as it crosses the viewport: out of focus and
-   faint at either edge, sharp through the middle. Driven by where the reader
-   has scrolled rather than by a clock, so it follows them instead of playing
-   at them.
+.section > .container {
+  opacity: var(--focus, 1);
+  filter: blur(calc((1 - var(--focus, 1)) * var(--section-blur)));
+}
 
-   Two animations over two ranges rather than one over the whole pass, and the
-   fills are the reason. Arriving fills both ways, so a section below the fold
-   is already faint before it starts. Leaving fills forwards only, so it
-   contributes nothing until it actually begins: with one animation across the
-   whole pass, the last section on the page ended fully blurred and invisible,
-   because the page runs out of scroll before that pass can finish. Split this
-   way, a section that never reaches its exit simply stays sharp, which is
-   what the foot of a page should do.
+/* Every block below the hero is a panel of its own screen, so the page keeps
+   one rhythm instead of each section carrying its own height, and so there is
+   something for the scroll to settle on. The top padding is asymmetric because
+   the bar is sticky and overlays whatever passes beneath it: box-sizing is
+   border-box, so that padding sits inside the 100svh and the one rule both
+   clears the bar and holds for a section that outgrows the screen.
 
-   Guarded twice. @supports because without a scroll timeline these would fall
-   back to the document timeline and run on a clock, fading every section out a
-   second after load and leaving it there. And the base rule above is the
-   sharp, visible state, so anywhere this does not apply the sections stay put. */
-@keyframes section-arriving {
-  from {
-    opacity: 0;
-    filter: blur(var(--section-blur));
-  }
-  to {
-    opacity: 1;
-    filter: blur(0);
+   Above the width where the carousel stops being a carousel, and no lower: a
+   short section stretched to a phone screen is a lot of nothing to scroll past.
+   The idiom is Konnekt's .section-full, and so is the snapping below. */
+@media (min-width: 901px) {
+  .section {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: calc(var(--nav-h) + var(--section-y)) 0 var(--section-y);
   }
 }
 
-@keyframes section-leaving {
-  from {
-    opacity: 1;
-    filter: blur(0);
+/* Settling on a section. proximity rather than mandatory: a section that
+   outgrows the screen would otherwise be yanked away from the part being read.
+   Pointer-gated as well as width-gated, because on a touch screen snapping
+   fights the flick.
+
+   The footer needs saving twice over. The last section gives up exactly the
+   footer's height, so that section's snap point and the end of the document
+   are one position rather than sitting a footer apart, which is close enough
+   that the scroll is pulled between the two and never settles. And the footer
+   takes a snap point of its own so it stays reachable at all: without one the
+   proximity radius pulls every attempt to reach it back up to the section
+   above, and the links in it cannot be clicked. --footer-h is measured by
+   main.js; the floor keeps the panel from being squeezed if the footer ever
+   wraps tall. Both of these are Konnekt's, learned there the hard way. */
+@media (min-width: 901px) and (pointer: fine) {
+  html {
+    scroll-snap-type: y proximity;
   }
-  to {
-    opacity: 0;
-    filter: blur(var(--section-blur));
+
+  .section {
+    scroll-snap-align: start;
+  }
+
+  .section:last-of-type {
+    min-height: max(420px, calc(100svh - var(--footer-h, 0px)));
+  }
+
+  .footer {
+    scroll-snap-align: end;
   }
 }
 
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .section {
-      animation:
-        section-arriving linear both,
-        section-leaving linear forwards;
-      animation-timeline: view(), view();
-      animation-range: entry, exit;
-    }
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-snap-type: none;
   }
 }
 

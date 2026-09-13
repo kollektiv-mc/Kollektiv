@@ -265,27 +265,44 @@ commit, or without one for a repo that has no commits yet. A request that fails 
 claims a version it did not fetch. The same element appears in the hero and in
 the downloads table and is filled from one answer.
 
-## Sections coming into focus
+## Sections coming into focus, and settling on one
 
-Each section below the hero is out of focus and faint at either edge of its
-pass through the viewport, and sharp through the middle. It is driven by where
-the reader has scrolled rather than by a clock, so it follows them instead of
-playing at them.
+Each section below the hero is a panel of its own screen, so the page keeps one
+rhythm rather than each section carrying its own height, and so there is
+something for the scroll to settle on. The idiom is Konnekt's `.section-full`,
+and so is the snapping. Both apply above the width where the carousel stops
+being a carousel and no lower: a short section stretched to a phone screen is a
+lot of nothing to scroll past.
 
-Two animations over two ranges rather than one over the whole pass, and the
-fills are the reason. Arriving fills both ways, so a section below the fold is
-already faint before it starts. Leaving fills forwards only, so it contributes
-nothing until it actually begins. With one animation across the whole pass the
-last section on the page ended fully blurred and invisible, because the page
-runs out of scroll before that pass can finish; split this way, a section that
-never reaches its exit simply stays sharp, which is what the foot of a page
-should do. That is also what puts the downloads and the bar on screen together
-at the bottom.
+**Settling** is `scroll-snap-type: y proximity`, not `mandatory`, so a section
+that outgrows the screen is never yanked away from the part being read. It is
+pointer-gated as well as width-gated, because on a touch screen snapping fights
+the flick, and it is off entirely under reduced motion.
 
-Guarded by `@supports`, because without a scroll timeline the same animations
-fall back to the document timeline and run on a clock, fading every section out
-a second after load and leaving it there. The base rule is the sharp, visible
-state, so anywhere this does not apply the sections stay put.
+The footer needs saving twice over, and both fixes are Konnekt's, learned there
+the hard way. The last section gives up exactly the footer's height, so that
+section's snap point and the end of the document are one position rather than
+sitting a footer apart, which is close enough that the scroll is pulled between
+the two and never settles. And the footer takes a snap point of its own so it
+stays reachable at all: without one the proximity radius pulls every attempt to
+reach it back up to the section above, and the links in it cannot be clicked.
+`--footer-h` is measured by `main.js`.
+
+**Focus** is the blur and fade: a section is sharp when it is settled in the
+middle of the screen and softens as it leaves, on either side. `main.js` writes
+`--focus` from how far the section's own middle is from the screen's, 1 settled
+and 0 gone, and the stylesheet reads it. The plateau is wide on purpose, since
+a section is readable for most of its pass and only softens as it goes.
+
+This was a scroll-driven animation in CSS, which was the wrong choice for one
+reason: `animation-timeline` is Chromium and Safari only, so in Firefox the
+effect simply did not happen. The arithmetic is the same either way and script
+runs everywhere. Where no script runs at all, the fallback in each `var()`
+leaves the sections sharp.
+
+It is carried by the container rather than the section, because the section is
+a whole screen and mostly empty: blurring the panel means blurring a viewport,
+blurring the container means blurring the words.
 
 ## Colour per product
 

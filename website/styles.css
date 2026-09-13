@@ -45,13 +45,12 @@
   /* The carousel. A window is 16:9 and about three quarters of the container
      wide, centred, so the neighbours peek in on both sides; --carousel-slide
      is one move and --carousel-dwell how long a window stays in focus, both
-     read by main.js. The veil's fade reaches --veil-idle up a window that is
-     not in focus and --veil-focus up the one that is. */
+     read by main.js. --veil-focus is how far up the window the frosted foot
+     reaches, and --veil-blur how hard it is frosted. */
   --tile-w: min(76cqi, 900px);
   --tile-gap: clamp(16px, 2vw, 28px);
   --tile-pad: clamp(20px, 2.6vw, 36px);
   --tile-title: clamp(22px, 2.4vw, 32px);
-  --veil-idle: 38%;
   --veil-focus: 68%;
   --veil-blur: 10px;
   /* How far the glow round the window in focus carries. The carousel lets its
@@ -247,7 +246,10 @@ code {
    that may cross the side padding. */
 .hero {
   position: relative;
-  overflow-x: clip;
+  /* Both axes. The shape behind the carousel is taller than the viewport, so
+     clipping only the sides let it hang into the section below; the carousel
+     bleeding past the sides is the other thing this catches. */
+  overflow: clip;
 }
 
 /* Behind the carousel, and behind the windows, which are opaque: what shows
@@ -261,6 +263,11 @@ code {
   height: min(128vh, 1500px);
   transform: translate(-50%, -50%);
   opacity: 0.3;
+  /* Softened here rather than in the drawing, which cannot stroke a line
+     softer than its own edge. The blur is why the strokes are laid down
+     thicker than a hairline: spread over several pixels, a one-pixel line
+     loses most of what makes it visible at all. */
+  filter: blur(4px);
   pointer-events: none;
 }
 
@@ -406,25 +413,10 @@ code {
   object-position: right top;
 }
 
-/* A window with nothing in it yet. */
+/* A window with nothing in it yet: its product's own ground, the same colour
+   its card opens onto, rather than a translucent pane the page shows through. */
 .tile-window-blank {
-  background: var(--bg-surface);
-}
-
-.tile-blank {
-  position: absolute;
-  inset: 0;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-bottom: var(--veil-idle);
-  font-family: var(--font-title);
-  font-weight: var(--weight-medium);
-  font-size: var(--text-sm);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-faint);
+  background: var(--detail-bg, var(--bg-surface));
 }
 
 /* The fade at the foot of the window: under the name alone while out of
@@ -437,29 +429,37 @@ code {
   right: 0;
   bottom: 0;
   z-index: 1;
-  height: var(--veil-idle);
-  background: linear-gradient(
-    to top,
-    var(--bg-base) 0%,
-    color-mix(in srgb, var(--bg-base) 80%, transparent) 45%,
-    transparent 100%
-  );
-  /* Frosts what is behind it — the screenshot and the wireframe — so the copy
-     over it reads without the app being hidden. Masked rather than cut, or
-     the blur would end on a line across the picture. It fades in with the
-     copy: same duration, same easing. */
-  backdrop-filter: blur(0);
-  -webkit-backdrop-filter: blur(0);
-  mask-image: linear-gradient(to top, black 55%, transparent 100%);
-  transition:
-    height var(--duration-panel) var(--ease-standard),
-    backdrop-filter var(--duration-panel) var(--ease-standard);
-}
+  /* Frosts the foot of the window so the copy over it reads without hiding the
+     app. Masked rather than cut, or the blur would end on a line across the
+     picture.
 
-.tile.is-active .tile-window::after {
+     Three things this rule used to do and no longer does, because each was a
+     way of making the same effect look wrong:
+
+     It darkened. A gradient to bg-base under the blur read as the picture
+     fading to black rather than as glass over it.
+
+     It grew, from a short box to a tall one. The mask is measured against this
+     box, so a box that changes height drags its own soft edge up the picture,
+     and that sweep is what read as the blur cutting in.
+
+     It animated backdrop-filter, from blur(0) to full. Chromium interpolates
+     that poorly and tends to snap partway.
+
+     So the box is one fixed height, always blurred, and only its opacity
+     moves. An element carrying a backdrop-filter at partial opacity blends the
+     blurred backdrop with the sharp one, which is a real blur fading in, and
+     opacity is the one property that animates smoothly every time. */
   height: var(--veil-focus);
   backdrop-filter: blur(var(--veil-blur));
   -webkit-backdrop-filter: blur(var(--veil-blur));
+  mask-image: linear-gradient(to top, black 45%, transparent 100%);
+  opacity: 0;
+  transition: opacity var(--duration-panel) var(--ease-standard);
+}
+
+.tile.is-active .tile-window::after {
+  opacity: 1;
 }
 
 /* The way in for a keyboard. A pointer can click the window itself. */
@@ -702,15 +702,11 @@ code {
     box-shadow: none;
     border-color: var(--border-subtle);
   }
-  .tile-shot,
-  .tile-blank {
+  .tile-shot {
     position: static;
     height: auto;
     aspect-ratio: 16 / 10;
     border-bottom: var(--border-hairline) solid var(--border-subtle);
-  }
-  .tile-blank {
-    padding-bottom: 0;
   }
   .tile-veil {
     position: static;

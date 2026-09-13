@@ -196,7 +196,15 @@
         edges.push([a, b])
       }
     })
-    return { points: points, edges: edges }
+    return {
+      points: points,
+      edges: edges,
+      // Anywhere near the sphere, the sphere is the point's own direction.
+      surface: function (p) {
+        var d = Math.sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]) || 1
+        return [p[0] / d, p[1] / d, p[2] / d]
+      },
+    }
   }
 
   function torus(major, minor, R, r) {
@@ -222,7 +230,20 @@
         edges.push([at(a, b), at(a, b + 1)])
       }
     }
-    return { points: points, edges: edges }
+    return {
+      points: points,
+      edges: edges,
+      // Out to the ring, then out from the ring: the nearest point on the tube.
+      surface: function (p) {
+        var flat = Math.sqrt(p[0] * p[0] + p[2] * p[2]) || 1
+        var cx = (p[0] / flat) * R
+        var cz = (p[2] / flat) * R
+        var dx = p[0] - cx
+        var dz = p[2] - cz
+        var d = Math.sqrt(dx * dx + p[1] * p[1] + dz * dz) || 1
+        return [cx + (dx / d) * r, (p[1] / d) * r, cz + (dz / d) * r]
+      },
+    }
   }
 
   function cube() {
@@ -263,6 +284,9 @@
   var TILT = { sphere: 0.62, torus: 1, cube: 0.62 }
   // How long the old shape takes to go and the new one to arrive, together.
   var MORPH = 600
+  // Steps an edge of a curved surface is walked in. Eight is where a great
+  // circle stops looking like a chain of straight lines at this size.
+  var CURVE = 8
   var orbits = []
   var lastTime = 0
 
@@ -386,7 +410,8 @@
     var tiltCos = Math.cos(orbit.shape.tilt)
     var tiltSin = Math.sin(orbit.shape.tilt)
     var scale = (Math.min(w, h) * 0.42) / orbit.shape.reach
-    var screen = orbit.shape.geometry.points.map(function (point) {
+
+    function project(point) {
       // Spin about the vertical axis, then tip the whole thing towards us.
       var x = point[0] * cos + point[2] * sin
       var z = point[2] * cos - point[0] * sin
@@ -394,19 +419,43 @@
       var depth = z * tiltCos + point[1] * tiltSin
       var perspective = 4 / (4 - depth)
       return [w / 2 + x * scale * perspective, h / 2 - y * scale * perspective, depth]
-    })
+    }
 
-    ctx.lineWidth = 1
-    orbit.shape.geometry.edges.forEach(function (edge) {
-      var a = screen[edge[0]]
-      var b = screen[edge[1]]
-      // Nearer edges draw stronger, which is the whole of the depth cue.
-      var near = (a[2] + b[2]) / 2
-      ctx.strokeStyle =
-        'rgba(' + orbit.glow + ', ' + fade * (0.18 + 0.5 * ((near + 1) / 2)) + ')'
+    var geometry = orbit.shape.geometry
+    var points = geometry.points
+    // An edge of a curved surface is a curve. Drawn as one straight line it
+    // cuts the corner, and a ball of cut corners is a polyhedron rather than a
+    // sphere. So a curved shape's edges are walked in steps, with every step
+    // put back onto the surface before it is projected; a cube has no curve to
+    // follow and keeps its two ends.
+    var steps = geometry.surface ? CURVE : 1
+
+    // Wider than a hairline on purpose; the canvas is blurred in CSS and a
+    // one-pixel line does not survive that. See .hero-orbit.
+    ctx.lineWidth = 1.6
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    geometry.edges.forEach(function (edge) {
+      var a = points[edge[0]]
+      var b = points[edge[1]]
       ctx.beginPath()
-      ctx.moveTo(a[0], a[1])
-      ctx.lineTo(b[0], b[1])
+      var depth = 0
+      for (var step = 0; step <= steps; step++) {
+        var along = step / steps
+        var point = [
+          a[0] + (b[0] - a[0]) * along,
+          a[1] + (b[1] - a[1]) * along,
+          a[2] + (b[2] - a[2]) * along,
+        ]
+        if (geometry.surface) point = geometry.surface(point)
+        var at = project(point)
+        if (step === 0) ctx.moveTo(at[0], at[1])
+        else ctx.lineTo(at[0], at[1])
+        if (step === 0 || step === steps) depth += at[2] / 2
+      }
+      // Nearer edges draw stronger, which is the whole of the depth cue.
+      ctx.strokeStyle =
+        'rgba(' + orbit.glow + ', ' + fade * (0.18 + 0.5 * ((depth + 1) / 2)) + ')'
       ctx.stroke()
     })
   }

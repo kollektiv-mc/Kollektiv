@@ -71,10 +71,20 @@ clips with `overflow-clip-margin` rather than `hidden`; horizontally that
 lets the tiles paint past the viewport, which is what `.hero`'s own
 `overflow-x: clip` is for.
 
-The foot of the window in focus is frosted — a backdrop blur under the
-gradient, masked so it fades out rather than ending on a line across the
-picture — which is what makes the copy readable while the upper half of the
-app stays sharp. It fades in with the copy, on the same duration and easing.
+The foot of the window in focus is frosted, which is what makes the copy
+readable while the upper half of the app stays sharp. It is a blur and nothing
+else: no darkening under it, because a gradient to the page colour read as the
+picture fading to black rather than as glass over it.
+
+The frosted box is one fixed height, always blurred, and only its opacity
+moves. Two earlier versions of it looked wrong for reasons worth keeping
+written down. Growing the box from short to tall dragged the mask's own soft
+edge up the picture, and that sweep is what read as the blur cutting in rather
+than arriving. Animating `backdrop-filter` from `blur(0)` to full is worse
+still: Chromium interpolates it poorly and tends to snap partway. Opacity
+animates smoothly every time, and an element carrying a `backdrop-filter` at
+partial opacity blends the blurred backdrop with the sharp one, which is a real
+blur fading in.
 
 A bar along the foot of the window in focus fills over eight seconds and the
 carousel moves on when it is full. Hovering a window holds it and pauses the
@@ -100,11 +110,26 @@ compared freshly built objects instead it never matched, so every pass through
 mark — and a wrap makes two in a row — restarted the morph and the shape
 flashed.
 
-`main.js` projects a few dozen edges onto a canvas; that needs no library, and
-a library is a dependency this page has no other use for. Each shape is
+`main.js` projects the edges onto a canvas; that needs no library, and a
+library is a dependency this page has no other use for. Each shape is
 normalised by its own reach, so a cube's corners and a sphere's surface come
 out the same size, and each carries its own tilt — a torus at the angle that
 suits a sphere is seen nearly edge-on and reads as an arc rather than a ring.
+
+**The edges are curves, not chords.** An edge of a curved surface drawn as one
+straight line cuts the corner, and a ball of cut corners is a polyhedron rather
+than a sphere. So each shape says how to put a point back onto itself: a
+sphere's surface is any point's own direction, a torus's is out to the ring and
+then out from the ring. Each edge is walked in eight steps with every step put
+back on the surface before it is projected, which is what makes the sphere read
+as a sphere and the torus as a tube. A cube has no curve to follow and keeps
+its two ends.
+
+It is drawn faintly and blurred in CSS, and the strokes are laid down wider
+than a hairline because of it: spread over several pixels, a one-pixel line
+loses most of what makes it visible. The canvas is clipped to the hero, which
+is why `.hero` clips both axes rather than only the sides. The shape is taller
+than the viewport and used to hang into the section below.
 
 The stroke colour is read from the tile's `--tile-glow-rgb` at draw time —
 the same move Kommands makes in `voxelColor` when it needs a token as a value
@@ -117,9 +142,9 @@ that repo's `src/lib/theme.ts`, which is kept out of the suite tokens on
 purpose (see `design/README.md` § Two things not held here). The value is
 restated inline on its tile in `index.html`, with a comment saying where it
 comes from; the other tiles take the suite accent. Kube's window is blank on
-purpose: nothing is built yet, and a mock-up would say otherwise — and because
-that window is the one translucent surface in the carousel, its cube shows
-through it rather than only around it.
+purpose: nothing is built yet, and a mock-up would say otherwise. It is filled
+with that product's own ground, the same colour its card opens onto, rather
+than left translucent for the page to show through.
 
 ### The card
 

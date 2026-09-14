@@ -132,3 +132,18 @@ jobs:
       - name: Suite participation
         if: ${{ !cancelled() }}
         run: ./scripts/check-participation.sh --require-products
+
+      # The em dash rule is suite-wide, but most of the published copy is in the
+      # products and this repo's own ci.yml cannot see them: it ran check-copy.sh
+      # over one website while Konnekt shipped seventeen em dashes in its page
+      # titles. bootstrap.sh has run by here, so this is the one place the whole
+      # published surface exists at once.
+      #
+      # Runs on a red run, for the reason stated on the steps above.
+      #
+      # --require-products because bootstrap.sh ran: an uncloned product here is
+      # a bootstrap that failed, and "no em dashes" over a set that was never
+      # read is the pass this repo exists to refuse.
+      - name: Public copy
+        if: ${{ !cancelled() }}
+        run: ./scripts/check-copy.sh --require-products

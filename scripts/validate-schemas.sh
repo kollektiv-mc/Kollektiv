@@ -70,11 +70,18 @@ if [ -f "$manifest" ] && [ "${#PYTHON[@]}" -gt 0 ]; then
     suite="$root/$name/.claude/suite.json"
     if [ -f "$suite" ]; then
       validate "$suite" "$root/design/suite.schema.json" "$name/.claude/suite.json"
+      # Adoption, not presence, is what --require-products asserts about. A
+      # repo in the manifest that has never run scripts/adopt.sh has no manifest
+      # to validate, and calling that a bootstrap failure would be red for a repo
+      # that has not started. Not cloned is still a failure under the flag: that
+      # one really does mean bootstrap.sh did not do its job.
+    elif [ -d "$root/$name" ]; then
+      echo "? $name has not adopted suite-kit, skipped"
     elif [ "$require_products" -eq 1 ]; then
-      echo "! $name has no .claude/suite.json — not cloned, or not adopted" >&2
+      echo "! $name not cloned — run scripts/bootstrap.sh first" >&2
       status=1
     else
-      echo "? $name not cloned or not adopted — skipped"
+      echo "? $name not cloned — skipped"
     fi
   done < <(python_lines -c '
 import json, sys

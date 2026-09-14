@@ -361,10 +361,18 @@ if os.path.isfile(manifest):
         d = os.path.join(root, name)
         if os.path.isfile(os.path.join(d, ".claude", "suite.json")):
             check_repo(name, d)
+        # Adoption, not presence, is what --require-products asserts about. A
+        # repo in the manifest that has never run scripts/adopt.sh has nothing
+        # to participate with yet, and calling that a bootstrap failure would be
+        # red for a repo that has not started. Not cloned stays a failure under
+        # the flag: that one really does mean bootstrap.sh did not do its job.
+        elif os.path.isdir(d):
+            print("? %s has not adopted suite-kit — skipped" % name)
+            skipped += 1
         elif require_products:
-            fail("%s not cloned, or not adopted" % name)
+            fail("%s not cloned — run scripts/bootstrap.sh first" % name)
         else:
-            print("? %s not cloned or not adopted — skipped" % name)
+            print("? %s not cloned — skipped" % name)
             skipped += 1
 else:
     fail("no suite.repos.json at %s" % root)

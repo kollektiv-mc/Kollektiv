@@ -27,6 +27,13 @@
         "role": "consumer",
         "generate": "pnpm gen:tokens"
       }
+    },
+    {
+      "name": "Kube",
+      "url": "https://github.com/kollektiv-mc/Kube.git",
+      "tokens": {
+        "role": "consumer"
+      }
     }
   ]
 }

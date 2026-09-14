@@ -39,15 +39,18 @@ that commits the copy and runs it.
 | `scripts/sync-labels.sh` | Applies `design/labels.json`'s GitHub side via `gh` (`--check` to detect drift) |
 | `scripts/validate-schemas.sh` | Validates every manifest against its schema |
 | `scripts/check-participation.sh` | Checks each repo's permissions floor, the paths its manifest names, its formatting settings, and that every vendored file is excluded from that repo's own formatter and scanner (`--require-products` to fail on an uncloned one) |
-| `scripts/check-copy.sh` | Checks the published copy for em dashes (`docs/conventions.md` § Public copy) |
+| `scripts/check-copy.sh` | Checks every repo's published copy for em dashes (`--require-products` to fail on an uncloned one) |
 | `website/` | The suite's home page — hand-written HTML/CSS, styled from `design/tokens.json` through `website/gen-tokens.py` |
 | `docs/adopting.md` | How a repo adopts suite-kit |
 | `docs/conventions.md` | Cross-repo rules: tracking, PR magic words, permissions |
 | `docs/linear.md` | The Linear structure `/suite-kit:suite-sync` mirrors GitHub Issues into |
 | `design/README.md` | Why the token set is shaped the way it is |
 
-This repo is the **workspace root**. `Konnekt/` and `Kommands/` are cloned beneath it
-by `bootstrap.sh` and are not tracked here.
+This repo is the **workspace root**. The repos in `suite.repos.json` are cloned
+beneath it by `bootstrap.sh` and are not tracked here: `Konnekt/` and `Kommands/`,
+which have adopted suite-kit, and `Kube/`, which is in the manifest but has not.
+A repo without `.claude/suite.json` has not adopted, and every check skips it by
+that marker rather than failing; see `docs/conventions.md`.
 
 ## Rules that bite
 

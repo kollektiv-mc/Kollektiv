@@ -202,10 +202,39 @@ is an index entry. The website is the first thing a user reads. Those are the
 surfaces where punctuation someone has to decode costs something, and they are
 also the ones nobody revises after the fact.
 
-**What is checked.** `scripts/check-copy.sh` reads this repo's `website/*.html`
-and fails on an em dash in the copy. It blanks comments, `<script>` and
-`<style>` first, so a note to the next person working on the page is left
-alone, and it keeps the line numbers so a failure names the line.
+**What is checked.** `scripts/check-copy.sh` reads every repo in
+`suite.repos.json`, plus this one, and fails on an em dash in the copy. Per repo
+it takes `website/*.html` and any `*.html` at the root, which is where a Vite
+app keeps the shell it serves; nothing deeper, so a fixture or a build output is
+never mistaken for published copy. It blanks comments, `<script>` and `<style>`
+first, so a note to the next person working on the page is left alone, and it
+keeps the line numbers so a failure names the line.
+
+A repo that is not cloned, or that has no page the scan can reach, is reported
+and skipped rather than counted as clean. The bare form does that so a checkout
+without the products still runs; `--require-products` turns an uncloned repo
+into a failure, and is what `.github/workflows/drift.yml` uses after
+`bootstrap.sh`. `ci.yml` runs the bare form on every push, which covers this
+repo's own website and says out loud which products it could not see.
+
+Adding a repo to `suite.repos.json` is the whole of what it takes to have its
+copy checked from then on.
+
+**Copy that is not in HTML is checked where the parser is.** Kommands renders
+its words from `.tsx`, so the scan above reads its `index.html` and finds one
+word of copy in it, the title. A regex over a component cannot tell a rendered
+string from a comment about one, and these trees comment heavily: 160 files
+there carry an em dash and all but a handful are prose between people working
+on it. So that half is an ESLint `no-restricted-syntax` rule in the repo, on
+`JSXText`, `Literal` and `TemplateElement`, which sees the three node types
+that carry copy and never sees a comment at all. It runs in `pnpm lint`, which
+CI already gates on, and it follows the same precedent as Konnekt's rule
+against inline `style={{}}`.
+
+The rule does not separate a string a user reads from one only a developer
+hits. It does not need to: neither wants an em dash, and a colon reads the same
+in both, so fixing the handful of loader and parser messages was cheaper than
+the machinery to exempt them.
 
 **What is not checked, and will not be.** Issue titles, pull request titles and
 bodies, and commit messages are not in a file this repo can read, so nothing
@@ -216,9 +245,12 @@ implies a gate it does not have is the same mistake in prose.
 **Where this came from.** Konnekt has stated the rule locally for some time, in
 `agent_docs/CLAUDE.md` and `CONTRIBUTING.md`, covering issue titles and pull
 request titles, bodies and commit messages. It never covered website copy, and
-Konnekt's own pages carry em dashes as a result. This is that rule hoisted to
-the suite, with the websites added, for the same reason every other rule here
-was hoisted: it was true of one repo and should be true of all of them.
+Konnekt's own pages carried seventeen em dashes as a result: every page title
+and its `og:`/`twitter:` twin, plus one line of prose. They are gone, and the
+check now reads the products rather than only this repo, which is what would
+have caught them. This is that rule hoisted to the suite, with the websites
+added, for the same reason every other rule here was hoisted: it was true of one
+repo and should be true of all of them.
 
 Its record in Konnekt is worth repeating, because it says what to expect.
 Across the last two hundred commits there, no subject line carried an em dash
@@ -341,6 +373,42 @@ Deliberately not in `.claude/suite.json`: `design/suite.schema.json` sets
 manifest nightly, so a key there is a change that has to land here first. A
 separate file next to its one consumer needs no such coordination.
 
+## Verifiable release artefacts
+
+A product that publishes a binary somebody downloads carries three things. They
+look like one thing and are not:
+
+- **`checksums.txt`, published beside the binaries.** It answers "did this
+  download arrive intact". It cannot answer "did this come from the project",
+  because whoever can write the release writes both halves of it.
+- **A build provenance attestation**, produced by `actions/attest` in the job
+  that uploads the exact bytes, which needs `id-token: write` and
+  `attestations: write` on that job. Each artifact's digest is bound to the
+  workflow, the repository and the commit, signed against the job's OIDC token
+  and recorded in a public transparency log. Nothing holds a signing key, so
+  there is no key to leak and none to rotate. Attest where the upload happens
+  rather than in the build jobs: what is signed has to be what a person
+  downloads, with no artifact round trip in between.
+- **Somewhere a reader is told.** An attestation nobody knows about buys
+  nothing, and release notes are read after the download if at all. The
+  product's download page carries the `gh attestation verify` invocation and
+  the checksum fallback, and says which question each one answers.
+
+Konnekt does all three, in `.github/workflows/release.yml`'s `publish` job and
+`website/download.html`. Kommands publishes no binary yet; when its desktop
+shell does, it carries the same three.
+
+Signing is a **separate** problem and is not covered here. Provenance proves
+where a binary came from once a reader asks; OS code signing and notarisation
+are what stop Windows and macOS warning about it before they get the chance.
+A product can hold all three above and still trip SmartScreen.
+
+This is a convention rather than a shared workflow, and deliberately so. Release
+workflows stay per-repo, per § What's shared vs. what stays per-repo below,
+because each names a toolchain and an artifact set only that product has.
+`sync-workflows.sh` carries job bodies that are identical everywhere; a release
+job never is. What travels between the products here is the requirement.
+
 ## What's shared vs. what stays per-repo
 
 **Shared**, in `design/labels.json`: the `type:*`/`area:*`/`p0`–`p3`/`blocked`
@@ -369,6 +437,22 @@ into the vendored `.github/workflows/issue-priority.yml` by
 `scripts/sync-priority.sh`. Per-repo: everything else in the forms. See
 § Priority above.
 
+**A repo in the manifest has not necessarily adopted.** `suite.repos.json` is
+the list of repos the suite manages, and a repo joins it before
+`scripts/adopt.sh` has ever run against it. `.claude/suite.json` is the marker
+that says it has: `adopt.sh` writes it, and every suite-kit skill opens by
+reading it. So each `--require-products` and `--require-vendored` flag asserts
+something about **adopted** repos, and a cloned repo without that file is
+reported and skipped rather than failed. Two things around it stay failures:
+a repo that is in the manifest and not on disk, which under those flags means
+`bootstrap.sh` did not do its job, and a repo that has adopted and is missing a
+vendored file, which means it lost one.
+
+Before this, five checks read "not cloned, or not adopted" as one state and
+failed on both, so adding a repo to the manifest turned the nightly red until
+that repo had adopted everything. Kube is in the manifest on exactly that
+footing today.
+
 **A vendored file is never touched by a product's own tools.** Every sync script
 byte-compares its master against the product's copy, so a product formatter or
 scanner that rewrites one hands the nightly a drift only the next sync can undo.
@@ -387,7 +471,8 @@ list what it vendors.
 - Anything about the product's own build, CI, or release — including which of
   its paths never reach what it ships, in `.github/changelog.json`. The shared
   workflows above are the exception, and the product still owns the copy it
-  commits.
+  commits. What a release that publishes a binary has to carry regardless of
+  how it is built is § Verifiable release artefacts above.
 
 ## Known Linear MCP gaps
 

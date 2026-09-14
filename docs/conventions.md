@@ -202,10 +202,23 @@ is an index entry. The website is the first thing a user reads. Those are the
 surfaces where punctuation someone has to decode costs something, and they are
 also the ones nobody revises after the fact.
 
-**What is checked.** `scripts/check-copy.sh` reads this repo's `website/*.html`
-and fails on an em dash in the copy. It blanks comments, `<script>` and
-`<style>` first, so a note to the next person working on the page is left
-alone, and it keeps the line numbers so a failure names the line.
+**What is checked.** `scripts/check-copy.sh` reads every repo in
+`suite.repos.json`, plus this one, and fails on an em dash in the copy. Per repo
+it takes `website/*.html` and any `*.html` at the root, which is where a Vite
+app keeps the shell it serves; nothing deeper, so a fixture or a build output is
+never mistaken for published copy. It blanks comments, `<script>` and `<style>`
+first, so a note to the next person working on the page is left alone, and it
+keeps the line numbers so a failure names the line.
+
+A repo that is not cloned, or that has no page the scan can reach, is reported
+and skipped rather than counted as clean. The bare form does that so a checkout
+without the products still runs; `--require-products` turns an uncloned repo
+into a failure, and is what `.github/workflows/drift.yml` uses after
+`bootstrap.sh`. `ci.yml` runs the bare form on every push, which covers this
+repo's own website and says out loud which products it could not see.
+
+Adding a repo to `suite.repos.json` is the whole of what it takes to have its
+copy checked from then on.
 
 **What is not checked, and will not be.** Issue titles, pull request titles and
 bodies, and commit messages are not in a file this repo can read, so nothing
@@ -216,9 +229,12 @@ implies a gate it does not have is the same mistake in prose.
 **Where this came from.** Konnekt has stated the rule locally for some time, in
 `agent_docs/CLAUDE.md` and `CONTRIBUTING.md`, covering issue titles and pull
 request titles, bodies and commit messages. It never covered website copy, and
-Konnekt's own pages carry em dashes as a result. This is that rule hoisted to
-the suite, with the websites added, for the same reason every other rule here
-was hoisted: it was true of one repo and should be true of all of them.
+Konnekt's own pages carried seventeen em dashes as a result: every page title
+and its `og:`/`twitter:` twin, plus one line of prose. They are gone, and the
+check now reads the products rather than only this repo, which is what would
+have caught them. This is that rule hoisted to the suite, with the websites
+added, for the same reason every other rule here was hoisted: it was true of one
+repo and should be true of all of them.
 
 Its record in Konnekt is worth repeating, because it says what to expect.
 Across the last two hundred commits there, no subject line carried an em dash

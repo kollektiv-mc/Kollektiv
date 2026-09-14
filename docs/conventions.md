@@ -341,6 +341,42 @@ Deliberately not in `.claude/suite.json`: `design/suite.schema.json` sets
 manifest nightly, so a key there is a change that has to land here first. A
 separate file next to its one consumer needs no such coordination.
 
+## Verifiable release artefacts
+
+A product that publishes a binary somebody downloads carries three things. They
+look like one thing and are not:
+
+- **`checksums.txt`, published beside the binaries.** It answers "did this
+  download arrive intact". It cannot answer "did this come from the project",
+  because whoever can write the release writes both halves of it.
+- **A build provenance attestation**, produced by `actions/attest` in the job
+  that uploads the exact bytes, which needs `id-token: write` and
+  `attestations: write` on that job. Each artifact's digest is bound to the
+  workflow, the repository and the commit, signed against the job's OIDC token
+  and recorded in a public transparency log. Nothing holds a signing key, so
+  there is no key to leak and none to rotate. Attest where the upload happens
+  rather than in the build jobs: what is signed has to be what a person
+  downloads, with no artifact round trip in between.
+- **Somewhere a reader is told.** An attestation nobody knows about buys
+  nothing, and release notes are read after the download if at all. The
+  product's download page carries the `gh attestation verify` invocation and
+  the checksum fallback, and says which question each one answers.
+
+Konnekt does all three, in `.github/workflows/release.yml`'s `publish` job and
+`website/download.html`. Kommands publishes no binary yet; when its desktop
+shell does, it carries the same three.
+
+Signing is a **separate** problem and is not covered here. Provenance proves
+where a binary came from once a reader asks; OS code signing and notarisation
+are what stop Windows and macOS warning about it before they get the chance.
+A product can hold all three above and still trip SmartScreen.
+
+This is a convention rather than a shared workflow, and deliberately so. Release
+workflows stay per-repo, per § What's shared vs. what stays per-repo below,
+because each names a toolchain and an artifact set only that product has.
+`sync-workflows.sh` carries job bodies that are identical everywhere; a release
+job never is. What travels between the products here is the requirement.
+
 ## What's shared vs. what stays per-repo
 
 **Shared**, in `design/labels.json`: the `type:*`/`area:*`/`p0`–`p3`/`blocked`
@@ -387,7 +423,8 @@ list what it vendors.
 - Anything about the product's own build, CI, or release — including which of
   its paths never reach what it ships, in `.github/changelog.json`. The shared
   workflows above are the exception, and the product still owns the copy it
-  commits.
+  commits. What a release that publishes a binary has to carry regardless of
+  how it is built is § Verifiable release artefacts above.
 
 ## Known Linear MCP gaps
 

@@ -220,6 +220,22 @@ repo's own website and says out loud which products it could not see.
 Adding a repo to `suite.repos.json` is the whole of what it takes to have its
 copy checked from then on.
 
+**Copy that is not in HTML is checked where the parser is.** Kommands renders
+its words from `.tsx`, so the scan above reads its `index.html` and finds one
+word of copy in it, the title. A regex over a component cannot tell a rendered
+string from a comment about one, and these trees comment heavily: 160 files
+there carry an em dash and all but a handful are prose between people working
+on it. So that half is an ESLint `no-restricted-syntax` rule in the repo, on
+`JSXText`, `Literal` and `TemplateElement`, which sees the three node types
+that carry copy and never sees a comment at all. It runs in `pnpm lint`, which
+CI already gates on, and it follows the same precedent as Konnekt's rule
+against inline `style={{}}`.
+
+The rule does not separate a string a user reads from one only a developer
+hits. It does not need to: neither wants an em dash, and a colon reads the same
+in both, so fixing the handful of loader and parser messages was cheaper than
+the machinery to exempt them.
+
 **What is not checked, and will not be.** Issue titles, pull request titles and
 bodies, and commit messages are not in a file this repo can read, so nothing
 gates them. They rest on review. Saying so is the point: the suite treats a

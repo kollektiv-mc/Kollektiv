@@ -77,9 +77,15 @@ while IFS= read -r name; do
     continue
   fi
 
+  # Adoption, not presence, is what a --require flag asserts about. A repo in
+  # the manifest that has never run scripts/adopt.sh carries none of this yet,
+  # and calling that a regression turns every gate red for a repo that has not
+  # started. .claude/suite.json is the marker: adopt.sh writes it and every
+  # suite-kit skill opens by reading it. A repo that HAS adopted and is missing
+  # a vendored file is still a finding, which is the branch below.
   if [ ! -f "$dir/.claude/suite.json" ]; then
-    echo "? $name has no .claude/suite.json — not adopted, nothing to run" >&2
-    status=1
+    echo "? $name has not adopted suite-kit, skipped"
+    skipped=$((skipped + 1))
     continue
   fi
 

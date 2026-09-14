@@ -43,6 +43,7 @@ require_python
 
 status=0
 changed=0
+skipped=0
 
 while IFS=$'\t' read -r name role; do
   [ -n "$name" ] || continue
@@ -51,6 +52,18 @@ while IFS=$'\t' read -r name role; do
   if [ ! -d "$dir" ]; then
     echo "? $name not cloned — run scripts/bootstrap.sh first" >&2
     status=1
+    continue
+  fi
+
+  # Adoption, not presence, is what a --require flag asserts about. A repo in
+  # the manifest that has never run scripts/adopt.sh carries none of this yet,
+  # and calling that a regression turns every gate red for a repo that has not
+  # started. .claude/suite.json is the marker: adopt.sh writes it and every
+  # suite-kit skill opens by reading it. A repo that HAS adopted and is missing
+  # a vendored file is still a finding, which is the branch below.
+  if [ ! -f "$dir/.claude/suite.json" ]; then
+    echo "? $name has not adopted suite-kit, skipped"
+    skipped=$((skipped + 1))
     continue
   fi
 
@@ -103,6 +116,9 @@ if [ "$check_only" -eq 1 ]; then
     echo "run scripts/sync-tokens.sh to update, then regenerate tokens in each product" >&2
   elif [ "$status" -ne 0 ]; then
     echo "no drift among the products present, but the workspace is incomplete" >&2
+  elif [ "$skipped" -ne 0 ]; then
+    if [ "$skipped" -eq 1 ]; then noun="1 repo has"; else noun="$skipped repos have"; fi
+    echo "no drift among the products carrying the token source; $noun not adopted yet"
   else
     echo "no drift"
   fi

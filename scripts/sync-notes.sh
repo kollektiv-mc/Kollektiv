@@ -100,7 +100,19 @@ while IFS= read -r name; do
     continue
   fi
 
-  # .github/changelog.json is the adoption marker, not .claude/suite.json: the
+  # Adoption, not presence, is what a --require flag asserts about. A repo in
+  # the manifest that has never run scripts/adopt.sh carries none of this yet,
+  # and calling that a regression turns every gate red for a repo that has not
+  # started. .claude/suite.json is the marker: adopt.sh writes it and every
+  # suite-kit skill opens by reading it. A repo that HAS adopted and is missing
+  # a vendored file is still a finding, which is the branch below.
+  if [ ! -f "$dir/.claude/suite.json" ]; then
+    echo "? $name has not adopted suite-kit, skipped"
+    skipped=$((skipped + 1))
+    continue
+  fi
+
+  # Past that, .github/changelog.json is this script's own adoption marker: the
   # generator cannot run without a product's own non-app path list, and a
   # product that has not written one has not adopted this.
   if [ ! -f "$dir/.github/changelog.json" ]; then

@@ -437,6 +437,22 @@ into the vendored `.github/workflows/issue-priority.yml` by
 `scripts/sync-priority.sh`. Per-repo: everything else in the forms. See
 § Priority above.
 
+**A repo in the manifest has not necessarily adopted.** `suite.repos.json` is
+the list of repos the suite manages, and a repo joins it before
+`scripts/adopt.sh` has ever run against it. `.claude/suite.json` is the marker
+that says it has: `adopt.sh` writes it, and every suite-kit skill opens by
+reading it. So each `--require-products` and `--require-vendored` flag asserts
+something about **adopted** repos, and a cloned repo without that file is
+reported and skipped rather than failed. Two things around it stay failures:
+a repo that is in the manifest and not on disk, which under those flags means
+`bootstrap.sh` did not do its job, and a repo that has adopted and is missing a
+vendored file, which means it lost one.
+
+Before this, five checks read "not cloned, or not adopted" as one state and
+failed on both, so adding a repo to the manifest turned the nightly red until
+that repo had adopted everything. Kube is in the manifest on exactly that
+footing today.
+
 **A vendored file is never touched by a product's own tools.** Every sync script
 byte-compares its master against the product's copy, so a product formatter or
 scanner that rewrites one hands the nightly a drift only the next sync can undo.

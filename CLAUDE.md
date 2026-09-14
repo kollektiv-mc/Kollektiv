@@ -46,8 +46,11 @@ that commits the copy and runs it.
 | `docs/linear.md` | The Linear structure `/suite-kit:suite-sync` mirrors GitHub Issues into |
 | `design/README.md` | Why the token set is shaped the way it is |
 
-This repo is the **workspace root**. `Konnekt/` and `Kommands/` are cloned beneath it
-by `bootstrap.sh` and are not tracked here.
+This repo is the **workspace root**. The repos in `suite.repos.json` are cloned
+beneath it by `bootstrap.sh` and are not tracked here: `Konnekt/` and `Kommands/`,
+which have adopted suite-kit, and `Kube/`, which is in the manifest but has not.
+A repo without `.claude/suite.json` has not adopted, and every check skips it by
+that marker rather than failing; see `docs/conventions.md`.
 
 ## Rules that bite
 

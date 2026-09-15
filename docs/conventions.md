@@ -72,6 +72,41 @@ The sweep never closes an issue. A finding that stops reproducing gets a comment
 so, because "it was fixed" and "the check stopped running" look identical from the
 outside, and only one of them is good news.
 
+## The health sweep's run log
+
+Findings are only half of what a scheduled run knows. The other half is that it ran at
+all, what it covered, and what it could not reach — and on a clean week that half has
+no issue to live in.
+
+So the sweep also keeps one standing issue in **kollektiv**, labelled `health-check`,
+identified by this line in its body:
+
+```
+Health-Sweep-Log: kollektiv
+```
+
+One issue, never closed, one comment per run, clean runs included. The comment carries
+counts rather than prose: per-repo checks passed, drift, the deep-dive area covered,
+what could not run, and links to whatever was opened or commented on. The detail lives
+in the issues; this is the ledger.
+
+**Why an issue and not a file in the repo.** The sweep's whole claim to being
+trustworthy is that it never commits, pushes, or leaves a branch behind — an unattended
+weekly run with nobody reviewing its diff. A log file it appends and pushes each week
+would trade that away for a format nobody reads more often, and `git push` is behind
+`ask` in every repo's permissions floor precisely because an unattended session has
+nobody to answer it. An issue comment costs the sweep nothing it was not already
+spending.
+
+**Why kollektiv and not a product.** The run is suite-wide. A suite-wide record filed
+under one product's directory is the same category error as a shared design token
+defined in one product: whoever reads it there will reasonably assume it is about that
+product.
+
+The report the run prints reaches a human once, through the Routine's completion
+notification, and then exists only in a session transcript. The log is the part that is
+still there in six months.
+
 ## Priority
 
 Every issue carries exactly one of `p0`-`p3`, defined in `design/labels.json` and

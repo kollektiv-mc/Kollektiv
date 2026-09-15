@@ -8,6 +8,10 @@ Read `.claude/suite.json` at the repo root. It declares what this product's heal
 means: `health.commands`, `health.invariants`, and `health.generated`. If the file
 is missing, say so and stop — do not guess a set of checks.
 
+A fourth section, `memory`, runs whether or not the manifest mentions it: the
+always-loaded agent memory budget, which every repo pays whether or not it
+declares anything. See `docs/conventions.md` § The agent memory budget.
+
 **Run every check. Do not stop at the first failure.** A partial run hides
 compounding problems: a lint failure and a broken invariant are different bugs, and
 finding one is not a reason to leave the other undiscovered.
@@ -16,7 +20,7 @@ finding one is not a reason to leave the other undiscovered.
 
 ## 1. Run the checks
 
-`suite-check.py` runs all three sections from the manifest. Use it rather than
+`suite-check.py` runs all four sections, three of them from the manifest. Use it rather than
 reconstructing the commands and greps by hand — two implementations of the same
 checks is the drift this suite exists to prevent, and the hand-run version is the
 one that quietly diverges.

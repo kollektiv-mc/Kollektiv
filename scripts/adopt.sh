@@ -210,6 +210,10 @@ Fill in by hand, in .claude/suite.json — see docs/adopting.md for each field:
   health.invariants   the checks a linter cannot express, each with a diagnosis
                       saying what a match means
   health.generated    any generator whose output is committed
+  health.memory       ONLY if the repo is over the always-loaded memory budget.
+                      The check runs on every repo regardless; this field is the
+                      ratchet a repo in excess holds while it comes down, and it
+                      is deleted once the repo is inside 200 lines
 
 Nothing was invented for these. An invariant with no stated reason gets deleted the
 first time it is inconvenient, and a guessed enforce level reports clean over the

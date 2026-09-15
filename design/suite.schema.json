@@ -97,6 +97,25 @@
         "diagnosis": { "type": "string", "minLength": 40 },
         "reference": { "$ref": "#/$defs/repoRelativePath" }
       }
+    },
+
+    "healthMemory": {
+      "type": "object",
+      "description": "A repo over the suite's always-loaded memory budget, holding its own ceiling while it comes down. Omitted by every repo that is inside the budget, which is the normal case: the check runs on every repo whether or not this is declared, because a repo pays the context cost either way and a check a repo opts into is a check a new repo silently lacks.",
+      "required": ["maxLines", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "maxLines": {
+          "type": "integer",
+          "minimum": 201,
+          "description": "This repo's current ceiling, in lines of always-loaded memory. A ratchet, like the aislop size limits and the coverage floors: it is seeded at what the repo measures today and only ever lowered. The minimum of 201 is what makes the field temporary rather than a permanent licence — a repo that reaches the suite budget can no longer express this key at all and has to delete it."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 40,
+          "description": "Why this repo is still over, and what is being done about it. An issue number belongs here."
+        }
+      }
     }
   },
 
@@ -232,6 +251,10 @@
           "type": "array",
           "items": { "$ref": "#/$defs/healthGenerated" },
           "description": "A repo may have more than one generator."
+        },
+        "memory": {
+          "allOf": [{ "$ref": "#/$defs/healthMemory" }],
+          "description": "Declared only by a repo over the always-loaded memory budget. See docs/conventions.md § The agent memory budget."
         }
       }
     }

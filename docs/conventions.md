@@ -219,6 +219,84 @@ Konnekt's `.prettierrc.json` and again, by hand, in Kommands' `CLAUDE.md` prose.
 They agreed, and nothing would have said so if they stopped. One convention
 written down twice is one convention waiting to fork.
 
+## The agent memory budget
+
+**A repo's always-loaded agent memory stays under 200 lines.** That is Claude
+Code's own target, and it is stated as a consequence rather than a preference:
+"Longer files consume more context and reduce adherence"
+([memory docs](https://code.claude.com/docs/en/memory)). A convention nobody
+reads is not a convention, and past a few hundred lines that stops being a
+figure of speech.
+
+**What counts is everything loaded at launch, not the file called `CLAUDE.md`.**
+Three things land in context every session and all three are in the budget:
+
+- the root `CLAUDE.md`, or `.claude/CLAUDE.md`
+- every `@import` from it, resolved recursively to a depth of four
+- every `.claude/rules/*.md` with no `paths:` frontmatter
+
+**Splitting into `@imports` is organisation, not relief.** Imported files are
+expanded into context at launch, so a twelve-line root file importing six
+hundred lines costs six hundred and twelve. Konnekt was in exactly that
+position when this rule was written, reading as a tidy twelve-line file and
+loading 639 lines, and a per-file check would have called it the smallest
+memory file in the suite.
+
+**The escape hatch is `.claude/rules/` with `paths:` frontmatter.** A scoped
+rule loads only when Claude reads a file it matches, so it costs nothing at
+launch and can be as long as the subject deserves. Kommands holds 288 lines
+that way across four files. What belongs there is anything that only matters in
+one part of the tree; what has to stay in `CLAUDE.md` is what must be true
+before any file is opened, because a path-scoped rule triggers on reading a
+matching file and a new file written from nothing may not have triggered one.
+
+Two filters decide what survives a trim, in this order:
+
+1. **Cut what Claude can derive from the codebase** — directory layouts,
+   dependency inventories, architecture overviews. Keep pitfalls, rationale,
+   and conventions that differ from a tool's defaults. This is the split
+   `/doctor`'s own trim check makes.
+2. **Demote what a gate already enforces.** A rule backed by a failing check
+   fails loudly whether or not it was in context; a rule backed only by prose
+   rots silently. Between two rules of equal length, the one ESLint already
+   catches is the one to move.
+
+And the rule Kommands wrote for itself, which holds for every repo: **each fact
+lives in exactly one file.** `CLAUDE.md` links, it does not restate.
+
+### Where it is enforced
+
+`suite-check.py`'s `memory` section, so `/suite-kit:health` reports it in every
+repo and the weekly sweep reports it across all of them. It is the one section
+driven by no manifest list, deliberately: every repo pays this cost whether or
+not it declares anything, so a check a repo opts into is a check a new repo
+silently lacks. An absent declaration means the suite default, never a skip.
+
+### A repo that is already over
+
+Coming down takes more than one pull request, so a repo over the budget
+declares `health.memory` in `.claude/suite.json`, seeded at what it measures
+today:
+
+```json
+"memory": {
+  "maxLines": 639,
+  "reason": "Being trimmed under kollektiv-mc/Konnekt#NNN. Lower this with each pass."
+}
+```
+
+A ratchet, on the same terms as the aislop size limits and the coverage floors:
+**lower it as the tree shrinks, never raise it to make a build pass.** A repo
+inside the budget declares nothing and keeps its headroom to 200, rather than
+being pinned at whatever it happens to measure. Being unusually short today is
+not a reason to be held to it tomorrow.
+
+The field is built to expire. `maxLines` has a schema minimum of 201, so a repo
+that reaches the budget can no longer express the key and has to delete it, and
+the runner fails a manifest that still carries one once the real total is inside
+200. A schema only binds a repo that validates its manifest, which is why the
+check refuses the stale field again at runtime.
+
 ## Public copy
 
 **Anything published carries no em dash.** Use a comma, a colon, or two

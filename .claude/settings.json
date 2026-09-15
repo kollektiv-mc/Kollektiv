@@ -1,10 +1,10 @@
 {
   "extraKnownMarketplaces": {
-    "superpowers": { "source": { "source": "github", "repo": "obra/superpowers" } }
+    "superpowers-dev": { "source": { "source": "github", "repo": "obra/superpowers" } }
   },
   "enabledPlugins": {
     "suite-kit@kollektiv": true,
-    "superpowers@superpowers": true
+    "superpowers@superpowers-dev": true
   },
   "permissions": {
     "deny": [

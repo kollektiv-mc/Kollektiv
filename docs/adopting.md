@@ -27,11 +27,11 @@ In the repo's committed `.claude/settings.json`:
 {
   "extraKnownMarketplaces": {
     "kollektiv": { "source": { "source": "github", "repo": "kollektiv-mc/Kollektiv" } },
-    "superpowers": { "source": { "source": "github", "repo": "obra/superpowers" } }
+    "superpowers-dev": { "source": { "source": "github", "repo": "obra/superpowers" } }
   },
   "enabledPlugins": {
     "suite-kit@kollektiv": true,
-    "superpowers@superpowers": true
+    "superpowers@superpowers-dev": true
   }
 }
 ```
@@ -39,9 +39,29 @@ In the repo's committed `.claude/settings.json`:
 `enabledPlugins` is an **object**, not an array — the schema rejects the array form
 that some documentation examples show.
 
+**`superpowers-dev` is not a typo.** The marketplace at `obra/superpowers` names
+itself `superpowers-dev` in its own manifest, and the manifest's name wins over the
+key written here — `claude plugin marketplace add obra/superpowers` reports
+`Successfully added marketplace: superpowers-dev` and writes that spelling into
+settings itself. All three repos declared it as `superpowers` until 2026-09-15, so
+`claude plugin install superpowers@superpowers` failed on every machine and in every
+scheduled run with `Plugin "superpowers" not found in marketplace "superpowers"` — a
+message that reads like upstream removed the plugin rather than like a wrong id.
+
 Declaring is not installing. On first run Claude Code reports the plugin as not
 installed and prints a `claude plugin install` line; run it once per machine. This
-applies on every path that loads plugins, including cloud sessions.
+applies on every path that loads plugins, including cloud sessions:
+
+```sh
+claude plugin marketplace add ./          # in kollektiv; a bare `.` is rejected
+claude plugin install suite-kit@kollektiv
+claude plugin marketplace add obra/superpowers
+claude plugin install superpowers@superpowers-dev
+```
+
+In a scheduled or cloud session nothing is installed at startup, so this is the
+normal opening move rather than a repair — `/suite-kit:health-sweep` does it as its
+step 0.
 
 Both marketplaces run third-party code with your privileges. Enabling them is a
 trust decision — make it deliberately, per repo.
@@ -251,7 +271,7 @@ disk.
 kollektiv is itself an adopter, not just the source of the plugin. Its
 `.claude/suite.json` declares `tracking: "github-issues"` and
 `roadmap: "docs/roadmap.md"`, and its `.claude/settings.json` enables
-`suite-kit@kollektiv` from the local marketplace plus `superpowers@superpowers` —
+`suite-kit@kollektiv` from the local marketplace plus `superpowers@superpowers-dev` —
 it omits `kollektiv` from `extraKnownMarketplaces` since this repo already is
 that marketplace and declaring it as a remote `github` source would register it
 twice. It has no `tokens`, `minecraft`, `health.invariants`, or
@@ -274,7 +294,7 @@ today. See [`linear.md`](linear.md) for the full structure.
 `.claude/settings.json`, `.claude/suite.json`, `tokens.source.json`, and the
 `.gitignore` lines are all on `main`.
 
-Its settings block declares `suite-kit@kollektiv` and `superpowers@superpowers`.
+Its settings block declares `suite-kit@kollektiv` and `superpowers@superpowers-dev`.
 This was ahead of the rest of the suite rather than a deviation from it: OMC has
 since been dropped everywhere, and step 1 above now names `superpowers` for
 everyone.
@@ -354,7 +374,7 @@ suite's `base.yml`; adopting the base, listing the vendored generator in its
 The settings block is merged into `.claude/settings.json` without disturbing its
 `hooks` section — Konnekt binds `graphify hook-guard` to `PreToolUse` on `Bash`,
 `Read`, and `Glob`; suite-kit ships no hooks specifically so it cannot collide with
-those. It declares `superpowers@superpowers`, not OMC, which this repo — and the
+those. It declares `superpowers@superpowers-dev`, not OMC, which this repo — and the
 whole suite — no longer uses. All of this (the permissions block, the CI check, the
 OMC → superpowers swap, and deleting `.claude/commands/linear-sync.md`) is on
 `main` via PR #22.

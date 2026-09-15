@@ -109,17 +109,39 @@ Two cloud Routines exist and are enabled, both created over MCP against this
 repo: the daily `/suite-kit:suite-sync` mirror (`30 6 * * *` UTC) and the weekly
 `/suite-kit:health-sweep` (`0 7 * * 1` UTC). `README.md` describes what each does.
 
+Settled since, by reading the runs rather than predicting them:
+
+- **The sweep files issues.** An earlier revision of this section said its
+  sessions had no issue-filing tools and that filing would report as blocked.
+  That was wrong: #11, #23 and #24 were all opened by the sweep, each carrying
+  its `Health-Check-Key:` line and the `health-check` label.
+- **Dedup works.** The 2026-09-14 run opened nothing and commented on #23, as
+  did 2026-09-07 before it. Two consecutive runs matching on the key line
+  instead of filing twins is the proof this section was waiting for.
+- **The `health-check` label exists in all three repos**, created by the sweep
+  itself rather than by `sync-labels.sh`, which has still never been applied to
+  Kommands (see below).
+- **The Routine's model is settable over MCP**, contrary to an earlier note here
+  that recorded `model_update_disabled` and had the sweep inheriting the account
+  default. `update_trigger` takes a `model`; the sweep is pinned to
+  `claude-opus-5` as of 2026-09-15. Opus is the assessor, and the skill's step 0b
+  holds the rule that its Sonnet subagents fetch rather than judge.
+- **The sweep is model-invocable again.** It carried
+  `disable-model-invocation: true`, which removes a skill from the model's
+  listing outright, so a scheduled run could never invoke it and read the file as
+  prose instead. Verified with a two-skill probe plugin under `claude -p`: the
+  gated skill is not listed at all, the ungated one invokes headlessly. The gate
+  is gone and an explicit scope guard at the top of the skill replaces it.
+
 Still open on the sweep:
 
-- Granting its Routine the GitHub connector from the claude.ai Routines UI. It
-  was created over MCP, which cannot attach connectors for this organization, so
-  its sessions have no issue-filing tools yet — the sweep will report filing as
-  blocked and put its findings in the run report instead.
-- Confirming it runs on Opus 5. A Routine's model cannot be set or read over MCP
-  (`model_update_disabled`), so it inherits whatever the account default is.
-- Confirming a second consecutive run opens zero new issues. Dedup via the
-  `Health-Check-Key:` line is the whole design, and only a real second run
-  proves it.
+- Watching the first run after 2026-09-15 actually install both plugins and
+  complete the deep review. Until that run, `superpowers` had never once loaded
+  (see below), so step 4 was skipped every week and every finding to date came
+  from a declared check rather than from review.
+- Seeding the run log. `Health-Sweep-Log: kollektiv` is a standing issue the
+  sweep opens on its first run under the new skill; until then, nothing records
+  a clean week.
 
 Routine cron is evaluated in UTC and does not follow DST, so both schedules need
 shifting by an hour twice a year, or moving off UTC — a schedule set for 09:00
@@ -214,9 +236,11 @@ Still open here:
   describe yet and a conventions entry written ahead of the code would be this repo
   being wrong about itself again.
 - Running `scripts/sync-labels.sh` against Kommands, which has never had it applied.
-  It is missing `area:release`, `area:agents`, `p0` to `p3`, `health-check` and
-  `changelog:skip`, and its `area:tokens` carries GitHub's default `ededed` and an
-  empty description, which is what applying a label by hand creates. No Kommands
+  It is missing `area:release`, `area:agents`, `p0` to `p3` and `changelog:skip`,
+  and its `area:tokens` carries GitHub's default `ededed` and an empty
+  description, which is what applying a label by hand creates. (`health-check`
+  was on this list until 2026-09-15; it exists in all three repos, created by
+  the sweep itself as its skill instructs.) No Kommands
   issue has ever carried a priority, so the suite's own rule that a repo does not
   invent its own priority scale is currently unenforced there rather than followed.
 
@@ -226,9 +250,18 @@ OMC (Oh-My-ClaudeCode) is dropped suite-wide, along with its `.omc-workspace`
 multi-repo session sharing. `superpowers` (`obra/superpowers`) is the one
 third-party plugin declared alongside `suite-kit` in all three repos.
 
-Still open: recording every machine and cloud path `superpowers@superpowers`
-has actually been installed on, and observing a session of its agents against
-Konnekt's `graphify hook-guard` before relying on it there beyond what
+The install id is **`superpowers@superpowers-dev`**. The marketplace at
+`obra/superpowers` names itself `superpowers-dev`, and the manifest's name beats
+the key in `extraKnownMarketplaces`. All three repos declared it as
+`superpowers` from adoption until 2026-09-15, and `/suite-kit:health-sweep`
+told its sessions to install `superpowers@superpowers`, so the plugin had never
+loaded anywhere: the failure reads `Plugin "superpowers" not found in
+marketplace "superpowers"`, which looks like upstream dropped it. Verified by
+installing both spellings in a cloud session on 2026-09-15; only the
+`-dev` one resolves.
+
+Still open: observing a session of its agents against Konnekt's
+`graphify hook-guard` before relying on it there beyond what
 `.claude/settings.json` already declares.
 
 ## Workspace validation

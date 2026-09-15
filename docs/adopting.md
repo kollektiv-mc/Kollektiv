@@ -104,6 +104,7 @@ inside a skill, as confusing prose.
 | `health.commands` | Ordered `{ name, run, cwd? }` list — `cwd` is relative to the repo root and defaults to it |
 | `health.invariants` | `{ name, grep, paths, exclude, expect, diagnosis, reference }` |
 | `health.generated` | List of `{ regenerate, cwd?, expectCleanDiff, requiresNetwork, diagnosis, reference }` — a repo can have more than one generator, and Kommands has two. `expectCleanDiff` is the list of repo-relative paths that must be unchanged after `regenerate` runs |
+| `health.memory` | `{ maxLines, reason }`, and **only** if the repo is over the always-loaded memory budget. The `memory` section runs on every repo regardless of what the manifest says, because every repo pays that cost; this field is the ratchet a repo in excess holds while it comes down, and `maxLines` has a schema minimum of 201 so it cannot outlive the excess. See `docs/conventions.md` § The agent memory budget |
 
 `Kommands/.claude/suite.json` is the worked example.
 
@@ -127,8 +128,16 @@ without a `kollektiv` checkout beside it.
 ./scripts/sync-runner.sh          # from the kollektiv root
 ```
 
-This copies `plugins/suite-kit/suite-check.py` into the repo as
-`.claude/suite-check.py`. Commit it.
+This copies `plugins/suite-kit/suite-check.py` and
+`plugins/suite-kit/suite-memory.py` into the repo as `.claude/suite-check.py` and
+`.claude/suite-memory.py`. Commit both.
+
+They are a pair: the runner loads the second from beside itself for the `memory`
+section. A repo carrying only the first has a section that can do nothing but
+report a skip, so `sync-runner.sh --check` calls a half-vendored pair drift
+rather than a repo that has not adopted yet. Both belong in the repo's
+`.aislopignore` and root `.prettierignore` for the reason every vendored file
+does, and `check-participation.sh` checks that they are there.
 
 **This is the step that makes the checks real.** Step 1 declares the plugin; it does
 not install it, and nothing in a cloud container, a scheduled routine, or a fresh

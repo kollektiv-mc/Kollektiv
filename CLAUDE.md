@@ -22,13 +22,15 @@ that commits the copy and runs it.
 | `design/suite.schema.json` | Schema for the per-repo `.claude/suite.json` |
 | `plugins/suite-kit/` | The shared Claude Code plugin |
 | `plugins/suite-kit/suite-check.py` | Runs a repo's checks from its `.claude/suite.json`, with no plugin installed |
+| `plugins/suite-kit/suite-memory.py` | The always-loaded agent memory budget, loaded by the runner from beside it |
+| `plugins/suite-kit/suite-check_test.py` | Tests for the budget's line counting, import resolution and ratchet |
 | `plugins/suite-kit/release-notes.py` | The release-notes generator every product cuts its notes with, vendored into `.github/scripts/` |
 | `plugins/suite-kit/workflows/` | The workflows every product runs identically (the aislop gate, CodeQL, the pull-request label gate, Scorecard), vendored into `.github/workflows/` |
 | `scripts/bootstrap.sh` | Clones the products as siblings |
 | `scripts/lib/python.sh` | Resolves a Python 3 interpreter for the other scripts, and strips CRs from its output |
 | `scripts/adopt.sh` | Scaffolds a repo's manifest, settings block and vendored files |
 | `scripts/sync-tokens.sh` | Vendors `design/tokens.json` into each product (`--check` to detect drift) |
-| `scripts/sync-runner.sh` | Vendors `suite-check.py` into each product (`--check` to detect drift) |
+| `scripts/sync-runner.sh` | Vendors `suite-check.py` and `suite-memory.py` into each product (`--check` to detect drift) |
 | `scripts/sync-notes.sh` | Vendors the release-notes generator, its tests and GitHub's fallback layout into each product; a product's `.github/changelog.json` is the adoption marker (`--check` to detect drift) |
 | `scripts/sync-workflows.sh` | Vendors the shared workflows into each product (`--check` to detect drift) |
 | `scripts/sync-aislop.sh` | Vendors `.aislop/base.yml` into each product that has adopted aislop (`--check` to detect drift, and a config that does not extend it) |

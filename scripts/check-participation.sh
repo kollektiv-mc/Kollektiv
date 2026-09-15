@@ -99,6 +99,7 @@ STYLE_FILES_UNREADABLE = (".prettierrc.js", ".prettierrc.mjs", ".prettierrc.cjs"
 VENDORED = {
     "tokens.source.json": "sync-tokens.sh",
     ".claude/suite-check.py": "sync-runner.sh",
+    ".claude/suite-memory.py": "sync-runner.sh",
     ".github/scripts/release-notes.py": "sync-notes.sh",
     ".github/scripts/release-notes_test.py": "sync-notes.sh",
     ".github/release.yml": "sync-notes.sh",

@@ -1,6 +1,5 @@
 ---
-description: Sweep every repo in suite.repos.json — run each product's health checks, review the week's changes, file findings as deduplicated GitHub issues in the repo they belong to, and record the run itself in a standing log issue. Use for the weekly scheduled health check, or whenever asked for a suite-wide rather than single-repo report.
-disable-model-invocation: true
+description: Run the suite-wide health sweep across every repo in suite.repos.json — each product's health checks, the cross-repo drift checks, a review of the week's commits — filing findings as deduplicated GitHub issues and recording the run in a standing log issue. Use ONLY when explicitly asked for a suite-wide sweep across all repos, or when fired by the weekly Routine. For one repo, use health instead; this one clones every product, installs plugins, and writes to GitHub.
 ---
 
 # Suite-wide health sweep
@@ -11,6 +10,20 @@ unattended, and writes what it finds down where the work happens.
 Run this from the workspace root (`kollektiv`). It is the scheduled counterpart to
 `/suite-kit:health`, not a replacement for it — step 3 below runs that skill in each
 repo rather than reimplementing its logic.
+
+**Check you were actually asked for this one.** This sweep clones three repositories,
+installs plugins, and opens and comments on GitHub issues in repos other than the one
+in front of you. Those are outward-facing side effects, and they are wrong to produce
+on a guess. If you reached this skill from something like "run a health check" or
+"check this repo", that is `/suite-kit:health` — stop, say so, and run that instead.
+Continue only when the request was explicitly suite-wide, or when this is the weekly
+Routine firing.
+
+This skill used to carry `disable-model-invocation: true`, which took it out of the
+model's skill listing entirely and so put it out of reach of the scheduled run it was
+written for. The Routine worked around that by reading this file as prose, which
+bypassed every skill mechanism and left the gate protecting nothing. The paragraph
+above is the replacement, and it is doing a job the frontmatter only appeared to do.
 
 **This sweep never changes code.** Its entire output is issues, a comment on the
 standing run log, and a report.
@@ -65,15 +78,41 @@ fails as **skipped, with the reason**, and carry on — step 3 falls back to eac
 product's vendored `.claude/suite-check.py`, which is the path that works with no
 plugin at all.
 
-**This skill is `disable-model-invocation: true`, and that is deliberate.** A
-suite-wide sweep should not fire because a description matched. The consequence is
-that installing `suite-kit` does *not* make `/suite-kit:health-sweep` reachable from
-a scheduled prompt: only a human typing the command can invoke it, and Claude Code
-blocks the model from calling it either way. **Reading this file directly is the only
-entry point a scheduled run has.** It is not a fallback for a broken session, and the
-line in the Routine prompt that says to read it is load-bearing — do not tidy it away
-as redundant. `/suite-kit:health` in step 3 carries no such restriction and is
-invokable normally.
+Installing `suite-kit` is what makes this skill reachable at all. Skills from a
+plugin installed mid-session become invokable in that same session, so a scheduled
+run installs in step 0 and can then invoke `/suite-kit:health-sweep` normally.
+
+**If the install fails, read this file from disk and follow it.** That path works
+with no plugin and no marketplace, and it is the Routine's stated fallback — it is
+how every run worked while this skill was gated out of the model's listing. Do not
+treat that line in the Routine prompt as redundant.
+
+## 0b. How to use subagents
+
+**Opus is the assessor. Subagents fetch; they do not judge.**
+
+Up to **two** Sonnet subagents may run at a time, and only for retrieval: locating
+files, collecting command output, gathering the raw text of a diff or a log, reading
+a doc and quoting the relevant lines back. Spawn them for breadth, when the same
+question has to be asked of three repos at once.
+
+What comes back from a subagent is **evidence, not a verdict**. A subagent reporting
+"this looks fine" is a fact about what the subagent said, and nothing about the
+repo. So:
+
+- Never let a subagent decide whether an invariant match is a violation, whether a
+  skip is acceptable, or whether a finding reproduces. Those are the judgements this
+  sweep exists to make, and `health/SKILL.md` step 2 is explicit that they need the
+  entry's `diagnosis` read against the match.
+- Never let a subagent open an issue, comment on one, or write the run log.
+- **Re-verify anything that becomes a finding against the primary source before
+  filing it.** Run the command yourself, read the file:line yourself. An issue body
+  claims a reader can confirm the problem without opening a session; a claim relayed
+  through a summary, unchecked, is how that stops being true.
+
+A run where the deep review was delegated wholesale to subagents and their
+conclusions were filed as findings has not done the review. It has laundered a
+skim, and step 4 already says why that is the one outcome nobody goes back to check.
 
 ## 1. Assemble the workspace
 

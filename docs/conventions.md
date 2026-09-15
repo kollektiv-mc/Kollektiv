@@ -93,10 +93,15 @@ in the issues; this is the ledger.
 **Why an issue and not a file in the repo.** The sweep's whole claim to being
 trustworthy is that it never commits, pushes, or leaves a branch behind — an unattended
 weekly run with nobody reviewing its diff. A log file it appends and pushes each week
-would trade that away for a format nobody reads more often, and `git push` is behind
-`ask` in every repo's permissions floor precisely because an unattended session has
-nobody to answer it. An issue comment costs the sweep nothing it was not already
-spending.
+would trade that away for a format nobody reads more often. An issue comment costs the
+sweep nothing it was not already spending.
+
+Note that `ask: Bash(git push:*)` in the permissions floor is **not** what stops it. A
+Routine's session runs with no permission prompts at all
+([routines docs](https://code.claude.com/docs/en/routines)), so nothing is there to
+answer an `ask` and the rule cannot block anything. What keeps the sweep from pushing
+is the instruction in its skill and nothing else, which is the reason that instruction
+is stated four times and the reason not to hand it a job that needs a commit.
 
 **Why kollektiv and not a product.** The run is suite-wide. A suite-wide record filed
 under one product's directory is the same category error as a shared design token

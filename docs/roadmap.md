@@ -121,11 +121,20 @@ Settled since, by reading the runs rather than predicting them:
 - **The `health-check` label exists in all three repos**, created by the sweep
   itself rather than by `sync-labels.sh`, which has still never been applied to
   Kommands (see below).
+- **The Routine's model is settable over MCP**, contrary to an earlier note here
+  that recorded `model_update_disabled` and had the sweep inheriting the account
+  default. `update_trigger` takes a `model`; the sweep is pinned to
+  `claude-opus-5` as of 2026-09-15. Opus is the assessor, and the skill's step 0b
+  holds the rule that its Sonnet subagents fetch rather than judge.
+- **The sweep is model-invocable again.** It carried
+  `disable-model-invocation: true`, which removes a skill from the model's
+  listing outright, so a scheduled run could never invoke it and read the file as
+  prose instead. Verified with a two-skill probe plugin under `claude -p`: the
+  gated skill is not listed at all, the ungated one invokes headlessly. The gate
+  is gone and an explicit scope guard at the top of the skill replaces it.
 
 Still open on the sweep:
 
-- Confirming it runs on Opus 5. A Routine's model cannot be set or read over MCP
-  (`model_update_disabled`), so it inherits whatever the account default is.
 - Watching the first run after 2026-09-15 actually install both plugins and
   complete the deep review. Until that run, `superpowers` had never once loaded
   (see below), so step 4 was skipped every week and every finding to date came

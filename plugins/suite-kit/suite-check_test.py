@@ -404,6 +404,65 @@ with tempfile.TemporaryDirectory() as tmp:
         None,
     )
 
+# ── The ruff pin comes from the workflow, and only when it is unambiguous ───
+# aislop scores nothing for Python without ruff, and says `[ok] 0 issues` while
+# doing it, so the runner has to establish before the run that the result would
+# mean what CI means. The version it checks against is read from the workflow so
+# that nothing here becomes a second place the pin is written.
+
+AISLOP_RUN = "npx --yes aislop@0.16.0 ci"
+
+
+def pin(root: pathlib.Path, workflow: str, version: str) -> None:
+    """Write a workflow that pins ruff the way CI does."""
+    write(root, f".github/workflows/{workflow}", f"  - run: pip install ruff=={version}\n")
+
+
+with tempfile.TemporaryDirectory() as tmp:
+    root = pathlib.Path(tmp)
+    pin(root, "aislop.yml", "0.16.7")
+    check("a product's vendored workflow carries the pin", probe.pinned_ruff(str(root)), "0.16.7")
+
+with tempfile.TemporaryDirectory() as tmp:
+    # kollektiv is not a product, so it carries the same steps inline in ci.yml.
+    root = pathlib.Path(tmp)
+    pin(root, "ci.yml", "0.16.7")
+    check("kollektiv's inline copy is found too", probe.pinned_ruff(str(root)), "0.16.7")
+
+with tempfile.TemporaryDirectory() as tmp:
+    # Two workflows disagreeing is a real problem, but picking one of them would
+    # be the confident wrong number this runner exists not to produce.
+    root = pathlib.Path(tmp)
+    pin(root, "a.yml", "0.16.7")
+    pin(root, "b.yml", "0.15.8")
+    check("disagreeing pins answer nothing", probe.pinned_ruff(str(root)), None)
+
+with tempfile.TemporaryDirectory() as tmp:
+    root = pathlib.Path(tmp)
+    check("no workflows directory answers nothing", probe.pinned_ruff(str(root)), None)
+
+with tempfile.TemporaryDirectory() as tmp:
+    root = pathlib.Path(tmp)
+    write(root, ".github/workflows/aislop.yml", f"  - run: {AISLOP_RUN}\n")
+    check("a workflow with no pin answers nothing", probe.pinned_ruff(str(root)), None)
+
+# ── A repo that pins ruff only runs aislop against that ruff ────────────────
+
+with tempfile.TemporaryDirectory() as tmp:
+    root = pathlib.Path(tmp)
+    pin(root, "aislop.yml", "99.99.99")
+    gap = probe.aislop_ruff_gap(AISLOP_RUN, str(root))
+    check("a ruff that is not the pinned one is named", "99.99.99" in (gap or ""), True)
+    check("a command that is not aislop is left alone",
+          probe.aislop_ruff_gap("pnpm lint", str(root)), None)
+
+with tempfile.TemporaryDirectory() as tmp:
+    # Nothing pinned means nothing to prove, so the run goes ahead. Silence here
+    # is the difference between reading a repo's own intent and inventing one.
+    root = pathlib.Path(tmp)
+    check("an unpinned repo still runs aislop",
+          probe.aislop_ruff_gap(AISLOP_RUN, str(root)), None)
+
 # ── Report ─────────────────────────────────────────────────────────────────
 if failures:
     print(f"{len(failures)} failing:\n", file=sys.stderr)

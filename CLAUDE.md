@@ -40,7 +40,7 @@ that commits the copy and runs it.
 | `.github/workflows/issue-priority.yml` | The issue-priority workflow, run here and vendored into each product |
 | `.github/workflows/drift.yml` | The cross-repo drift checks, on every push and nightly |
 | `scripts/sync-labels.sh` | Applies `design/labels.json`'s GitHub side via `gh` (`--check` to detect drift) |
-| `scripts/cloud-setup.sh` | The cloud environment's setup script, pasted into the environment dialog rather than run from a checkout; installs graphify for Konnekt's `PreToolUse` hooks |
+| `scripts/cloud-setup.sh` | The cloud environment's setup script, pasted into the environment dialog rather than run from a checkout; installs graphify for Konnekt's `PreToolUse` hooks and the pinned ruff the aislop gate needs |
 | `scripts/validate-schemas.sh` | Validates every manifest against its schema |
 | `scripts/check-participation.sh` | Checks each repo's permissions floor, the paths its manifest names, its formatting settings, and that every vendored file is excluded from that repo's own formatter and scanner (`--require-products` to fail on an uncloned one) |
 | `scripts/check-copy.sh` | Checks every repo's published copy for em dashes (`--require-products` to fail on an uncloned one) |
@@ -129,14 +129,25 @@ A check that could not run is **skipped**, never passing. Most of the value of t
 health check is the gap between "I ran the checks" and "the checks passed". The runner
 enforces that distinction mechanically: a grep over a path that does not exist, a
 `pnpm` script with no `package.json`, a command whose dependencies were never
-installed, a `go` command whose package embeds a build nobody has built — each is
-a skip with a reason, and none of them is a pass.
+installed, a `go` command whose package embeds a build nobody has built, an
+aislop run without the ruff its own CI pins — each is a skip with a reason, and
+none of them is a pass.
 
-That last one reads the failure rather than pre-judging the command, and it
+The `go` one reads the failure rather than pre-judging the command, and it
 reinterprets only what it can prove: the embedded path has to be both absent and
 gitignored, so a tracked file that is genuinely missing stays a failure, and an
 embed miss stops excusing the run the moment anything else in the output failed
 too.
+
+The aislop one is the opposite shape and worth knowing about, because it is the
+only check here that is skipped *before* it runs. aislop's Python engines run
+only when ruff is on PATH, and with none they report `[ok] 0 issues` and a score
+of 100 rather than saying they did nothing; the JSON says `"skipped": false` with
+no diagnostics, so there is nothing to read afterwards. A wrong version is the
+same problem quieter, since 0.15.8 and 0.16.7 disagree about real findings in
+this tree. So the runner establishes beforehand that the result would mean what
+CI means, and reads the version it wants from the repo's own workflows rather
+than from a second pin of its own. A repo that pins nothing is left alone.
 
 **Token drift is deliberately not one of those checks.** `/suite-kit:health` reports on
 one repo; drift detection needs every product cloned beside this one, which the `Suite drift`

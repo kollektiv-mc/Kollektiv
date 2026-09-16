@@ -64,7 +64,7 @@ kollektiv/
 ├── design/suite.schema.json    schema for each repo's .claude/suite.json
 ├── scripts/sync-labels.sh      applies design/labels.json's GitHub side via gh
 │                               (--check reports drift and writes nothing)
-├── scripts/sync-runner.sh      vendors suite-check.py into each product
+├── scripts/sync-runner.sh      vendors the runner trio into each product
 │                               (--check reports drift and writes nothing)
 ├── scripts/sync-notes.sh       vendors the release-notes generator into each product
 ├── scripts/sync-aislop.sh      vendors .aislop/base.yml into each product
@@ -72,8 +72,10 @@ kollektiv/
 ├── scripts/check-participation.sh
 │                               permissions floor, manifest paths, formatting settings,
 │                               and that vendored files are excluded from product tools
+├── scripts/cloud-setup.sh      the cloud environment's setup script, pasted into the
+│                               environment dialog rather than run from a checkout
 ├── scripts/adopt.sh            scaffolds a repo's suite.json, settings block,
-│                               .gitignore lines and both vendored files
+│                               .gitignore lines and the vendored files
 ├── plugins/suite-kit/          the shared plugin
 ├── .claude/                    this repo's own suite-kit + superpowers adoption
 ├── docs/adopting.md            how a repo adopts suite-kit

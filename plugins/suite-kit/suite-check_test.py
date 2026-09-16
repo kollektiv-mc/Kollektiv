@@ -1,23 +1,27 @@
 #!/usr/bin/env python3
-"""Tests for the always-loaded memory budget (suite-memory.py).
+"""Tests for the memory budget (suite-memory.py) and failure reinterpretation.
 
 Run: python3 plugins/suite-kit/suite-check_test.py
 
-Only the memory section is covered here, and deliberately. The other three run
-a repo's real commands against a real checkout, where mocking the subprocess
-would test the mock; this one is pure text handling with no I/O beyond reading
-files, and it is the part that fails silently. A miscount reports a confident
-wrong number, and a budget nobody can trust is worse than no budget at all.
+Neither section runs a repo's real commands. The three that do would need the
+subprocess mocked, and a test of a mock is a test of nothing; what is covered
+here is the text handling on either side of them, which is where both sections
+fail silently. A miscount reports a confident wrong number, and a budget nobody
+can trust is worse than no budget at all. A failure wrongly reinterpreted as a
+skip is the same fault one step further on: skipped is the one result nobody
+follows up on, so the rule that decides it is worth pinning down.
 
 The fixtures are built on disk under a temporary directory rather than faked,
 because half of what is being tested is which files get found in the first
-place.
+place, and the other half is a real `git check-ignore` answering about a real
+.gitignore.
 """
 
 from __future__ import annotations
 
 import importlib.util
 import pathlib
+import subprocess
 import sys
 import tempfile
 
@@ -32,6 +36,7 @@ def load(stem: str):
 
 
 runner = load("suite-check")
+probe = load("suite-probe")
 check_mod = load("suite-memory")
 
 failures: list[str] = []
@@ -255,6 +260,148 @@ with tempfile.TemporaryDirectory() as tmp:
         "a nested relative import resolves against its own file",
         sorted(resolved(files)),
         ["CLAUDE.md", "docs/one.md", "docs/two.md"],
+    )
+
+# ── A //go:embed miss is the environment only when the target is build output ─
+# Go compiles embed directives during vet and test, so a package embedding a
+# gitignored Vite bundle cannot be checked on a fresh clone. That is the
+# environment. An embed naming a tracked file that is simply gone is not, and
+# the two arrive as the same error text, so only the tree can tell them apart.
+
+EMBED_MISS = "main.go:15:12: pattern all:frontend/dist: no matching files found\n"
+
+
+def git_fixture(root: pathlib.Path, ignore: str) -> None:
+    write(root, ".gitignore", ignore)
+    subprocess.run(["git", "init", "-q"], cwd=root, check=True, capture_output=True)
+
+
+have_git = subprocess.run(
+    ["git", "--version"], capture_output=True, check=False
+).returncode == 0
+
+if not have_git:
+    print("git not available: skipping the //go:embed cases", file=sys.stderr)
+else:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = pathlib.Path(tmp)
+        git_fixture(root, "frontend/dist/\n")
+        check(
+            "an absent gitignored embed target is build output",
+            probe.missing_build_output(EMBED_MISS, str(root)),
+            "frontend/dist",
+        )
+        check(
+            "and the whole failure reads as environmental",
+            probe.environmental_failure("go vet ./...", str(root), str(root), EMBED_MISS),
+            "embedded build output not present (no frontend/dist)",
+        )
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # Nothing ignores it, so something that should be committed is missing.
+        # Reporting that as a skip would bury a genuinely broken tree.
+        root = pathlib.Path(tmp)
+        git_fixture(root, "node_modules/\n")
+        check(
+            "an absent tracked embed target stays a failure",
+            probe.missing_build_output(EMBED_MISS, str(root)),
+            None,
+        )
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = pathlib.Path(tmp)
+        git_fixture(root, "frontend/dist/\n")
+        write(root, "frontend/dist/index.html", "<!doctype html>\n")
+        check(
+            "a target that exists is not the reason for any failure",
+            probe.missing_build_output(EMBED_MISS, str(root)),
+            None,
+        )
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # No repo, so check-ignore cannot answer. Guessing here would hide the
+        # case this whole rule exists to keep visible.
+        root = pathlib.Path(tmp)
+        check(
+            "outside a git repo the question goes unanswered",
+            probe.missing_build_output(EMBED_MISS, str(root)),
+            None,
+        )
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # `go test` keeps going into the packages that do compile, so a real
+        # break lands in the same output as the embed miss. Verbatim from
+        # Konnekt with a deliberate error added to backend/services.
+        root = pathlib.Path(tmp)
+        git_fixture(root, "frontend/dist/\n")
+        both = (
+            "# konnekt\n"
+            "main.go:15:12: pattern all:frontend/dist: no matching files found\n"
+            "FAIL\tkonnekt [setup failed]\n"
+            "?   \tkonnekt/backend/models\t[no test files]\n"
+            "# konnekt/backend/services\n"
+            "backend/services/eventbus.go:65:26: undefined: undefinedSymbol\n"
+            "FAIL\tkonnekt/backend/services [build failed]\n"
+            "ok  \tkonnekt/scripts/gen-icons\t(cached)\n"
+            "FAIL\n"
+        )
+        check(
+            "a real break alongside the miss is never reinterpreted",
+            probe.missing_build_output(both, str(root)),
+            None,
+        )
+        check(
+            "a failing test alongside the miss is not either",
+            probe.missing_build_output(
+                "main.go:15:12: pattern all:frontend/dist: no matching files found\n"
+                "--- FAIL: TestThing (0.00s)\n"
+                "FAIL\tkonnekt/backend/services\t0.12s\n",
+                str(root),
+            ),
+            None,
+        )
+        check(
+            "but the miss on its own still reads as build output",
+            probe.missing_build_output(
+                "# konnekt\n"
+                "main.go:15:12: pattern all:frontend/dist: no matching files found\n"
+                "FAIL\tkonnekt [setup failed]\n"
+                "?   \tkonnekt/backend/models\t[no test files]\n"
+                "ok  \tkonnekt/backend/services\t6.494s\n"
+                "FAIL\n",
+                str(root),
+            ),
+            "frontend/dist",
+        )
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # The pattern is relative to the .go file's own directory, not the cwd
+        # the command ran in.
+        root = pathlib.Path(tmp)
+        git_fixture(root, "shell/dist/\n")
+        write(root, "shell/main.go", "package main\n")
+        check(
+            "the pattern resolves against the source file's directory",
+            probe.missing_build_output(
+                "shell/main.go:9:12: pattern dist: no matching files found\n", str(root)
+            ),
+            "shell/dist",
+        )
+
+with tempfile.TemporaryDirectory() as tmp:
+    # The reinterpretation is scoped to the toolchain that produces the error.
+    root = pathlib.Path(tmp)
+    check(
+        "a non-Go command is never reinterpreted by the embed rule",
+        probe.environmental_failure("./scripts/x.sh", str(root), str(root), EMBED_MISS),
+        None,
+    )
+    check(
+        "and a Go failure with other output is still a failure",
+        probe.environmental_failure(
+            "go vet ./...", str(root), str(root), "backend/x.go:4:2: undefined: Foo\n"
+        ),
+        None,
     )
 
 # ── Report ─────────────────────────────────────────────────────────────────

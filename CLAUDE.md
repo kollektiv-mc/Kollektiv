@@ -22,15 +22,16 @@ that commits the copy and runs it.
 | `design/suite.schema.json` | Schema for the per-repo `.claude/suite.json` |
 | `plugins/suite-kit/` | The shared Claude Code plugin |
 | `plugins/suite-kit/suite-check.py` | Runs a repo's checks from its `.claude/suite.json`, with no plugin installed |
+| `plugins/suite-kit/suite-probe.py` | Whether a check can run, and whether its failure was the environment's; loaded by the runner from beside it |
 | `plugins/suite-kit/suite-memory.py` | The always-loaded agent memory budget, loaded by the runner from beside it |
-| `plugins/suite-kit/suite-check_test.py` | Tests for the budget's line counting, import resolution and ratchet |
+| `plugins/suite-kit/suite-check_test.py` | Tests for the budget's line counting, import resolution and ratchet, and for the skip-versus-failure rules in `suite-probe.py` |
 | `plugins/suite-kit/release-notes.py` | The release-notes generator every product cuts its notes with, vendored into `.github/scripts/` |
 | `plugins/suite-kit/workflows/` | The workflows every product runs identically (the aislop gate, CodeQL, the pull-request label gate, Scorecard), vendored into `.github/workflows/` |
 | `scripts/bootstrap.sh` | Clones the products as siblings |
 | `scripts/lib/python.sh` | Resolves a Python 3 interpreter for the other scripts, and strips CRs from its output |
 | `scripts/adopt.sh` | Scaffolds a repo's manifest, settings block and vendored files |
 | `scripts/sync-tokens.sh` | Vendors `design/tokens.json` into each product (`--check` to detect drift) |
-| `scripts/sync-runner.sh` | Vendors `suite-check.py` and `suite-memory.py` into each product (`--check` to detect drift) |
+| `scripts/sync-runner.sh` | Vendors `suite-check.py`, `suite-probe.py` and `suite-memory.py` into each product (`--check` to detect drift) |
 | `scripts/sync-notes.sh` | Vendors the release-notes generator, its tests and GitHub's fallback layout into each product; a product's `.github/changelog.json` is the adoption marker (`--check` to detect drift) |
 | `scripts/sync-workflows.sh` | Vendors the shared workflows into each product (`--check` to detect drift) |
 | `scripts/sync-aislop.sh` | Vendors `.aislop/base.yml` into each product that has adopted aislop (`--check` to detect drift, and a config that does not extend it) |
@@ -39,6 +40,7 @@ that commits the copy and runs it.
 | `.github/workflows/issue-priority.yml` | The issue-priority workflow, run here and vendored into each product |
 | `.github/workflows/drift.yml` | The cross-repo drift checks, on every push and nightly |
 | `scripts/sync-labels.sh` | Applies `design/labels.json`'s GitHub side via `gh` (`--check` to detect drift) |
+| `scripts/cloud-setup.sh` | The cloud environment's setup script, pasted into the environment dialog rather than run from a checkout; installs graphify for Konnekt's `PreToolUse` hooks |
 | `scripts/validate-schemas.sh` | Validates every manifest against its schema |
 | `scripts/check-participation.sh` | Checks each repo's permissions floor, the paths its manifest names, its formatting settings, and that every vendored file is excluded from that repo's own formatter and scanner (`--require-products` to fail on an uncloned one) |
 | `scripts/check-copy.sh` | Checks every repo's published copy for em dashes (`--require-products` to fail on an uncloned one) |
@@ -127,7 +129,14 @@ A check that could not run is **skipped**, never passing. Most of the value of t
 health check is the gap between "I ran the checks" and "the checks passed". The runner
 enforces that distinction mechanically: a grep over a path that does not exist, a
 `pnpm` script with no `package.json`, a command whose dependencies were never
-installed — each is a skip with a reason, and none of them is a pass.
+installed, a `go` command whose package embeds a build nobody has built — each is
+a skip with a reason, and none of them is a pass.
+
+That last one reads the failure rather than pre-judging the command, and it
+reinterprets only what it can prove: the embedded path has to be both absent and
+gitignored, so a tracked file that is genuinely missing stays a failure, and an
+embed miss stops excusing the run the moment anything else in the output failed
+too.
 
 **Token drift is deliberately not one of those checks.** `/suite-kit:health` reports on
 one repo; drift detection needs every product cloned beside this one, which the `Suite drift`

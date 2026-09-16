@@ -39,6 +39,7 @@ that commits the copy and runs it.
 | `.github/workflows/issue-priority.yml` | The issue-priority workflow, run here and vendored into each product |
 | `.github/workflows/drift.yml` | The cross-repo drift checks, on every push and nightly |
 | `scripts/sync-labels.sh` | Applies `design/labels.json`'s GitHub side via `gh` (`--check` to detect drift) |
+| `scripts/cloud-setup.sh` | The cloud environment's setup script, pasted into the environment dialog rather than run from a checkout; installs graphify for Konnekt's `PreToolUse` hooks |
 | `scripts/validate-schemas.sh` | Validates every manifest against its schema |
 | `scripts/check-participation.sh` | Checks each repo's permissions floor, the paths its manifest names, its formatting settings, and that every vendored file is excluded from that repo's own formatter and scanner (`--require-products` to fail on an uncloned one) |
 | `scripts/check-copy.sh` | Checks every repo's published copy for em dashes (`--require-products` to fail on an uncloned one) |

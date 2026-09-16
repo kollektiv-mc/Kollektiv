@@ -188,6 +188,40 @@ nobody is watching.
 section binding `graphify hook-guard` to `PreToolUse`. Add the permissions block
 alongside it. suite-kit ships no hooks specifically so it cannot collide with those.
 
+## The cloud environment's setup script
+
+`scripts/cloud-setup.sh` is the body of the **Setup script** field in the cloud
+environment dialog at claude.ai/code. It is the only script here that is not run
+from a checkout, because that field is the only thing that runs before Claude Code
+launches. The copy in this repo is the reviewable master: paste it into the dialog
+when it changes, or the thing provisioning every cloud session is config that
+exists nowhere and nobody can review.
+
+Today it installs one tool, graphify, for Konnekt's `PreToolUse` hooks. That it had
+to be written at all is the lesson worth keeping. Konnekt's `CLAUDE.md` told agents
+to run `pipx install graphify`, and there is no `graphify` on PyPI: the
+distribution is `graphifyy` and `graphify` is only the console script it installs.
+So the documented command failed on every machine, and because nothing checks that
+an optional tool is present, the only trace was sessions reporting "graphify is not
+installed in this container" into `agent_docs/HEALTH_LOG.md` for months.
+
+Two rules follow from that:
+
+- **A setup script installs, it does not build.** graphify's graph is an AST pass
+  over a whole tree, and the clone is fresh every session anyway. Konnekt's
+  `CLAUDE.md` says to build it on demand, and this repo's job is to make the tool
+  available, not to decide a session needs it.
+- **Fail loudly.** The script exits non-zero when anything it installed is not
+  runnable afterwards. A half-provisioned environment gets snapshotted and then
+  every later session inherits the gap in silence, which is the failure above. It
+  verifies the bare command name resolves on a standard `PATH`, not just on the
+  dialog's own, because a `PreToolUse` hook gets the former.
+
+The cost of the second rule is that a PyPI outage during a rebuild reddens the
+environment rather than quietly producing one without the tool. That is the trade
+this suite already makes everywhere else: a check that could not run is skipped,
+never passed.
+
 ## Required formatting settings
 
 Every repo with a JavaScript or TypeScript toolchain sets these in its Prettier

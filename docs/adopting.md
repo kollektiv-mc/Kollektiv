@@ -130,7 +130,7 @@ without a `kollektiv` checkout beside it.
 
 This copies `plugins/suite-kit/suite-check.py` and
 `plugins/suite-kit/suite-memory.py` into the repo as `.claude/suite-check.py` and
-`.claude/suite-memory.py`. Commit both.
+`.claude/suite-probe.py` and `.claude/suite-memory.py`. Commit all three.
 
 They are a pair: the runner loads the second from beside itself for the `memory`
 section. A repo carrying only the first has a section that can do nothing but

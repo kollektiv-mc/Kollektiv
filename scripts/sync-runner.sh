@@ -2,7 +2,8 @@
 #
 # Copy the suite-kit check runner into each cloned product.
 #
-# The runner is a pair: suite-check.py plus suite-memory.py, which it loads
+# The runner is a trio: suite-check.py plus suite-probe.py and suite-memory.py,
+# which it loads
 # from beside itself. They are vendored together and compared together, because
 # a product carrying one and not the other has a runner whose memory section can
 # only ever report a skip, which is the one result nobody follows up on.
@@ -51,7 +52,7 @@ done
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 manifest="$root/suite.repos.json"
 # One list so that neither half can be added without the other.
-runner_files=(suite-check.py suite-memory.py)
+runner_files=(suite-check.py suite-probe.py suite-memory.py)
 
 [ -f "$manifest" ] || { echo "no suite.repos.json at $root" >&2; exit 1; }
 for f in "${runner_files[@]}"; do

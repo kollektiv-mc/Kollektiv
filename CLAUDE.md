@@ -104,6 +104,19 @@ to the same gate the products run, so they arrive clean, and
 `check-participation.sh` checks that each product's `.aislopignore` and root
 `.prettierignore` list what it vendors.
 
+**Dependabot is the exception, and it cannot be excluded.** It rewrites a
+vendored workflow the same way a formatter rewrites a vendored script, and no
+ignore list here reaches it: its `github-actions` updates are scoped to
+`.github/workflows/` in each product, its `ignore` entries name dependencies
+rather than paths, and the masters under `plugins/suite-kit/workflows/` sit
+where it does not look. So the version a product runs moves first and this
+repo's copy trails, which is backwards from every other vendored file. Read a
+`sync-workflows.sh --check` failure naming only an action version as that, not
+as a product editing what it should not: bump the master to the version the
+product already proved green, re-sync, and commit the copy in whichever product
+is now behind. `Suite drift` is the only thing that reports it, since no single
+clone holds both sides.
+
 ## Before calling a task done
 
 Run `/suite-kit:health`. It reads `.claude/suite.json` and runs every check, including

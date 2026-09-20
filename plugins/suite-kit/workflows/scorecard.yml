@@ -54,7 +54,7 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Scorecard reads the tree; it never needs to write to the remote, and
           # leaving a token in .git/config for an analysis step is the kind of
@@ -77,7 +77,7 @@ jobs:
 
       # Kept for 5 days so a score that moves can be diffed against the previous
       # run without re-running the analysis.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: scorecard-results
           path: results.sarif

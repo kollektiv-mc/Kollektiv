@@ -578,6 +578,19 @@ Scorecard, vendored by `scripts/sync-workflows.sh`. A job body lives here once,
 so the aislop and ruff versions it pins change everywhere on the next sync;
 nothing calls a workflow in this repo by reference.
 
+Every workflow in the suite, shared or per-repo, pins each action to the full
+commit SHA of a release, with that release as a trailing comment:
+`actions/checkout@<40 hex> # v7.0.1`. A tag can be moved to other code by
+whoever controls the action's repository, and a moved tag in a release workflow
+runs with that job's write token. Resolve the SHA from the action's own
+repository (`git ls-remote --tags https://github.com/<owner>/<repo>`, taking the
+peeled `^{}` commit of an annotated tag), never from a fork or a search result.
+Every workflow also declares a top-level `permissions:` block, `contents: read`
+unless it needs less, and a job that needs more says so in its own block.
+Dependabot's `github-actions` updates keep the pins current in the products;
+see the Dependabot paragraph in `CLAUDE.md` for why the masters here trail
+them.
+
 **Shared**, in `.aislop/base.yml`: the aislop policy, vendored by
 `scripts/sync-aislop.sh`. Per-repo: the size ratchet in each `.aislop/config.yml`,
 held at that tree's largest function and file, and the `.aislopignore` naming

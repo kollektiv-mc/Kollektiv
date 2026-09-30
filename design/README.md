@@ -70,7 +70,15 @@ requirement nobody has.
 A missing value is a token to add, not a literal to inline. That rule is enforced
 per-repo by `/suite-kit:design-tokens`.
 
-## Two things not held here
+## Three things not held here
+
+**The logo gradient.** The Kapitel Kapital wordmark is pixel type filled with
+a vertical gradient, `#F9AE9F` at the top to `#6D3939` at the bottom, on a
+black outline. Those two values are recorded here and nowhere else: no product
+renders the wordmark, so a token for it would reach two generated stylesheets
+that never use it, and a token named for one logo is an appearance name by
+definition. If a surface ever needs the gradient, it is a token to add then,
+named for the role it plays there.
 
 **Skins.** Konnekt's `BUILTIN_SKINS` (midnight, nord, solarized, mocha) override
 shared token *names* with product-local values. They are a desktop-app feature,

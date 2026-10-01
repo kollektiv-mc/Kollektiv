@@ -88,6 +88,30 @@ class Result:
         }
 
 
+# --- subprocess -----------------------------------------------------------
+
+# Every command's output is decoded as UTF-8 with replacement, never as the
+# locale's codec. `text=True` on its own uses locale.getpreferredencoding(),
+# which on Windows is cp1252 unless PYTHONUTF8 is set, and a tool that prints
+# UTF-8 (every one in this suite) then raises UnicodeDecodeError. On Windows
+# that happens in subprocess's reader thread, which reports it and hands back
+# None for both streams, so the runner crashed on the concatenation before it
+# printed a single result; elsewhere it raises straight through. A replacement
+# character in a failure's last 20 lines is a cost nobody notices; a traceback
+# instead of the results table is the whole run lost.
+TEXT = {"encoding": "utf-8", "errors": "replace"}
+
+
+def run_text(**kwargs):
+    """subprocess.run with output captured as text, whatever the locale is."""
+    return subprocess.run(capture_output=True, check=False, **TEXT, **kwargs)
+
+
+def captured(proc):
+    """stdout followed by stderr, with a stream that came back None as empty."""
+    return (proc.stdout or "") + (proc.stderr or "")
+
+
 # --- manifest -------------------------------------------------------------
 
 
@@ -129,21 +153,15 @@ def run_commands(root, entries):
             results.append(Result("commands", name, SKIP, reason))
             continue
 
-        proc = subprocess.run(
-            cwd=cwd,
-            capture_output=True,
-            text=True,
-            check=False,
-            **shell_argv(run, shell),
-        )
+        proc = run_text(cwd=cwd, **shell_argv(run, shell))
         if proc.returncode == 127:
             results.append(Result("commands", name, SKIP, "command not found"))
         elif proc.returncode != 0:
-            why = environmental_failure(run, cwd, root, proc.stdout + proc.stderr)
+            why = environmental_failure(run, cwd, root, captured(proc))
             if why:
                 results.append(Result("commands", name, SKIP, why))
             else:
-                output = (proc.stdout + proc.stderr).strip().splitlines()
+                output = captured(proc).strip().splitlines()
                 results.append(
                     Result(
                         "commands", name, FAIL, f"exit {proc.returncode}", output[-20:]
@@ -292,24 +310,16 @@ def run_generated(root, entries, offline):
             results.append(Result("generated", name, SKIP, reason))
             continue
 
-        proc = subprocess.run(
-            cwd=cwd,
-            capture_output=True,
-            text=True,
-            check=False,
-            **shell_argv(regenerate, shell),
-        )
+        proc = run_text(cwd=cwd, **shell_argv(regenerate, shell))
         if proc.returncode == 127:
             results.append(Result("generated", name, SKIP, "command not found"))
             continue
         if proc.returncode != 0:
-            why = environmental_failure(
-                regenerate, cwd, root, proc.stdout + proc.stderr
-            )
+            why = environmental_failure(regenerate, cwd, root, captured(proc))
             if why:
                 results.append(Result("generated", name, SKIP, why))
             else:
-                output = (proc.stdout + proc.stderr).strip().splitlines()
+                output = captured(proc).strip().splitlines()
                 results.append(
                     Result(
                         "generated",
@@ -324,14 +334,11 @@ def run_generated(root, entries, offline):
         # --porcelain rather than 'git diff', so a generated file that is new and
         # still untracked counts. A hand-edited generated file and an uncommitted
         # regeneration are the same bug and both must show up here.
-        status = subprocess.run(
-            ["git", "status", "--porcelain", "--"] + entry["expectCleanDiff"],
+        status = run_text(
+            args=["git", "status", "--porcelain", "--"] + entry["expectCleanDiff"],
             cwd=root,
-            capture_output=True,
-            text=True,
-            check=False,
         )
-        dirty = [line for line in status.stdout.splitlines() if line.strip()]
+        dirty = [line for line in (status.stdout or "").splitlines() if line.strip()]
         if dirty:
             results.append(
                 Result(

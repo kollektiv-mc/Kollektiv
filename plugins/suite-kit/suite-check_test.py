@@ -6,7 +6,9 @@ Run: python3 plugins/suite-kit/suite-check_test.py
 Neither section runs a repo's real commands. The three that do would need the
 subprocess mocked, and a test of a mock is a test of nothing; what is covered
 here is the text handling on either side of them, which is where both sections
-fail silently. A miscount reports a confident wrong number, and a budget nobody
+fail silently. The one exception runs a real command through the commands
+section, because what it pins down is how subprocess hands output back, and a
+mock would have hidden exactly the bug it exists to catch. A miscount reports a confident wrong number, and a budget nobody
 can trust is worse than no budget at all. A failure wrongly reinterpreted as a
 skip is the same fault one step further on: skipped is the one result nobody
 follows up on, so the rule that decides it is worth pinning down.
@@ -462,6 +464,46 @@ with tempfile.TemporaryDirectory() as tmp:
     root = pathlib.Path(tmp)
     check("an unpinned repo still runs aislop",
           probe.aislop_ruff_gap(AISLOP_RUN, str(root)), None)
+
+# ── Command output is decoded the same way on every platform ───────────────
+# `text=True` alone decodes with the locale's codec, cp1252 on Windows, and a
+# tool that printed one byte outside it took the whole run down: subprocess's
+# reader thread raised, stdout and stderr came back None, and the runner died
+# on `stdout + stderr` before the table. 0x9d is undefined in cp1252 and is
+# not a valid UTF-8 start byte either, so this case exercises the replacement
+# path on every platform rather than only the one where it was found. The
+# command is a real one so that the decoding under test is subprocess's own.
+
+EMIT_BAD_BYTE = (
+    f'"{sys.executable.replace(chr(92), "/")}" -c '
+    "\"import sys; sys.stdout.buffer.write(b'before \\x9d after\\n'); sys.exit(3)\""
+)
+
+with tempfile.TemporaryDirectory() as tmp:
+    root = pathlib.Path(tmp)
+    [result] = runner.run_commands(
+        str(root), [{"name": "bad byte", "run": EMIT_BAD_BYTE}]
+    )
+    check(
+        "a byte the locale cannot decode is still a result", result.status, runner.FAIL
+    )
+    check("and the exit code survives", result.reason, "exit 3")
+    check(
+        "and the output is kept, with the byte replaced",
+        result.details,
+        ["before \ufffd after"],
+    )
+
+check(
+    "a stream that came back None reads as empty",
+    runner.captured(subprocess.CompletedProcess([], 1, None, None)),
+    "",
+)
+check(
+    "and the two streams are joined in order",
+    runner.captured(subprocess.CompletedProcess([], 1, "out", "err")),
+    "outerr",
+)
 
 # ── Report ─────────────────────────────────────────────────────────────────
 if failures:

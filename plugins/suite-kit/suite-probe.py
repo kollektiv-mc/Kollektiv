@@ -238,7 +238,12 @@ def aislop_ruff_gap(run, root, shell=None):
 
     argv = ["ruff", "--version"] if shell is None else [shell, "-c", "ruff --version"]
     try:
-        probe = subprocess.run(argv, capture_output=True, text=True, check=False)
+        # Decoded as UTF-8 with replacement for the reason suite-check.py's
+        # run_text gives: `text=True` alone means the locale's codec, and on
+        # Windows that is cp1252 unless PYTHONUTF8 is set.
+        probe = subprocess.run(
+            argv, capture_output=True, encoding="utf-8", errors="replace", check=False
+        )
     except OSError:
         probe = None
     if probe is None or probe.returncode != 0:

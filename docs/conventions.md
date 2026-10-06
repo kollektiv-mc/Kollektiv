@@ -433,9 +433,12 @@ a release; Kommands has no release workflow yet, so there the generator is
 tested on every push and waits for its first tag.
 
 **Every pull request carries exactly one `type:` label.** The label alone decides
-where it lands, and CI fails a pull request without one: the check is
+where it lands, and a pull request without one cannot merge: the check is
 `plugins/suite-kit/workflows/pr-labelled.yml` here, vendored into each product's
-`.github/workflows/` by `scripts/sync-workflows.sh`.
+`.github/workflows/` by `scripts/sync-workflows.sh`. It posts a `pr-labelled`
+commit status that stays pending until a `type:` and an `area:` label are both
+on, rather than failing, so opening a pull request and labelling it a moment
+later sends no failure notification.
 Before that gate existed, 24 of the 41 pull requests in Konnekt's first release
 window were unlabelled, the generator fell back to reading the title's leading
 verb, and "Add a Full release roadmap section and a nightly snapshot build
@@ -447,7 +450,7 @@ channel" — a website and CI change — was published to users under **Features
 | `type:bug` | **Fixes** |
 | `type:chore`, `type:docs` | counted in a footer line, not listed |
 | `changelog:skip` | left out entirely, not counted |
-| none | **Other changes**, and CI is red |
+| none | **Other changes**, and `pr-labelled` stays pending |
 
 Two rules follow from that table and are worth stating outright:
 

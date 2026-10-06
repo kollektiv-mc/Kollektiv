@@ -222,10 +222,12 @@ where the ratchet ends.
 **The label gate.** Every pull request carries one `type:` and one `area:` label
 (conventions.md § Release notes and pull request labelling). The check is
 `.github/workflows/pr-labelled.yml`, another of the shared workflows step 6 vendored;
-it triggers on `labeled` and `unlabeled` as well, so adding the label turns the check
-green. The labels themselves come from `design/labels.json`
+it posts a `pr-labelled` commit status that stays pending until both labels are on,
+and triggers on `labeled` and `unlabeled` as well, so adding the last one turns it
+green. Require `pr-labelled` in the branch rule; the job that posts it is
+`post-status` and always succeeds. The labels themselves come from `design/labels.json`
 via `scripts/sync-labels.sh`, which needs an authenticated `gh`; a repo that has
-never had it applied fails the gate on every pull request until it does.
+never had it applied holds every pull request at pending until it does.
 
 **The priority question.** Every issue form asks it, and
 `.github/workflows/issue-priority.yml` turns the answer into a `p*` label, because a

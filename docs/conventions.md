@@ -410,6 +410,57 @@ and thirteen bodies did. The half that is read on every release lands; the half
 buried in a body drifts. Only the website half of this rule has a check behind
 it, so the rest will drift the same way unless review catches it.
 
+## Wording
+
+**A name is a noun phrase, a message is a sentence or two, and the reason goes
+where a reader who needs it looks: the comment, the tooltip, the docs.** Three
+limits follow, each held by a gate in the product that has the surface:
+
+- **A test function is named in at most 60 characters:** the thing under test
+  and the one condition, `TestDHSnapshotFailedCopyStillRecordsDowntime`. The
+  sentence it stands for goes in the comment above it, or in a `t.Run` subtest
+  name, which may carry spaces. Length is a reading cost only, since `_test.go`
+  files never reach a build; the limit is about the CI line that quotes the
+  name.
+- **A label that is scanned fits its surface in at most 20 characters and never
+  wraps:** a block in a palette, a tab, a menu entry, a chip. The full name goes
+  in the description the surface shows once the item is selected.
+- **A message that shares a line with controls is one line, whatever its
+  length:** at most 140 characters, one or two sentences, truncated by the
+  element with the full text in its tooltip. A status surface that grows moves
+  every control beside it, so the bar keeps its height and the text yields.
+
+**Where this came from.** Konnekt's Distant Horizons series (#570 to #581)
+landed 42 test names over 60 characters in four days against none in the
+thousand tests before it, the longest at 79, and one of them read as a
+paragraph in a CI failure. The same series named a block "Distant Horizons
+Snapshot", the one label that wrapped in the 192px palette, and put two
+sentences of RCON advice, 171 and 230 characters, beside the graph editor's
+Save button, where they wrapped to four lines and moved it. Nothing constrained
+any of it: this file said nothing about what a name is for, aislop has no
+length rule (its `docs/rules.md`, read 2026-10-14), and the shared workflows
+gate scores and labels, not words. Sentence-length names and a layout that
+shifts under its own text are what AI-assisted code leaves behind when nothing
+refuses it, and they were read as exactly that.
+
+**What is checked.** Each limit is a gate in the product with the surface,
+because the width of a palette is a fact about one product. Konnekt holds all
+three: the `test names stay readable` invariant in `.claude/suite.json` (60)
+and, in `backend/services/scheduler_wording_test.go`,
+`TestBlockLabelsFitThePalette` (20) over every registered scheduler block and
+`TestGraphWarningsStayShort` (140) over the editor's advice strings. Kommands
+holds the first, over `shell/`, with no name over the limit on the day it was
+added, and has no palette or toolbar message to hold the other two against. A
+new surface of either kind gets its test when it is built; the number is the
+convention, the test is the product's.
+
+**What is not checked, and why.** A vitest title is a sentence by design,
+`it('...')`, and Prettier's 100 columns already shape it: the longest in either
+product is 92 characters, and none is over 100. An error returned from Go or
+thrown from TypeScript is read in a log or a test failure, where a long line
+costs nothing it does not also buy. Neither gets a limit until one is found
+wrapping a surface.
+
 ## Release notes and pull request labelling
 
 A merged pull request's title is public copy. It is what a person reading the

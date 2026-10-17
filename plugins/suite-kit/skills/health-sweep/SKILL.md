@@ -34,7 +34,7 @@ not commit, push, open pull requests, or leave a branch behind. A finding that l
 easy is still a finding, not an invitation.
 
 Three steps below do write outside the conversation, and all three are local,
-session-scoped and expected: installing the two plugins (step 0, user scope, in a
+session-scoped and expected: installing `suite-kit` (step 0, user scope, in a
 container that is discarded), cloning the products, and running a product's
 `regenerate` command to check its generated files are in sync. **Leave the last two
 uncommitted.** A dirty working tree in a cloned product is the check having run, not
@@ -49,29 +49,23 @@ check nobody trusts is zero. The issue is the deliverable.
 ## 0. Load the tooling
 
 **Declaring a plugin is not installing it.** Every repo's `.claude/settings.json`
-enables `suite-kit` and `superpowers`, and a scheduled run still starts in a fresh
-container with neither on disk — `claude plugin list` reports none. That is the
-normal state of this sweep's session, not a broken one. Install both, from this
-repo's root, before anything else:
+enables `suite-kit`, and a scheduled run still starts in a fresh container with
+nothing on disk: `claude plugin list` reports none. That is the normal state of this
+sweep's session, not a broken one. Install it, from this repo's root, before
+anything else:
 
 ```sh
 claude plugin marketplace add ./
 claude plugin install suite-kit@kollektiv
-claude plugin marketplace add obra/superpowers
-claude plugin install superpowers@superpowers-dev
 ```
 
-Three things about those four lines, each of which has cost a run:
+**`./`, not `.`**: a bare `.` is rejected as an invalid source format. The install
+is **user scope and session-local**. It changes no repo, and the container is
+discarded afterwards.
 
-- **`./`, not `.`** — a bare `.` is rejected as an invalid source format.
-- **`superpowers@superpowers-dev`, not `superpowers@superpowers`.** The marketplace
-  at `obra/superpowers` names *itself* `superpowers-dev` in its manifest, and the
-  manifest's name wins over the alias in `extraKnownMarketplaces`. The id that reads
-  correctly fails with `Plugin "superpowers" not found in marketplace "superpowers"`,
-  which is exactly the message you get for a plugin that does not exist, so it reads
-  as upstream's problem rather than a typo here.
-- Both installs are **user scope and session-local.** They change no repo, and the
-  container is discarded afterwards.
+The repos also declare `superpowers`. This sweep no longer needs it: step 4's review
+is Claude Code's built-in `/code-review`, which ships with the CLI and has nothing to
+install. Do not install `superpowers` for the sweep.
 
 Then run `/reload-plugins` if the install summary asks for it. Report an install that
 fails as **skipped, with the reason**, and carry on — step 3 falls back to each
@@ -180,22 +174,67 @@ Run every repo even after one fails. The point of a sweep is the whole picture.
 ## 4. The deeper review
 
 The declared checks catch regressions in things someone already thought to encode.
-The sweep also exists to catch what no check encodes yet.
+The sweep also exists to catch what no check encodes yet. The review has two halves, run in each repo, and both cover:
 
-Use the **`superpowers`** skills for this — systematic code review, not a skim. Cover:
-
-- every commit merged to the repo's default branch since the previous sweep
-  (`git log --since` the last run's date, or the last 7 days on a first run), and
+- every commit merged to the repo's default branch since the previous sweep (the
+  last run's date from the run log in step 6, or the last 7 days on a first run),
+  and
 - one rotating deep-dive area per repo per week, so the whole codebase is covered
-  over time rather than only its most recent edits.
+  over time rather than only its most recent edits. Name it in the run log, so the
+  next run can pick a different one.
 
-`superpowers` is installed in step 0. If that install failed, try it once more
-there — the id is `superpowers@superpowers-dev`, for the reason given in that step.
+### Correctness and efficiency: `/code-review`
 
-If it is still unavailable after that, run everything else and report the deeper
-review as **skipped, with the reason**. Do not substitute an unstructured read and
-report it as though the review ran. A shallow pass recorded as a pass is worse than
-an honest gap, because it is the one outcome nobody goes back to check.
+Claude Code's built-in `/code-review` ships with the CLI, so there is nothing to
+install and nothing to fail to load. In each repo, take as the base the last
+default-branch commit before the previous run
+(`git rev-list -1 --before=<last run> origin/<default>`), then run:
+
+```
+/code-review high --max-findings all <base>...origin/<default>
+/code-review high --max-findings all <deep-dive path>
+```
+
+- `--max-findings all` needs Claude Code v2.1.288 or later. On an older CLI, drop it
+  and say in the run log that the review's own limit applied.
+- Never pass `--fix` or `--comment`. This sweep does not change code or post on pull
+  requests.
+- Never pass `ultra`. A scheduled run does not launch the cloud review.
+
+The review runs as a subagent, so step 0b applies to what it returns: each finding
+is a candidate, re-verified at its file:line before it is filed, and the fix it
+suggests stays out of the issue (step 5).
+
+This replaced the `superpowers` review skills on 2026-10-15. On 2026-10-12 the
+plugin installed but `superpowers:requesting-code-review` was an unknown skill, so
+the review was skipped and 35 Konnekt commits went unread: the week the Distant
+Horizons series landed the names and messages `docs/conventions.md` § Wording was
+then written against.
+
+### Appropriateness: yours, over the same diff
+
+`/code-review` looks for bugs and cleanups, not for whether the code is the right
+size for its job. Read the same diff yourself for:
+
+- the limits in `docs/conventions.md` § Wording, on surfaces no product gate holds
+  yet: a name that is a sentence, a label that wraps, a message beside controls
+  that can grow its container;
+- text that says more than its reader needs: a comment restating the line under
+  it, an error or log line carrying advice that belongs in docs, a doc paragraph
+  narrating how the change was made;
+- code with no caller, a second way of doing something the codebase already does
+  once, an abstraction with one user;
+- a departure from the product's own `CLAUDE.md` or `.claude/rules/`.
+
+File one of these only with its file:line and the written rule it breaks. Taste
+with no written rule behind it is not a finding. When the same thing keeps
+appearing with no rule to cite, the gap is in the conventions: file that against
+this repo instead.
+
+If `/code-review` is unavailable or fails, still do the appropriateness half,
+report the correctness half as **skipped, with the reason**, and do not substitute
+an unstructured read for it. A shallow pass recorded as a pass is worse than an
+honest gap, because it is the one outcome nobody goes back to check.
 
 ## 5. File the findings
 
@@ -306,7 +345,7 @@ Post exactly one comment per run, whatever the outcome:
 | Kommands | 14/14 | pass |
 
 **Drift** — 9/9 pass
-**Deep review** — <the rotating area covered, or: skipped, with the reason>
+**Deep review** — <per repo: the range and the deep-dive area, `/code-review` findings, appropriateness findings; or: skipped, with the reason>
 **Could not run** — <N, and which; or: none>
 
 **Opened** — <links, or: none>

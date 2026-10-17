@@ -105,9 +105,9 @@ its manifest declares `tracking: "github-issues"` on `main` and
 
 ## Scheduled runs
 
-Two cloud Routines exist and are enabled, both created over MCP against this
-repo: the daily `/suite-kit:suite-sync` mirror (`30 6 * * *` UTC) and the weekly
-`/suite-kit:health-sweep` (`0 7 * * 1` UTC). `README.md` describes what each does.
+Two cloud Routines exist, both created over MCP against this repo: the daily
+`/suite-kit:suite-sync` mirror (`30 6 * * *` UTC), disabled since 2026-08-21, and
+the weekly `/suite-kit:health-sweep` (`0 7 * * 1` UTC), enabled. `README.md` describes what each does.
 
 Settled since, by reading the runs rather than predicting them:
 
@@ -135,10 +135,12 @@ Settled since, by reading the runs rather than predicting them:
 
 Still open on the sweep:
 
-- Watching the first run after 2026-09-15 actually install both plugins and
-  complete the deep review. Until that run, `superpowers` had never once loaded
-  (see below), so step 4 was skipped every week and every finding to date came
-  from a declared check rather than from review.
+- Watching the first run after 2026-10-15 complete both halves of step 4. The
+  review is now Claude Code's built-in `/code-review` plus an appropriateness
+  read against `docs/conventions.md` § Wording. `superpowers` carried it on
+  2026-09-28 (five findings) and partly on 2026-10-05, then failed to load its
+  review skill on 2026-10-12, which skipped the review over 35 Konnekt
+  commits.
 - Seeding the run log. `Health-Sweep-Log: kollektiv` is a standing issue the
   sweep opens on its first run under the new skill; until then, nothing records
   a clean week.
@@ -259,6 +261,9 @@ loaded anywhere: the failure reads `Plugin "superpowers" not found in
 marketplace "superpowers"`, which looks like upstream dropped it. Verified by
 installing both spellings in a cloud session on 2026-09-15; only the
 `-dev` one resolves.
+
+The health sweep stopped using it on 2026-10-15 (see Scheduled runs): its
+review is the built-in `/code-review`, which has nothing to install.
 
 Still open: observing a session of its agents against Konnekt's
 `graphify hook-guard` before relying on it there beyond what

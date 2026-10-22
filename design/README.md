@@ -47,6 +47,11 @@ requirement nobody has.
   light override for it.
 - **`"@sans"`** in a font stack substitutes that family's stack. The only
   reference syntax in the file.
+- **`site` and `site-mono`** are the families of the products' websites, which
+  set every line in Geist and Geist Mono. The apps never read them: Konnekt's
+  font settings list their own roles. Geist is under the SIL Open Font Licence,
+  so a website can serve its files itself, which the ITF families in `sans`,
+  `title` and `display` forbid (Konnekt #442).
 - **`"userConfigurable": true`** — the value is a *default* the user may override
   at runtime, via Konnekt's colour pickers. A generator must not bake it in as
   fixed.

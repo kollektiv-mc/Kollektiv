@@ -135,15 +135,10 @@ Settled since, by reading the runs rather than predicting them:
 
 Still open on the sweep:
 
-- Watching the first run after 2026-10-15 complete both halves of step 4. The
-  review is now Claude Code's built-in `/code-review` plus an appropriateness
-  read against `docs/conventions.md` § Wording. `superpowers` carried it on
-  2026-09-28 (five findings) and partly on 2026-10-05, then failed to load its
-  review skill on 2026-10-12, which skipped the review over 35 Konnekt
-  commits.
-- Seeding the run log. `Health-Sweep-Log: kollektiv` is a standing issue the
-  sweep opens on its first run under the new skill; until then, nothing records
-  a clean week.
+- Watching the first run under the pillar review (suite-kit 0.11.0) cover
+  one pillar per product in step 4c and log it, so the run after it can pick
+  the next. Both halves of the previous review ran on 2026-10-19, and the run
+  log is kollektiv-mc/Kollektiv#39.
 
 Routine cron is evaluated in UTC and does not follow DST, so both schedules need
 shifting by an hour twice a year, or moving off UTC — a schedule set for 09:00

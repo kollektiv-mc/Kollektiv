@@ -86,7 +86,7 @@ Health-Sweep-Log: kollektiv
 ```
 
 One issue, never closed, one comment per run, clean runs included. The comment carries
-counts rather than prose: per-repo checks passed, drift, the deep-dive area covered,
+counts rather than prose: per-repo checks passed, drift, the health pillar covered,
 what could not run, and links to whatever was opened or commented on. The detail lives
 in the issues; this is the ledger.
 
@@ -409,6 +409,28 @@ Across the last two hundred commits there, no subject line carried an em dash
 and thirteen bodies did. The half that is read on every release lands; the half
 buried in a body drifts. Only the website half of this rule has a check behind
 it, so the rest will drift the same way unless review catches it.
+
+## Simplicity
+
+**Code is the smallest thing that does today's job.** It is read far more often
+than it is extended, and an extension point nobody uses is paid for on every
+read. Five limits, in every repo:
+
+- **No abstraction with one user.** An interface, factory, wrapper or generic
+  helper arrives with its second caller, not its first.
+- **No option nobody sets.** A parameter, flag or config field with one value in
+  use is a constant until a second value is needed.
+- **No second way.** A change that does something the codebase already does
+  reuses that path, or replaces it in the same change.
+- **No code without a caller.** An export, file, branch or fallback that nothing
+  reaches goes in the change that orphaned it.
+- **Text carries only what its reader needs.** A comment says why, never what the
+  line beneath it says; an error or log line states the failure, and advice goes
+  in the docs; a doc describes what is there, not how the change was made.
+
+**What is checked.** aislop's `code-quality/duplicate-block` catches the copied
+form of a second way. The rest is review: the health sweep reads every
+week's commits against this list, and cites the limit a finding breaks.
 
 ## Wording
 

@@ -1,342 +1,220 @@
 ---
-description: Run the suite-wide health sweep across every repo in suite.repos.json — each product's health checks, the cross-repo drift checks, a review of the week's commits — filing findings as deduplicated GitHub issues and recording the run in a standing log issue. Use ONLY when explicitly asked for a suite-wide sweep across all repos, or when fired by the weekly Routine. For one repo, use health instead; this one clones every product, installs plugins, and writes to GitHub.
+description: Run the suite-wide health sweep across every repo in suite.repos.json — each product's health checks, the cross-repo drift checks, a review of the week's commits and one health pillar per repo — filing findings as deduplicated GitHub issues and recording the run in a standing log issue. Use ONLY when explicitly asked for a suite-wide sweep across all repos, or when fired by the weekly Routine. For one repo, use health instead; this one clones every product, installs plugins, and writes to GitHub.
 ---
 
 # Suite-wide health sweep
 
 `/suite-kit:health` reports on **one** repo, on demand. This sweeps **all** of them,
-unattended, and writes what it finds down where the work happens.
+unattended, and files what it finds where the work happens. Run it from the
+workspace root (`kollektiv`).
 
-Run this from the workspace root (`kollektiv`). It is the scheduled counterpart to
-`/suite-kit:health`, not a replacement for it — step 3 below runs that skill in each
-repo rather than reimplementing its logic.
+**Check you were actually asked for this one.** It clones every product, installs
+plugins, and opens and comments on issues in other repos. If you reached it from
+"run a health check" or "check this repo", that is `/suite-kit:health`: stop, say
+so, and run that instead. Continue only when the request was explicitly
+suite-wide, or this is the weekly Routine firing.
 
-**Check you were actually asked for this one.** This sweep clones three repositories,
-installs plugins, and opens and comments on GitHub issues in repos other than the one
-in front of you. Those are outward-facing side effects, and they are wrong to produce
-on a guess. If you reached this skill from something like "run a health check" or
-"check this repo", that is `/suite-kit:health` — stop, say so, and run that instead.
-Continue only when the request was explicitly suite-wide, or when this is the weekly
-Routine firing.
+**This sweep never changes code.** Its whole output is issues, one comment on the
+run log, and a report. It does not fix, refactor, scaffold or build anything, not
+the trivial one-line fix and not the thing it is certain about. It does not commit,
+push, open pull requests, or leave a branch behind. It is an unattended run with
+nobody reviewing its diff, so anything it changed would land unreviewed.
 
-This skill used to carry `disable-model-invocation: true`, which took it out of the
-model's skill listing entirely and so put it out of reach of the scheduled run it was
-written for. The Routine worked around that by reading this file as prose, which
-bypassed every skill mechanism and left the gate protecting nothing. The paragraph
-above is the replacement, and it is doing a job the frontmatter only appeared to do.
-
-**This sweep never changes code.** Its entire output is issues, a comment on the
-standing run log, and a report.
-
-It does not fix, refactor, implement, scaffold, or build anything — not the trivial
-one-line fix, not the thing it is certain about, not "while I was in there". It does
-not commit, push, open pull requests, or leave a branch behind. A finding that looks
-easy is still a finding, not an invitation.
-
-Three steps below do write outside the conversation, and all three are local,
-session-scoped and expected: installing `suite-kit` (step 0, user scope, in a
-container that is discarded), cloning the products, and running a product's
-`regenerate` command to check its generated files are in sync. **Leave the last two
-uncommitted.** A dirty working tree in a cloned product is the check having run, not
-work in progress.
-
-The reason for the rule is what the sweep is: an unattended weekly run with nobody
-reviewing its diff. Anything it changed would land unreviewed, and the value of a
-check nobody trusts is zero. The issue is the deliverable.
+Three things it does write are local and expected: installing `suite-kit`,
+cloning the products, and running a product's `regenerate` command to check its
+generated files. **Leave the last two uncommitted.** A dirty tree in a cloned
+product is the check having run.
 
 ---
 
 ## 0. Load the tooling
 
-**Declaring a plugin is not installing it.** Every repo's `.claude/settings.json`
-enables `suite-kit`, and a scheduled run still starts in a fresh container with
-nothing on disk: `claude plugin list` reports none. That is the normal state of this
-sweep's session, not a broken one. Install it, from this repo's root, before
-anything else:
+A scheduled run starts in a fresh container with no plugins on disk, whatever
+`.claude/settings.json` declares. From this repo's root:
 
 ```sh
 claude plugin marketplace add ./
 claude plugin install suite-kit@kollektiv
 ```
 
-**`./`, not `.`**: a bare `.` is rejected as an invalid source format. The install
-is **user scope and session-local**. It changes no repo, and the container is
-discarded afterwards.
+The source is `./`; a bare `.` is rejected. The install is user scope and
+session-local, and its skills are invokable in the same session. Run
+`/reload-plugins` if the install summary asks for it. Do not install
+`superpowers`; nothing here needs it.
 
-The repos also declare `superpowers`. This sweep no longer needs it: step 4's review
-is Claude Code's built-in `/code-review`, which ships with the CLI and has nothing to
-install. Do not install `superpowers` for the sweep.
+If the install fails, report it as **skipped, with the reason**, read this file
+from disk and follow it. Step 3 then runs each product's vendored
+`.claude/suite-check.py`, which needs no plugin.
 
-Then run `/reload-plugins` if the install summary asks for it. Report an install that
-fails as **skipped, with the reason**, and carry on — step 3 falls back to each
-product's vendored `.claude/suite-check.py`, which is the path that works with no
-plugin at all.
+## 0b. Subagents fetch; you judge
 
-Installing `suite-kit` is what makes this skill reachable at all. Skills from a
-plugin installed mid-session become invokable in that same session, so a scheduled
-run installs in step 0 and can then invoke `/suite-kit:health-sweep` normally.
+Up to **two** Sonnet subagents may run at a time, and only for retrieval:
+locating files, collecting command output, quoting a doc or a diff back. What they
+return is evidence, never a verdict.
 
-**If the install fails, read this file from disk and follow it.** That path works
-with no plugin and no marketplace, and it is the Routine's stated fallback — it is
-how every run worked while this skill was gated out of the model's listing. Do not
-treat that line in the Routine prompt as redundant.
+- Never let a subagent decide whether a match is a violation, a skip is
+  acceptable, or a finding reproduces.
+- Never let a subagent open an issue, comment, or write the run log.
+- **Re-verify anything that becomes a finding against the primary source** before
+  filing it: run the command or read the file:line yourself.
 
-## 0b. How to use subagents
-
-**Opus is the assessor. Subagents fetch; they do not judge.**
-
-Up to **two** Sonnet subagents may run at a time, and only for retrieval: locating
-files, collecting command output, gathering the raw text of a diff or a log, reading
-a doc and quoting the relevant lines back. Spawn them for breadth, when the same
-question has to be asked of three repos at once.
-
-What comes back from a subagent is **evidence, not a verdict**. A subagent reporting
-"this looks fine" is a fact about what the subagent said, and nothing about the
-repo. So:
-
-- Never let a subagent decide whether an invariant match is a violation, whether a
-  skip is acceptable, or whether a finding reproduces. Those are the judgements this
-  sweep exists to make, and `health/SKILL.md` step 2 is explicit that they need the
-  entry's `diagnosis` read against the match.
-- Never let a subagent open an issue, comment on one, or write the run log.
-- **Re-verify anything that becomes a finding against the primary source before
-  filing it.** Run the command yourself, read the file:line yourself. An issue body
-  claims a reader can confirm the problem without opening a session; a claim relayed
-  through a summary, unchecked, is how that stops being true.
-
-A run where the deep review was delegated wholesale to subagents and their
-conclusions were filed as findings has not done the review. It has laundered a
-skim, and step 4 already says why that is the one outcome nobody goes back to check.
+A review delegated wholesale and filed from subagent summaries has not been done.
 
 ## 1. Assemble the workspace
 
-Read `suite.repos.json` for the repo list. **Do not hardcode product names** — a
-fourth repo added to that manifest must be swept without editing this skill.
+Read `suite.repos.json` for the repo list; never hardcode product names. Run
+`./scripts/bootstrap.sh`, which clones each repo beside this one and is
+idempotent. If `add_repo` is available, attach each product with
+`access: "push"` (filing issues needs it) and call `register_repo_root` so its
+`CLAUDE.md`, rules and settings load.
 
-Run `./scripts/bootstrap.sh`. It clones each repo in the manifest beside this one as
-`<root>/<name>`, is idempotent, and never touches a directory it did not create. The
-products are public, so this needs no credentials. If `add_repo` is available in the
-session, attach each product with it as well (`access: "push"` — filing issues needs
-credentials, cloning alone does not) and call `register_repo_root` afterwards so the
-product's own `CLAUDE.md`, skills, and settings load.
-
-A repo that cannot be cloned is reported as **skipped, with the reason**, and the
-sweep continues to the next one. One unreachable product does not cancel the other
-checks.
+A repo that cannot be cloned is **skipped, with the reason**; the sweep continues.
 
 ## 2. Drift
 
-With every product cloned, run each drift check from the root, in the order
-`.github/workflows/drift.yml` runs them, and run all of them even after one fails:
+Run every `run:` line of `.github/workflows/drift.yml`, in order and with its
+flags, from the root. Run all of them even after one fails.
 
-```sh
-./scripts/sync-tokens.sh --check
-./scripts/sync-runner.sh --check --require-vendored
-./scripts/sync-aislop.sh --check
-./scripts/sync-workflows.sh --check
-./scripts/sync-priority.sh --check
-./scripts/sync-notes.sh --check --require-vendored
-./scripts/validate-schemas.sh --require-products
-./scripts/check-participation.sh --require-products
-./scripts/check-copy.sh --require-products
-```
-
-**That list is a copy, and a copy drifts.** It fell two checks behind `drift.yml`
-once already, between `sync-workflows.sh` landing and this line being written, and
-`sync-notes.sh` sat here for three weeks without the `--require-vendored` the
-workflow passes it — which is the difference between a product that lost the
-release-notes generator being a finding and it being a silent skip. Read the `run:`
-lines out of `.github/workflows/drift.yml` and run those, with their flags. If what
-the workflow runs and what is written above disagree, the workflow is right and the
-disagreement is itself a finding to file against this repo.
-
-These are the checks `/suite-kit:health` deliberately leaves out: they need the full
-workspace, and would fail on a bare checkout. **Here they belong**, because assembling
-that workspace is step 1. Read each script's outcomes carefully — every one
-distinguishes "no drift", "no drift among the products present, but the workspace is
-incomplete", "not adopted" and actual drift, specifically so the middle two are not
-read as a pass. Report them the way the scripts report them. With every product
+Report each the way the script does. They distinguish "no drift", "no drift
+among the products present, but the workspace is incomplete", "not adopted" and
+real drift, so the middle two are never read as a pass. With every product
 present, an unadopted product is a finding for `validate-schemas.sh` and
 `check-participation.sh`, and a skip for the sync scripts run without
 `--require-vendored`.
 
 ## 3. Per-repo health
 
-In each cloned repo, run `/suite-kit:health`. It reads that repo's
-`.claude/suite.json` and knows what that product's health means.
+In each cloned repo, run `/suite-kit:health`. A repo with no `.claude/suite.json`
+is **not adopted**: report it and move on, without inventing commands for it.
+Run every repo even after one fails.
 
-A repo with no `.claude/suite.json` has not adopted suite-kit. Report it as
-**not adopted** and move on — do not invent a plausible set of commands for it.
-`docs/adopting.md` is the fix, and it is a human's call.
+## 4. Review
 
-Run every repo even after one fails. The point of a sweep is the whole picture.
+The declared checks catch what someone already encoded. This step reads the code
+against what is written down but not encoded. It has three parts per adopted repo.
 
-## 4. The deeper review
+**Range.** Every commit on the default branch since the previous run (its date is
+in the run log, step 6; the last 7 days on a first run). Take as the base
+`git rev-list -1 --before=<last run> origin/<default>`. The range always starts at
+the last run: nothing a run leaves unreviewed is added to the next one.
 
-The declared checks catch regressions in things someone already thought to encode.
-The sweep also exists to catch what no check encodes yet. The review has two halves, run in each repo, and both cover:
+**The written rules.** Read them before reviewing:
 
-- every commit merged to the repo's default branch since the previous sweep (the
-  last run's date from the run log in step 6, or the last 7 days on a first run),
-  and
-- one rotating deep-dive area per repo per week, so the whole codebase is covered
-  over time rather than only its most recent edits. Name it in the run log, so the
-  next run can pick a different one.
+- the product's health checklist, the file its `CLAUDE.md` (or a file it
+  imports) names for its four pillars;
+- `docs/conventions.md` § Simplicity and § Wording;
+- the product's own `CLAUDE.md` and `.claude/rules/`.
 
-### Correctness and efficiency: `/code-review`
+A product whose `CLAUDE.md` names no checklist is reported as **no checklist**,
+and 4c is skipped for it.
 
-Claude Code's built-in `/code-review` ships with the CLI, so there is nothing to
-install and nothing to fail to load. In each repo, take as the base the last
-default-branch commit before the previous run
-(`git rev-list -1 --before=<last run> origin/<default>`), then run:
+### 4a. Correctness: `/code-review`
 
 ```
 /code-review high --max-findings all <base>...origin/<default>
-/code-review high --max-findings all <deep-dive path>
 ```
 
-- `--max-findings all` needs Claude Code v2.1.288 or later. On an older CLI, drop it
-  and say in the run log that the review's own limit applied.
-- Never pass `--fix` or `--comment`. This sweep does not change code or post on pull
-  requests.
-- Never pass `ultra`. A scheduled run does not launch the cloud review.
+Never pass `--fix`, `--comment` or `ultra`. On a CLI older than v2.1.288, drop
+`--max-findings all` and say in the log that the review's own limit applied. Each
+finding it returns is a candidate, re-verified per 0b.
 
-The review runs as a subagent, so step 0b applies to what it returns: each finding
-is a candidate, re-verified at its file:line before it is filed, and the fix it
-suggests stays out of the issue (step 5).
+### 4b. Rules: yours, over the same diff
 
-This replaced the `superpowers` review skills on 2026-10-15. On 2026-10-12 the
-plugin installed but `superpowers:requesting-code-review` was an unknown skill, so
-the review was skipped and 35 Konnekt commits went unread: the week the Distant
-Horizons series landed the names and messages `docs/conventions.md` § Wording was
-then written against.
+`/code-review` looks for bugs, not for whether a change keeps the rules above.
+Read the diff yourself for any change that breaks a Simplicity or Wording limit,
+a ticked item in the checklist, or the product's own rules. A finding cites its
+file:line and the rule it breaks. Taste with no written rule behind it is not a
+finding; when the same thing keeps appearing with none to cite, file the gap in
+the conventions against this repo.
 
-### Appropriateness: yours, over the same diff
+### 4c. One pillar, over the whole tree
 
-`/code-review` looks for bugs and cleanups, not for whether the code is the right
-size for its job. Read the same diff yourself for:
+Each run covers one pillar per repo: the one after the pillar the previous run
+logged for that repo, in the checklist's order, starting with the first. With
+four pillars and a weekly run, the whole checklist is covered about monthly.
 
-- the limits in `docs/conventions.md` § Wording, on surfaces no product gate holds
-  yet: a name that is a sentence, a label that wraps, a message beside controls
-  that can grow its container;
-- text that says more than its reader needs: a comment restating the line under
-  it, an error or log line carrying advice that belongs in docs, a doc paragraph
-  narrating how the change was made;
-- code with no caller, a second way of doing something the codebase already does
-  once, an abstraction with one user;
-- a departure from the product's own `CLAUDE.md` or `.claude/rules/`.
+Check every **ticked** item in that pillar against the code as it is now. A
+ticked item that no longer holds is a finding, citing the item. An unticked item
+is a known gap the checklist already tracks: do not file it.
 
-File one of these only with its file:line and the written rule it breaks. Taste
-with no written rule behind it is not a finding. When the same thing keeps
-appearing with no rule to cite, the gap is in the conventions: file that against
-this repo instead.
+### What could not be covered
 
-If `/code-review` is unavailable or fails, still do the appropriateness half,
-report the correctness half as **skipped, with the reason**, and do not substitute
-an unstructured read for it. A shallow pass recorded as a pass is worse than an
-honest gap, because it is the one outcome nobody goes back to check.
+Anything in the range or the pillar not read this run (commits, candidates not
+re-verified, checklist items not checked) is counted under **Could not run** in
+the log with the reason. It is this run's gap, recorded once, and is not carried
+forward. If `/code-review` is unavailable, still do 4b and 4c and record 4a as
+**skipped, with the reason**; never substitute an unstructured read and call it
+the review.
 
 ## 5. File the findings
 
-Findings go to **GitHub Issues in the repo the finding is about** — Konnekt's findings
-to Konnekt, Kommands' to Kommands, the hub's to this repo. Nothing goes to Linear;
-see `docs/conventions.md`.
+Findings go to **GitHub Issues in the repo the finding is about**. Nothing goes
+to Linear.
 
-Every issue this sweep opens carries, on its own line in the body:
+Every issue carries, on its own line in the body, a key **stable across runs**,
+derived from what the finding is, never the week or the title:
 
 ```
 Health-Check-Key: <repo>/<check-id>
 ```
 
-`<check-id>` must be **stable across runs** — derived from what the finding *is*, never
-from the week it was found or the wording of the title. `konnekt/invariant/no-raw-hex`,
-`kommands/command/typecheck`, `kollektiv/tokens/drift`.
+For example `konnekt/invariant/no-raw-hex`, `kommands/command/typecheck`,
+`kollektiv/tokens/drift`, `konnekt/pillar/performant/ring-buffers`.
 
-Before opening anything, search that repo's open issues for the key. Then:
+Search that repo's open issues for the key line, **never for titles**, then:
 
 | Key found | Finding present | Do |
 |---|---|---|
 | no | yes | Open an issue |
-| yes | yes | Comment on the existing issue with the new run's date and what changed |
-| yes | no | Comment that it no longer reproduces — **do not close it** |
+| yes | yes | Comment with the run's date and what changed |
+| yes | no | Comment that it no longer reproduces; **do not close it** |
 
-**Match on the key line, never on titles.** This is the same rule
-`docs/conventions.md` states for roadmap-sourced issues, for the same reason: titles get
-edited on both sides and drift apart, and matching on them produces duplicates that then
-need untangling by hand.
+Closing is a human's call: "fixed" and "the check stopped running" look the same
+from here. Label everything `health-check`, creating the label if the repo lacks
+it.
 
-Closing is a human's call. An issue that stops reproducing may have been fixed, or the
-check may have stopped running — and this sweep cannot tell those apart.
-
-Label everything it files `health-check`. Create the label if the repo lacks it.
-
-### What an issue says
-
-**One problem per issue, described thoroughly and briefly.** Those pull against each
-other, and the resolution is to cut explanation, never evidence. A reader must be able
-to confirm the problem themselves without opening a session.
-
-Title: the problem, specifically. `gen:tokens output is stale in Konnekt`, not
-`Health check findings`.
-
-Body, in this order and nothing else:
+**One problem per issue.** Cut explanation, never evidence: a reader must be able
+to confirm it without opening a session. Title: the problem, specifically
+(`gen:tokens output is stale in Konnekt`). Body, in this order and nothing else:
 
 ```
 Health-Check-Key: <repo>/<check-id>
 
 <One or two sentences: what is wrong.>
 
-**Where** — <file:line>, <file:line>  (all of them; a truncated list is a bug report
-that cannot be reproduced)
+**Where**: <file:line>, <file:line>  (all of them)
 
-**Why it matters** — <the failure this causes, in one or two sentences.>
+**Why it matters**: <the failure this causes, in one or two sentences.>
 
-**Found by** — <the check name> · <reference doc>
+**Found by**: <the check, rule or checklist item> · <reference doc>
 ```
 
-For an invariant, use the `diagnosis` and `reference` from that entry in
-`.claude/suite.json` **verbatim** for those last two fields. They were written to name
-the specific silent failure behind the rule, and paraphrasing loses exactly the part
-that made the rule worth having.
+For an invariant, copy the entry's `diagnosis` and `reference` from
+`.claude/suite.json` verbatim into the last two fields. For a checklist item,
+quote the item.
 
-**Do not propose the fix.** No patch, no diff, no "just change X to Y", no
-implementation sketch. Diagnosis is this sweep's job and the whole of it; deciding what
-to do about it is the reader's, and an unreviewed suggestion from an unattended run is
-worth less than the space it takes up. State the problem and stop.
+**Do not propose the fix**: no patch, no "just change X to Y". Paste an error only
+when it is the evidence, and only its relevant lines. Issue and log text is
+published, so it carries no em dash.
 
-Paste an error only when it is the evidence — the failing assertion, the drift the
-script printed — and only the relevant lines of it. Never a full log.
-
-**If no GitHub issue tooling is available in the session**, do not drop the findings
-and do not treat the sweep as complete. Put every finding, in full and with its key
-line, into the report of step 7, and state plainly at the top that issue filing was
-**blocked** and why. A scheduled run reaches a human through its completion
-notification; a finding that only ever existed in a session nobody opened is a finding
-that was never made.
+If no GitHub issue tooling is available, put every finding, in full with its key
+line, into the report (step 7), and say at the top that filing was **blocked** and
+why.
 
 ## 6. The run log
 
-Findings become issues. **Every run also leaves a record of itself, including the
-runs that find nothing** — those are the ones with no other trace, and a sweep whose
-clean weeks are indistinguishable from the weeks it did not fire is not evidence of
-anything.
-
-The log is a single permanent issue in **this repo**, labelled `health-check`, with
-this on its own line in the body:
+Every run, clean ones included, posts exactly one comment on the standing issue
+in **this repo** whose body carries:
 
 ```
 Health-Sweep-Log: kollektiv
 ```
 
-Search that line first. Find it and comment; find nothing and open it once, titled
-`Health sweep run log`. **Never close it, and never open a second one** — it is a
-ledger, not a finding, and the one thing that makes it readable is that a year of
-runs sits in one place in order.
-
-Post exactly one comment per run, whatever the outcome:
+Search for that line; open the issue once, titled `Health sweep run log` and
+labelled `health-check`, only if none exists. Never close it or open a second.
 
 ```
-## <YYYY-MM-DD> — <clean | N finding(s)>
+## <YYYY-MM-DD>: <clean | N finding(s)>
 
 | Repo | Checks | Result |
 |---|---|---|
@@ -344,38 +222,22 @@ Post exactly one comment per run, whatever the outcome:
 | Konnekt | 20/21 | 1 skipped |
 | Kommands | 14/14 | pass |
 
-**Drift** — 9/9 pass
-**Deep review** — <per repo: the range and the deep-dive area, `/code-review` findings, appropriateness findings; or: skipped, with the reason>
-**Could not run** — <N, and which; or: none>
+**Drift**: 9/9 pass
+**Review**: <per repo: the range, the pillar covered, findings from 4a, 4b and 4c>
+**Could not run**: <N, and what; or: none>
 
-**Opened** — <links, or: none>
-**Commented** — <links, or: none>
-**No longer reproducing** — <links, or: none>
+**Opened**: <links, or: none>
+**Commented**: <links, or: none>
+**No longer reproducing**: <links, or: none>
 ```
 
-Counts, not prose. The detail belongs in the issues; this is the row that says the
-sweep ran, what it covered, and what it could not reach. `Could not run` is the
-column worth reading a year later, and the whole reason a clean run still posts: a
-run reporting `14/14 pass` and a run reporting `0/14, workspace never assembled` are
-both silent otherwise, and only one of them is good news.
-
-If issue tooling is unavailable, the log comment cannot be posted either. Say so at
-the top of the report alongside the blocked findings, per step 5.
+Counts, not prose; the detail is in the issues. The pillar name is what the next
+run reads to pick its own. If the log cannot be posted, say so at the top of the
+report.
 
 ## 7. Report
 
-One table per repo, in the shape `/suite-kit:health` already uses:
-
-| Check | Result |
-|---|---|
-
-Then, for the run as a whole: issues opened, issues commented on, and issues whose
-finding no longer reproduces — each as a link. Add a link to the run-log comment
-step 6 posted.
-
-Close with the count of checks that **could not run**, and why. If that count is not
-zero, it is the first thing the report should say after the tables, not a footnote.
-
-The report reaches a human through the Routine's completion notification and then
-exists only in a session transcript. The run log is what survives, so anything worth
-knowing in six months belongs in step 6's comment, not only here.
+One `| Check | Result |` table per repo, as `/suite-kit:health` prints it. Then
+the issues opened, commented on, and no longer reproducing, each as a link, and a
+link to the log comment. If anything could not run, say how much and why right
+after the tables.

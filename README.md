@@ -190,13 +190,13 @@ this repo:
 
 The sweep clones every repo in `suite.repos.json`, runs each one's
 `/suite-kit:health`, runs every cross-repo drift check `.github/workflows/drift.yml`
-runs, reviews the week's commits, and files findings as GitHub issues labelled
+runs, reviews the week's commits and one health pillar per product, and files findings as GitHub issues labelled
 `health-check` in the repo they belong to. It never commits, pushes, or opens pull
 requests. Its issues carry a `Health-Check-Key:` line so the next week's run comments
 on an open issue rather than filing a duplicate.
 
 Every run, findings or none, also adds one comment to a standing log issue in this
-repo carrying `Health-Sweep-Log: kollektiv` — the counts, the deep-dive area covered
+repo carrying `Health-Sweep-Log: kollektiv` — the counts, the pillar covered
 and what could not run. A clean week has no issue of its own, and without that
 comment it is indistinguishable from a week the Routine never fired.
 

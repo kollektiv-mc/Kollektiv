@@ -502,7 +502,8 @@ rest on review.
 
 **Where an agent meets them.** A product carries the list as a path-scoped
 `.claude/rules/copy.md` over the files its copy is written in, so it loads when
-an agent opens one of them and costs nothing otherwise. Kommands has it.
+an agent opens one of them and costs nothing otherwise. Konnekt and Kommands
+both have it.
 
 ## Release notes and pull request labelling
 

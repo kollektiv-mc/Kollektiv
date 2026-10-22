@@ -54,9 +54,12 @@ manifest="$root/suite.repos.json"
 # Script and tests move together. A generator whose tests were left behind is
 # worse than one with none: the stale file passes, and says so. release.yml is
 # the layout GitHub's own generator uses when the script cannot produce a body;
-# its headings mirror the script's, so it travels with it.
+# its headings mirror the script's, so it travels with it. changelog-section.py
+# is the Changelog-section parser the generator loads from beside itself and
+# the pr-labelled gate fetches from the base branch, so it travels with both.
 sources=(
   "plugins/suite-kit/release-notes.py:.github/scripts/release-notes.py"
+  "plugins/suite-kit/changelog-section.py:.github/scripts/changelog-section.py"
   "plugins/suite-kit/release-notes_test.py:.github/scripts/release-notes_test.py"
   "plugins/suite-kit/release.yml:.github/release.yml"
 )
@@ -153,7 +156,9 @@ while IFS= read -r name; do
 
     mkdir -p "$(dirname "$dest")"
     cp "$src" "$dest"
-    [ "${pair##*:}" = ".github/scripts/release-notes.py" ] && chmod +x "$dest"
+    case "${pair##*:}" in
+      .github/scripts/release-notes.py | .github/scripts/changelog-section.py) chmod +x "$dest" ;;
+    esac
     echo "+ $name updated ${pair##*:} — commit it"
     changed=1
     product_changed=1

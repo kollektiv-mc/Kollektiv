@@ -103,6 +103,7 @@ VENDORED = {
     ".claude/suite-memory.py": "sync-runner.sh",
     ".github/scripts/release-notes.py": "sync-notes.sh",
     ".github/scripts/release-notes_test.py": "sync-notes.sh",
+    ".github/scripts/changelog-section.py": "sync-notes.sh",
     ".github/release.yml": "sync-notes.sh",
     ".github/workflows/issue-priority.yml": "sync-priority.sh",
     ".aislop/base.yml": "sync-aislop.sh",

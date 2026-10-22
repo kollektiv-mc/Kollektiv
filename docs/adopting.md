@@ -219,12 +219,15 @@ config with its current score, as a second ratchet: raised as findings close, ne
 lowered, with the open findings listed in its health checklist. The base's 100 is
 where the ratchet ends.
 
-**The label gate.** Every pull request carries one `type:` and one `area:` label
-(conventions.md § Release notes and pull request labelling). The check is
-`.github/workflows/pr-labelled.yml`, another of the shared workflows step 6 vendored;
-it posts a `pr-labelled` commit status that stays pending until both labels are on,
-and triggers on `labeled` and `unlabeled` as well, so adding the last one turns it
-green. Require `pr-labelled` in the branch rule; the job that posts it is
+**The label gate.** Every pull request carries an `area:` label and either a
+`## Changelog` section or a `type:` label (conventions.md § Release notes and pull
+request labelling). The check is `.github/workflows/pr-labelled.yml`, another of the
+shared workflows step 6 vendored; it posts a `pr-labelled` commit status that stays
+pending until both halves are there, and triggers on `edited`, `labeled` and
+`unlabeled` as well, so adding the last label or fixing the section turns it green.
+It reads the section with `.github/scripts/changelog-section.py` fetched from the
+base branch, which the release-notes step below vendors; until it is there, the
+gate judges labels alone. Require `pr-labelled` in the branch rule; the job that posts it is
 `post-status` and always succeeds. The labels themselves come from `design/labels.json`
 via `scripts/sync-labels.sh`, which needs an authenticated `gh`; a repo that has
 never had it applied holds every pull request at pending until it does.
@@ -248,10 +251,11 @@ drift.
 **The release notes.** Write `.github/changelog.json` with the repo's `nonAppPaths`,
 the prefixes a pull request can touch without changing what ships (Konnekt's and
 Kommands' are worked examples, with the reasoning for each entry beside it), then
-run `./scripts/sync-notes.sh`, which copies the generator, its tests and GitHub's
-fallback layout in. Add a CI job that runs `.github/scripts/release-notes_test.py`
-on every push, and list the two Python files in `.aislopignore` and the layout in
-`.prettierignore`. The release workflow, when the repo has one, calls the generator
+run `./scripts/sync-notes.sh`, which copies the generator, its Changelog-section
+parser, its tests and GitHub's fallback layout in. Add a CI job that runs
+`.github/scripts/release-notes_test.py` on every push, and list the three Python
+files in `.aislopignore` and the layout in `.prettierignore`. Add a `## Changelog`
+block to the pull request template (Konnekt's is the worked example). The release workflow, when the repo has one, calls the generator
 the way Konnekt's does and falls back to GitHub's layout if it cannot produce a
 body.
 

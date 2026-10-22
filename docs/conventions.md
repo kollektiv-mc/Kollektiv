@@ -507,10 +507,31 @@ both have it.
 
 ## Release notes and pull request labelling
 
-A merged pull request's title is public copy. It is what a person reading the
-release notes sees, and it is the only thing they see about that change, so it
-describes what changed in the product, not which files moved or which branch it
-came off.
+A release's notes list changes, not pull requests. One pull request can carry
+several, and its body says what they are in a `## Changelog` section, one line
+each:
+
+```markdown
+## Changelog
+
+- feature: Add servers from a plus in the Servers header
+- fix: Make the world info panel opaque
+- chore: Load Settings on first open
+```
+
+The types are `feature`, `fix` (or `bug`), `chore`, `docs` and `skip`. Each
+line is public copy, held to the same rules as a title below: imperative,
+sentence case, no trailing period, no em dash, what changed for a user rather
+than which files moved. The parser is `plugins/suite-kit/changelog-section.py`,
+vendored beside the generator; the generator and the gate both run it, so a
+line one accepts the other files the same way.
+
+The section is optional. Without one, the pull request is one change: its
+`type:` label decides where it lands and its title is the line. That is how
+Dependabot and Renovate pull requests are filed, since they cannot write a
+section, and how a single small change can stay. Either way a merged pull
+request's title is public copy, because without a section it is the only thing
+a reader sees about that change.
 
 A product that has adopted this builds its notes with
 `.github/scripts/release-notes.py`, vendored from
@@ -527,47 +548,59 @@ layout (`.github/release.yml`) beside it, and the drift check runs with
 a release; Kommands has no release workflow yet, so there the generator is
 tested on every push and waits for its first tag.
 
-**Every pull request carries exactly one `type:` label.** The label alone decides
-where it lands, and a pull request without one cannot merge: the check is
+**Every pull request carries a Changelog section or a `type:` label, and an
+`area:` label.** A pull request with neither cannot merge: the check is
 `plugins/suite-kit/workflows/pr-labelled.yml` here, vendored into each product's
 `.github/workflows/` by `scripts/sync-workflows.sh`. It posts a `pr-labelled`
-commit status that stays pending until a `type:` and an `area:` label are both
-on, rather than failing, so opening a pull request and labelling it a moment
-later sends no failure notification.
+commit status that stays pending until both halves are there, rather than
+failing, so opening a pull request and labelling it a moment later sends no
+failure notification. A Changelog line it cannot read (an unknown type, no
+text) keeps it pending and names the line. A pull request with a `type:` label
+and no section passes with a warning, "No Changelog section: the notes will use
+the title", rather than staying pending: a branch rule requiring `pr-labelled`
+merges nothing that is not green, so the warning has to be one that still
+merges.
 Before that gate existed, 24 of the 41 pull requests in Konnekt's first release
 window were unlabelled, the generator fell back to reading the title's leading
 verb, and "Add a Full release roadmap section and a nightly snapshot build
 channel" — a website and CI change — was published to users under **Features**.
 
-| Label | Where it lands |
-|---|---|
-| `type:feature` | **Features** |
-| `type:bug` | **Fixes** |
-| `type:chore`, `type:docs` | counted in a footer line, not listed |
-| `changelog:skip` | left out entirely, not counted |
-| none | **Other changes**, and `pr-labelled` stays pending |
+| Changelog line | Label, without a section | Where it lands |
+|---|---|---|
+| `feature:` | `type:feature` | **Features** |
+| `fix:`, `bug:` | `type:bug` | **Fixes** |
+| `chore:`, `docs:` | `type:chore`, `type:docs` | counted in a footer line, not listed |
+| `skip:` | `changelog:skip` | left out entirely, not counted |
+| | none | **Other changes**, and `pr-labelled` stays pending |
+
+`changelog:skip` silences a whole pull request, section and all. A section the
+gate would refuse is not half-used: the generator files that pull request by its
+label instead and says so in the release job's log.
 
 Two rules follow from that table and are worth stating outright:
 
-- **The title is never read.** Not by its leading verb, not by a `feat:`
+- **The title is never read for a category.** Not by its leading verb, not by a `feat:`
   prefix, not at all. The guess that used to run was first confined to where
   being wrong was cheap, and has now been removed outright: a verb says how
   someone phrased a sentence, not what the change was. An unlabelled pull
   request lands in "Other changes", which is where a failed gate stays visible
   instead of being dressed up as a category.
-- **Maintenance is counted, not listed.** `type:chore` and `type:docs` are real
+- **Maintenance is counted, not listed.** `chore` and `docs` entries are real
   work that changed nothing a user can observe. Listing them is how 17 entries
   of CI and tooling ended up in a changelog for people downloading a binary. The
   footer says how many there were, and the full-changelog link has them all.
 
-**One pull request, one concern.** The notes list a merged pull request once,
-under one heading, by its title, so a pull request carrying a feature *and* a
-website pass *and* a CI tweak cannot be described honestly by any single line.
-Split it, or accept that it will be filed as a chore.
+**One pull request per piece of work, one Changelog line per change.** A
+session's worth of small fixes and tweaks is one pull request with a line for
+each, which can be previewed, reviewed and merged together. Split only when a
+part is risky on its own (security, a data migration), has to be revertable on
+its own, or ships at a different time. A pull request carrying a feature *and*
+a website pass *and* a CI tweak is fine as long as its section says so: one
+`feature:` line, and `chore:` lines for the rest.
 
 ### Which `type:` label
 
-Since the label is the only input, it has to be decidable by whoever applies
+Since the type is the only input, it has to be decidable by whoever applies
 one, at the moment they apply it. Ask these in order and stop at the first yes:
 
 1. **Can a user of the product tell the difference?** If nothing they can see,
@@ -592,8 +625,8 @@ repair.
 When the ladder feels ambiguous, revert the change in your head and ask what
 the user loses. Something goes back to being broken is `type:bug`. They lose
 something they never had is `type:feature`. They cannot tell is `type:chore`.
-A change that is honestly half repair and half new capability is two pull
-requests, which is the one-concern rule doing its job.
+A change that is honestly half repair and half new capability is two Changelog
+lines, one `fix:` and one `feature:`.
 
 These four sentences are also the label descriptions in `design/labels.json`,
 so the ladder is in the label picker and not only in this document.

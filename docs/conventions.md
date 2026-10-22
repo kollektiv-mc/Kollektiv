@@ -461,6 +461,49 @@ thrown from TypeScript is read in a log or a test failure, where a long line
 costs nothing it does not also buy. Neither gets a limit until one is found
 wrapping a surface.
 
+### Copy a user reads
+
+The same lead applies to every word a user reads, on the websites, in the docs
+and in the apps: say what the thing is, once, and stop. A reader who needs the
+reason finds it in the body, a tooltip, or the docs.
+
+- **A label names the thing.** No code glyphs or accent colour on a label
+  (`[i] about`, `>_ features`, `() scheduler`), and no single word in a
+  headline coloured for emphasis. A section head is a number and a title.
+- **A headline says what is there, not a slogan.** "Scheduler", not
+  "Automate everything".
+- **No line that explains the layout.** No subtitle beside a heading, and no
+  sentence telling the reader what they are about to see ("Each item links to
+  where it is explained", "Pick the part of Konnekt you are working on"). A
+  control that explains itself, a search bar, stands alone.
+- **Header facts are fixed per kind of page, and few.** A fact that does not
+  apply to every page of its kind does not belong in the header. Konnekt's
+  docs keep Duration, Requirements, Category and Topics, and dropped Effect on
+  server, Time limit, Since, Where, Applies to and Read next.
+- **A fact's label is a plain noun, its value a number and unit.** Duration,
+  not Takes; Requirements, not You need; Topics, not Touches. `~20 min`, not a
+  sentence. The same fact carries the same label on every page.
+- **One sentence per line in prose.** No sentence starts on the tail of the
+  one before. A line that wraps to leave one or two words gets a shorter
+  sentence, not a wider box.
+
+**Where this came from.** Konnekt's website overhaul (2026-10-21) was asked
+for because the site read as generated: a glowing accent word in the hero and
+coloured code-glyph eyebrows on every section. The docs templates that
+followed collected the rest in review: subtitles beside headings, an
+instruction line above a search bar, hero facts that applied to some pages and
+not others, labels phrased as verbs, and prose that wrapped mid-sentence. The
+redesign's README (Konnekt `docs/design/website/README.md`) records them for
+that site; this is the same list hoisted so every product starts from it.
+
+**What is checked.** Nothing, by decision. Whether a line explains the layout,
+or a headline is a slogan, is a judgement a regex cannot make, so these rules
+rest on review.
+
+**Where an agent meets them.** A product carries the list as a path-scoped
+`.claude/rules/copy.md` over the files its copy is written in, so it loads when
+an agent opens one of them and costs nothing otherwise. Kommands has it.
+
 ## Release notes and pull request labelling
 
 A merged pull request's title is public copy. It is what a person reading the

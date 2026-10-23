@@ -106,9 +106,33 @@ the last run: nothing a run leaves unreviewed is added to the next one.
 - the product's own `CLAUDE.md` and `.claude/rules/`.
 
 A product whose `CLAUDE.md` names no checklist is reported as **no checklist**,
-and 4c is skipped for it.
+and 4a is skipped for it.
 
-### 4a. Correctness: `/code-review`
+Run the parts in this order. The first two are bounded and are what only this
+sweep does; `/code-review` comes last so it cannot use up the run before them.
+
+### 4a. One pillar, over the whole tree
+
+Each run covers one pillar per repo: the one after the pillar the previous run
+logged for that repo, in the checklist's order, starting with the first. With
+four pillars and a weekly run, the whole checklist is covered about monthly.
+
+Judge every **ticked** item in that pillar against the code as it is now. Skip an
+item a declared check in `.claude/suite.json` already enforces (a command, an
+invariant, a generated entry); step 3 settled it. What remains is what no machine
+checks: docs that match the tree, dead code, layering, a pattern held across
+files. A ticked item that no longer holds is a finding, citing the item. An
+unticked item is a known gap the checklist already tracks: do not file it.
+
+### 4b. Rules: yours, over the range's diff
+
+Read the diff yourself for any change that breaks a Simplicity or Wording limit,
+a ticked item in the checklist, or the product's own rules. A finding cites its
+file:line and the rule it breaks. Taste with no written rule behind it is not a
+finding; when the same thing keeps appearing with none to cite, file the gap in
+the conventions against this repo.
+
+### 4c. Correctness: `/code-review`
 
 ```
 /code-review high --max-findings all <base>...origin/<default>
@@ -116,33 +140,16 @@ and 4c is skipped for it.
 
 Never pass `--fix`, `--comment` or `ultra`. On a CLI older than v2.1.288, drop
 `--max-findings all` and say in the log that the review's own limit applied. Each
-finding it returns is a candidate, re-verified per 0b.
-
-### 4b. Rules: yours, over the same diff
-
-`/code-review` looks for bugs, not for whether a change keeps the rules above.
-Read the diff yourself for any change that breaks a Simplicity or Wording limit,
-a ticked item in the checklist, or the product's own rules. A finding cites its
-file:line and the rule it breaks. Taste with no written rule behind it is not a
-finding; when the same thing keeps appearing with none to cite, file the gap in
-the conventions against this repo.
-
-### 4c. One pillar, over the whole tree
-
-Each run covers one pillar per repo: the one after the pillar the previous run
-logged for that repo, in the checklist's order, starting with the first. With
-four pillars and a weekly run, the whole checklist is covered about monthly.
-
-Check every **ticked** item in that pillar against the code as it is now. A
-ticked item that no longer holds is a finding, citing the item. An unticked item
-is a known gap the checklist already tracks: do not file it.
+finding it returns is a candidate, re-verified per 0b. Re-verify first the
+candidates 4b would also cite: dead code, a second way, an abstraction or option
+with one user, and work done more often than needed.
 
 ### What could not be covered
 
 Anything in the range or the pillar not read this run (commits, candidates not
-re-verified, checklist items not checked) is counted under **Could not run** in
+re-verified, checklist items not judged) is counted under **Could not run** in
 the log with the reason. It is this run's gap, recorded once, and is not carried
-forward. If `/code-review` is unavailable, still do 4b and 4c and record 4a as
+forward. If `/code-review` is unavailable, still do 4a and 4b and record 4c as
 **skipped, with the reason**; never substitute an unstructured read and call it
 the review.
 
@@ -168,6 +175,11 @@ Search that repo's open issues for the key line, **never for titles**, then:
 | no | yes | Open an issue |
 | yes | yes | Comment with the run's date and what changed |
 | yes | no | Comment that it no longer reproduces; **do not close it** |
+
+An open issue a review part filed (4a to 4c) is re-checked only when the range
+touched a file its **Where** names. Nothing it points at has changed otherwise, so
+it needs no comment. Count the ones left alone in the log, not one by one. An
+issue a declared check filed is settled by that check's result in steps 2 and 3.
 
 Closing is a human's call: "fixed" and "the check stopped running" look the same
 from here. Label everything `health-check`, creating the label if the repo lacks
@@ -227,7 +239,7 @@ labelled `health-check`, only if none exists. Never close it or open a second.
 **Could not run**: <N, and what; or: none>
 
 **Opened**: <links, or: none>
-**Commented**: <links, or: none>
+**Commented**: <links, or: none>; <N> untouched since filed, not re-checked
 **No longer reproducing**: <links, or: none>
 ```
 

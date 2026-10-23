@@ -135,10 +135,10 @@ Settled since, by reading the runs rather than predicting them:
 
 Still open on the sweep:
 
-- Watching the first run under the pillar review (suite-kit 0.11.0) cover
-  one pillar per product in step 4c and log it, so the run after it can pick
-  the next. Both halves of the previous review ran on 2026-10-19, and the run
-  log is kollektiv-mc/Kollektiv#39.
+- Watching the first run under suite-kit 0.12.0 judge the pillar items no
+  declared check enforces. The 2026-10-23 run under 0.11.0 covered Clean in
+  both products but checked only items step 3 already runs, and left the
+  `/code-review` candidates about dead code and render cost unverified.
 
 Routine cron is evaluated in UTC and does not follow DST, so both schedules need
 shifting by an hour twice a year, or moving off UTC — a schedule set for 09:00

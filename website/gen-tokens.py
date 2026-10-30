@@ -18,8 +18,6 @@ other scripts here already resolve a Python 3 interpreter (scripts/lib/python.sh
 Dark only. The site has no theme switcher and nothing sets data-theme, so a
 light block would be dead CSS that reads as if light mode were supported.
 
-Also writes assets/img/favicon.svg, whose two colours come from the same source.
-
 Run from anywhere:  ./website/gen-tokens.py
 Written only when the output actually changes, so a no-op run leaves mtimes alone.
 """
@@ -31,7 +29,6 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 SOURCE = HERE.parent / "design" / "tokens.json"
 OUT = HERE / "tokens.css"
-FAVICON = HERE / "assets" / "img" / "favicon.svg"
 
 SUPPORTED_VERSION = 1
 
@@ -168,21 +165,6 @@ def emit(src):
     return "\n".join(lines)
 
 
-# The favicon is the wordmark's initial on the page background. An SVG cannot
-# read a custom property from a <link rel="icon">, so its two colours are
-# emitted here from the same source rather than typed into an image by hand.
-def emit_favicon(src):
-    bg = src["color"]["surface"]["bg-base"]["dark"]["hex"]
-    fg = src["color"]["status"]["accent"]["dark"]["hex"]
-    return (
-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
-        f'<rect width="64" height="64" rx="14" fill="{bg}"/>'
-        '<path d="M15 12h11v18.5L41 12h13L37.5 33 55 52H41.5L26 34.5V52H15z"'
-        f' fill="{fg}"/>'
-        "</svg>\n"
-    )
-
-
 def write_if_changed(path, contents):
     current = path.read_text(encoding="utf-8") if path.exists() else None
     if current == contents:
@@ -202,7 +184,7 @@ def main():
 
     validate(src)
 
-    outputs = [(OUT, emit(src)), (FAVICON, emit_favicon(src))]
+    outputs = [(OUT, emit(src))]
     written = [
         str(path.relative_to(HERE.parent))
         for path, contents in outputs
@@ -212,7 +194,7 @@ def main():
         print(f"gen-tokens: wrote {', '.join(written)}")
     else:
         names = ", ".join(str(path.relative_to(HERE.parent)) for path, _ in outputs)
-        print(f"gen-tokens: {names} are already current")
+        print(f"gen-tokens: {names} already current")
 
 
 if __name__ == "__main__":

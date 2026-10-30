@@ -57,7 +57,7 @@ jobs:
       # shows up here as a diff. No product is needed for it, so it belongs
       # with this repo's own checks rather than in drift.yml.
       - name: Website tokens
-        run: ./website/gen-tokens.py && git diff --exit-code -- website/tokens.css website/assets/img/favicon.svg
+        run: ./website/gen-tokens.py && git diff --exit-code -- website/tokens.css
 
   # The AI-slop gate this repo asks the products to carry, applied to itself:
   # the master copies of the runner and the generator are scored here, so a

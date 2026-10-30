@@ -16,8 +16,9 @@ python3 -m http.server -d website
 | `main.js` | Runs the hero carousel, the card a tile opens into, the sections coming into focus, and each product's release pill; the page reads fine without it |
 | `shapes.js` | The wireframe that turns behind the carousel. Loaded first, and reached through `window.KollektivShapes` |
 | `tokens.css` | **Generated.** Custom properties from `design/tokens.json`. Do not edit |
-| `gen-tokens.py` | Writes `tokens.css` and `assets/img/favicon.svg` from the token source |
-| `assets/img/favicon.svg` | **Generated.** The wordmark's initial, coloured from the tokens |
+| `gen-tokens.py` | Writes `tokens.css` from the token source |
+| `assets/img/favicon-16.png`, `favicon-32.png`, `favicon.png` | The app icon from `design/brand/`, rendered at 16, 32 and 256 px; the 16 from its own 16 px cut |
+| `assets/img/lockup.svg` | A copy of `design/brand/lockup-on-dark.svg`, the bar's and the footer's wordmark |
 | `assets/img/konnekt.png` | Konnekt's dashboard, the same shot its own website uses |
 | `assets/img/kommands.png` | Kommands' `//generate` editor with its 3D preview, captured from a dev build |
 | `assets/fonts/` | Satoshi Black, Excon Medium, Ranade Regular as woff2 — the faces `type.family` names, self-hosted |
@@ -31,7 +32,6 @@ and `index.html` links that ahead of `styles.css`.
 
 ```
 design/tokens.json ──gen-tokens.py──▶ website/tokens.css        (committed)
-                                    ▶ website/assets/img/favicon.svg
 ```
 
 The custom-property names match what Konnekt's generator emits for its own
@@ -48,9 +48,11 @@ makes. Two rules keep it honest:
 - Nothing outside that block redeclares a token or inlines a value the tokens
   hold. A value the apps could share belongs in `design/tokens.json`.
 
-Two literals sit outside CSS and cannot read a custom property: the
-`theme-color` meta tag in `index.html`, which restates `bg-base`, and the
-favicon, which is why the generator writes it.
+Two kinds of colour sit outside CSS and cannot read a custom property: the
+`theme-color` meta tag in `index.html`, which restates `bg-base`, and the brand
+files, the favicons and the lockup. Those are copies of `design/brand/`, whose
+README says where each colour comes from. Re-copy them when that folder
+changes; nothing checks that they match.
 
 ## The bar
 
@@ -348,8 +350,8 @@ repo's README's to explain, not the page's.
 ## Checks
 
 `.claude/suite.json` declares `gen-tokens.py` as a generator whose output is
-committed, so `./plugins/suite-kit/suite-check.py` fails when `tokens.css` or
-the favicon is stale or hand-edited, and an invariant greps `styles.css` for
+committed, so `./plugins/suite-kit/suite-check.py` fails when `tokens.css` is
+stale or hand-edited, and an invariant greps `styles.css` for
 literal hex colours. CI runs the same clean-diff check.
 
 ## What is not here

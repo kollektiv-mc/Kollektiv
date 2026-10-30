@@ -20,6 +20,7 @@ that commits the copy and runs it.
 | `design/labels.json` | The suite's single source of truth for the GitHub/Linear label taxonomy |
 | `design/labels.schema.json` | Its schema |
 | `design/suite.schema.json` | Schema for the per-repo `.claude/suite.json` |
+| `design/brand/` | The Kollektiv mark, lockup and app icon, with their construction and colours |
 | `plugins/suite-kit/` | The shared Claude Code plugin |
 | `plugins/suite-kit/suite-check.py` | Runs a repo's checks from its `.claude/suite.json`, with no plugin installed |
 | `plugins/suite-kit/suite-probe.py` | Whether a check can run, and whether its failure was the environment's; loaded by the runner from beside it |

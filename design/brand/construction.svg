@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 272" role="img" aria-label="Kollektiv mark construction">
+<title>Kollektiv mark construction</title>
+<rect width="240" height="240" fill="#05060a"/>
+<rect x="15" y="15" width="210" height="210" stroke="#ffffff" stroke-opacity="0.35" stroke-width="1" fill="none" stroke-dasharray="4 4"/>
+<g transform="scale(10)"><polygon points="12,1.4997 16.9606,4.3637 12,7.2277 7.0394,4.3637" fill="#4ade80"/><polygon points="7.0394,4.3637 12,7.2277 12,12.9557 7.0394,10.0917" fill="#22c55e"/><polygon points="12,7.2277 16.9606,4.3637 16.9606,10.0917 12,12.9557" fill="#16a34a"/><polygon points="6.4894,11.0443 11.45,13.9083 6.4894,16.7723 1.5288,13.9083" fill="#fb923c"/><polygon points="1.5288,13.9083 6.4894,16.7723 6.4894,22.5003 1.5288,19.6363" fill="#f97316"/><polygon points="6.4894,16.7723 11.45,13.9083 11.45,19.6363 6.4894,22.5003" fill="#ea580c"/><polygon points="17.5106,11.0443 22.4712,13.9083 17.5106,16.7723 12.55,13.9083" fill="#a57ffe"/><polygon points="12.55,13.9083 17.5106,16.7723 17.5106,22.5003 12.55,19.6363" fill="#9362f4"/><polygon points="17.5106,16.7723 22.4712,13.9083 22.4712,19.6363 17.5106,22.5003" fill="#7d49da"/></g>
+<polygon points="120,14.9969 70.3941,43.6369 70.3941,100.9169 120,129.5569 169.6059,100.9169 169.6059,43.6369" stroke="#ffffff" stroke-opacity="0.35" stroke-width="1" fill="none" stroke-dasharray="3 3"/>
+<circle cx="120" cy="72.2769" r="2.5" fill="#ffffff"/>
+<polygon points="64.8941,110.4431 15.2881,139.0831 15.2881,196.3631 64.8941,225.0031 114.5,196.3631 114.5,139.0831" stroke="#ffffff" stroke-opacity="0.35" stroke-width="1" fill="none" stroke-dasharray="3 3"/>
+<circle cx="64.8941" cy="167.7231" r="2.5" fill="#ffffff"/>
+<polygon points="175.1059,110.4431 125.5,139.0831 125.5,196.3631 175.1059,225.0031 224.7119,196.3631 224.7119,139.0831" stroke="#ffffff" stroke-opacity="0.35" stroke-width="1" fill="none" stroke-dasharray="3 3"/>
+<circle cx="175.1059" cy="167.7231" r="2.5" fill="#ffffff"/>
+<polygon points="120,72.2769 64.8941,167.7231 175.1059,167.7231" stroke="#ffffff" stroke-opacity="0.35" stroke-width="1" fill="none"/>
+<text x="120" y="262" fill="#ffffff" fill-opacity="0.6" font-family="ui-monospace, monospace" font-size="11" text-anchor="middle">r = 5.728 · gap = 1.1 · live area 21</text>
+</svg>

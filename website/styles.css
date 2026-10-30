@@ -154,16 +154,19 @@ code {
   max-width: var(--prose-width);
 }
 
+/* The lockup from design/brand/, as an image: its wordmark is outlined, so it
+   needs no font here. The file is 1.05 times as tall as the font size it was
+   drawn at, so 1.05em sets the wordmark at this element's font size. */
 .wordmark {
-  font-family: var(--font-display);
-  font-weight: var(--weight-display);
+  display: inline-flex;
   font-size: var(--text-xl);
-  letter-spacing: -0.01em;
-  color: var(--accent);
   text-decoration: none;
-  /* The one glow the design language permits: accent-tinted, never a drop
-     shadow. See design/README.md § Two things not held here. */
-  text-shadow: 0 0 var(--space-4) rgb(var(--accent-rgb) / 0.35);
+}
+
+.wordmark img {
+  display: block;
+  height: 1.05em;
+  width: auto;
 }
 
 .wordmark-sm {
@@ -225,7 +228,7 @@ code {
 }
 
 .btn-primary:hover {
-  /* Accent-tinted ring, the same exception the wordmark uses; not a shadow. */
+  /* Accent-tinted ring, not a shadow. */
   box-shadow: 0 0 0 1px rgb(var(--product-rgb, var(--accent-rgb)) / 0.4);
 }
 

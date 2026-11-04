@@ -43,6 +43,7 @@ Drawn on a 24-unit grid, like Konnekt's. The mark fills a 21-unit live area,
 | Block | An isometric cube: a regular hexagon of radius *r*, split into three faces at its centre, lit from above | *r* = 5.728 |
 | Arrangement | Two blocks side by side, the third on top, centred between them: the blocks' centres form an equilateral triangle | |
 | Gap | Constant between every pair of facing edges | 1.1, the same as Konnekt's |
+| Base | Each block's faces sit on a hexagon filled with its left face's shade, so the seams between faces anti-alias against the block's own colour, not the ground, and draw no dark line | |
 | Bounds | Set by the live area's height | 20.94 × 21 |
 
 ## Sizes

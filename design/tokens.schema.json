@@ -98,6 +98,10 @@
         "status": {
           "allOf": [{ "$ref": "#/$defs/colorGroup" }],
           "description": "Roles a consumer is expected to expose as separable colour components as well as a composed value, so alpha can be varied from one token."
+        },
+        "brand": {
+          "allOf": [{ "$ref": "#/$defs/colorGroup" }],
+          "description": "Each product's identity colour: the colour of its block in the Kollektiv mark, on a dark and on a light ground. Fixed, never userConfigurable, and exposed as separable colour components like status. An identity, not a text colour: text in a product's colour uses accent."
         }
       }
     },

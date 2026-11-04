@@ -70,13 +70,17 @@ as Konnekt's do.
 
 | Block | On dark: top, left, right | On light: top, left, right | Where the colour comes from |
 | --- | --- | --- | --- |
-| Konnekt | `#4ade80` `#22c55e` `#16a34a` | `#22c55e` `#16a34a` `#15803d` | `accent` and `success` in `tokens.json`; `#15803d` is Konnekt's light-ground shade, not a token yet |
-| Kommands | `#fb923c` `#f97316` `#ea580c` | `#f97316` `#ea580c` `#c2410c` | `PRODUCT_ACCENT` in Kommands' `src/lib/theme.ts` (Tailwind's orange 400), then orange 500 to 700, as the green ladder is Tailwind's green 400 to 700 |
+| Konnekt | `#4ade80` `#22c55e` `#16a34a` | `#22c55e` `#16a34a` `#15803d` | Tailwind's green 400 to 700, Konnekt's `accent` |
+| Kommands | `#fb923c` `#f97316` `#ea580c` | `#f97316` `#ea580c` `#c2410c` | Tailwind's orange 400 to 700, Kommands' `PRODUCT_ACCENT` |
 | Kube | `#a57ffe` `#9362f4` `#7d49da` | `#9362f4` `#7d49da` `#6429bc` | Chosen here, see below |
 
-Kommands' and Kube's colours are each product's own and are not in
-`tokens.json`, the same choice the Kollektiv site's tiles make for Kommands'
-ember. They live in these files and in each product.
+Each product's top face is its token in `tokens.json`'s `color.brand`:
+`brand-konnekt`, `brand-kommands` and `brand-kube`, the top on dark as the
+token's dark value and the top on light as its light one. The other faces are
+the mark's construction, not identities anyone else paints with, so they stay
+in these files. A brand token is a product's identity colour, for a mark, a
+tile or a glow, and not a text colour: text in a product's colour uses its
+`accent`, which a product darkens on light grounds for contrast.
 
 **Kube's violet.** In OKLCH it is hue 295, with each face 0.09 darker than the
 green and ember ladder (0.69, 0.62, 0.545; 0.455 on light) so that its top face

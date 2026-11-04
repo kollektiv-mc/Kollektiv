@@ -10,8 +10,8 @@
  */
 
 :root {
-  /* Colours, dark theme. Status colours are emitted as a channel triplet
-     and a composed value, so alpha varies from one token:
+  /* Colours, dark theme. Status and brand colours are emitted as a channel
+     triplet and a composed value, so alpha varies from one token:
      rgb(var(--accent-rgb) / 0.3) needs no second --accent-30 token. */
   --bg-base: #05060a;
   --bg-elevated: rgba(18, 20, 30, 0.82);
@@ -34,6 +34,12 @@
   --danger: rgb(var(--danger-rgb));
   --sun-rgb: 255 216 77;
   --sun: rgb(var(--sun-rgb));
+  --brand-konnekt-rgb: 74 222 128;
+  --brand-konnekt: rgb(var(--brand-konnekt-rgb));
+  --brand-kommands-rgb: 251 146 60;
+  --brand-kommands: rgb(var(--brand-kommands-rgb));
+  --brand-kube-rgb: 165 127 254;
+  --brand-kube: rgb(var(--brand-kube-rgb));
 
   /* Type. The size scale is the app UI's — 12px body — so the site's own
      display sizes are page vocabulary in styles.css, not tokens. */

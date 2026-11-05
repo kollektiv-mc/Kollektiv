@@ -8,7 +8,7 @@ The umbrella for a small suite of Minecraft tools:
 | [Kommands](https://github.com/kollektiv-mc/Kommands) | Command generator for Java Edition | Vite · React 19, and a Wails v2 · Go desktop shell |
 
 This repo owns **conventions, domain knowledge, and agent tooling**. It does not
-own builds, CI, or releases — each product keeps its own.
+own builds, CI, or releases: each product keeps its own.
 
 ---
 
@@ -81,7 +81,7 @@ kollektiv/
 ├── docs/adopting.md            how a repo adopts suite-kit
 ├── docs/conventions.md         cross-repo rules: tracking, PRs, permissions
 ├── docs/linear.md              the Linear structure /suite-kit:suite-sync mirrors into
-├── docs/roadmap.md             this repo's own roadmap — direction, not work items
+├── docs/roadmap.md             this repo's own roadmap: direction, not work items
 ├── website/                    the suite's home page, styled from design/tokens.json
 ├── Konnekt/                    cloned, untracked
 └── Kommands/                   cloned, untracked
@@ -104,7 +104,7 @@ matches the source is not rewritten.
 
 ## Design tokens
 
-`design/tokens.json` is the suite's single source of truth for design values —
+`design/tokens.json` is the suite's single source of truth for design values:
 tech-neutral JSON, semantic name to value, no CSS syntax baked in. Both products
 are **consumers**: `sync-tokens.sh` vendors the file into each clone as
 `tokens.source.json`, and each product's own generator transforms it into whatever
@@ -129,8 +129,8 @@ rules both products share.
 | `/suite-kit:suite-sync` | Mirror each repo's GitHub Issues into Linear |
 | `@mc-reviewer` | Review a diff for version-trait and hardcoded-value violations |
 
-The skills are generic. Everything product-specific — the actual commands, the
-actual grep invariants, where the repo is tracked — lives in that product's
+The skills are generic. Everything product-specific (the actual commands, the
+actual grep invariants, where the repo is tracked) lives in that product's
 `.claude/suite.json`, next to the code it constrains. See
 [`docs/adopting.md`](docs/adopting.md).
 
@@ -152,18 +152,18 @@ fastest way to make both feel broken.
 
 [`obra/superpowers`](https://github.com/obra/superpowers) is declared alongside
 suite-kit in every repo in the suite. It replaces Oh-My-ClaudeCode, which this repo
-no longer uses or documents — OMC's workspace-sharing feature (`.omc-workspace`) is
+no longer uses or documents: OMC's workspace-sharing feature (`.omc-workspace`) is
 gone along with it; the sibling-clone layout `bootstrap.sh` produces stands on its
 own and never depended on it.
 
-Declaring a marketplace runs third-party code with your privileges — that is a trust
+Declaring a marketplace runs third-party code with your privileges: that is a trust
 decision made per repo, same as any `extraKnownMarketplaces` entry.
 
 ---
 
 ## Tracking
 
-**GitHub Issues is the one source of truth for work items across the suite** —
+**GitHub Issues is the one source of truth for work items across the suite**:
 every repo declares `tracking: "github-issues"`. Linear is a downstream
 mirror, kept current by `/suite-kit:suite-sync` on a schedule. See
 [`docs/conventions.md`](docs/conventions.md) and
@@ -171,7 +171,7 @@ mirror, kept current by `/suite-kit:suite-sync` on a schedule. See
 milestones, and the label taxonomy shared by both sides.
 
 The Linear workspace (`Kollektiv-MC`, since renamed `Kollektiv`) holds two
-teams — `Kollektiv` and `Apps` — under one `Kollektiv Suite` initiative.
+teams (`Kollektiv` and `Apps`) under one `Kollektiv Suite` initiative.
 Linear's MCP exposes no `create_team`; teams are hand-made in the Linear UI.
 
 The workspace was recreated from scratch on 2026-08-04 (previously
@@ -185,7 +185,7 @@ this repo:
 
 | Routine | Cron (UTC) | What it does |
 |---|---|---|
-| Suite sync — GitHub → Linear | `30 6 * * *` | Runs `/suite-kit:suite-sync` |
+| Suite sync: GitHub → Linear | `30 6 * * *` | Runs `/suite-kit:suite-sync` |
 | Weekly suite health check | `0 7 * * 1` | Runs `/suite-kit:health-sweep` |
 
 The sweep clones every repo in `suite.repos.json`, runs each one's
@@ -196,9 +196,9 @@ requests. Its issues carry a `Health-Check-Key:` line so the next week's run com
 on an open issue rather than filing a duplicate.
 
 Every run, findings or none, also adds one comment to a standing log issue in this
-repo carrying `Health-Sweep-Log: kollektiv` — the counts, the pillar covered
+repo carrying `Health-Sweep-Log: kollektiv`: the counts, the pillar covered
 and what could not run. A clean week has no issue of its own, and without that
 comment it is indistinguishable from a week the Routine never fired.
 
 Routine cron is evaluated in UTC and does not follow DST, so these drift by an
-hour in local terms twice a year — see [`docs/roadmap.md`](docs/roadmap.md).
+hour in local terms twice a year: see [`docs/roadmap.md`](docs/roadmap.md).

@@ -12,7 +12,7 @@ python3 -m http.server -d website
 | Path | What it is |
 |---|---|
 | `index.html` | The one page |
-| `styles.css` | Layout and the page vocabulary — every value the token set does not hold |
+| `styles.css` | Layout and the page vocabulary: every value the token set does not hold |
 | `main.js` | Runs the hero carousel, the card a tile opens into, the sections coming into focus, and each product's release pill; the page reads fine without it |
 | `shapes.js` | The wireframe that turns behind the carousel. Loaded first, and reached through `window.KollektivShapes` |
 | `tokens.css` | **Generated.** Custom properties from `design/tokens.json`. Do not edit |
@@ -21,7 +21,7 @@ python3 -m http.server -d website
 | `assets/img/lockup.svg` | A copy of `design/brand/lockup-on-dark.svg`, the bar's and the footer's wordmark |
 | `assets/img/konnekt.png` | Konnekt's dashboard, the same shot its own website uses |
 | `assets/img/kommands.png` | Kommands' `//generate` editor with its 3D preview, captured from a dev build |
-| `assets/fonts/` | Satoshi Black, Excon Medium, Ranade Regular as woff2 — the faces `type.family` names, self-hosted |
+| `assets/fonts/` | Satoshi Black, Excon Medium, Ranade Regular as woff2: the faces `type.family` names, self-hosted |
 
 ## How it is styled
 
@@ -38,8 +38,8 @@ The custom-property names match what Konnekt's generator emits for its own
 website (`--bg-base`, `--accent-rgb`, `--font-display`, `--radius-panel`,
 `--duration-fast`), so a rule reads the same on either site.
 
-**What `styles.css` may declare itself.** The token set is the *app* scale — a
-12px body and 24px as its largest space — and a marketing page has display
+**What `styles.css` may declare itself.** The token set is the *app* scale (a
+12px body and 24px as its largest space) and a marketing page has display
 sizes and a section rhythm no app UI has. Those live in the `:root` block at the
 top of `styles.css`, marked as page vocabulary, the same split Konnekt's website
 makes. Two rules keep it honest:
@@ -88,8 +88,8 @@ beside the name and is taken out of flow, so the name's own width is what that
 translation works against whether or not the pill is showing.
 
 The window in focus is ringed by a soft glow in its product's colour while the
-carousel is at rest and the pointer is on it — at rest, because a tile sliding
-under a resting pointer would otherwise light up on the way past — on the window itself, not on the carousel, which is a band
+carousel is at rest and the pointer is on it (at rest, because a tile sliding
+under a resting pointer would otherwise light up on the way past), on the window itself, not on the carousel, which is a band
 the width of the viewport. The glow doubles as the reason the carousel has
 stopped. It reaches further than the carousel's clip edge, so the carousel
 clips with `overflow-clip-margin` rather than `hidden`; horizontally that
@@ -184,13 +184,13 @@ leaves five parallels with one of them on the equator, and joins the poles with
 eight meridians. This replaced a geodesic sphere, whose triangles gave no
 vertex any special role and so had no pole to pinch at. The pinch turns out to
 be what makes a globe read as a globe. One canvas for the page rather
-than one per tile — it is the page's background, and the windows are opaque,
+than one per tile: it is the page's background, and the windows are opaque,
 so a shape drawn inside a tile would have been drawn on top of the app. When
 the carousel moves on, the old shape fades out and the new one fades in, and
 the swap happens at the point where neither is on screen. Each shape is built
 once and kept: the "already showing this" test compares by name, and when it
 compared freshly built objects instead it never matched, so every pass through
-mark — and a wrap makes two in a row — restarted the morph and the shape
+mark (and a wrap makes two in a row) restarted the morph and the shape
 flashed.
 
 `shapes.js` projects the edges onto a canvas; that needs no library, and a
@@ -206,7 +206,7 @@ stubs if it is missing, so a failed script leaves an empty background rather
 than a dead page. `readGlow` went with it, which is why `.claude/suite.json`'s
 no-literal-colours invariant names `shapes.js` too. Each shape is
 normalised by its own reach, so a cube's corners and a sphere's surface come
-out the same size, and each carries its own tilt — a torus at the angle that
+out the same size, and each carries its own tilt: a torus at the angle that
 suits a sphere is seen nearly edge-on and reads as an arc rather than a ring.
 
 **The edges are curves, not chords.** An edge of a curved surface drawn as one
@@ -231,9 +231,8 @@ loses most of what makes it visible. The canvas is clipped to the hero, which
 is why `.hero` clips both axes rather than only the sides. The shape is taller
 than the viewport and used to hang into the section below.
 
-The stroke colour is read from the tile's `--product-rgb` at draw time —
-the same move Kommands makes in `voxelColor` when it needs a token as a value
-rather than as a class — so nothing in the drawing code restates a design
+The stroke colour is read from the tile's `--product-rgb` at draw time (the same move Kommands makes in `voxelColor` when it needs a token as a value
+rather than as a class), so nothing in the drawing code restates a design
 value. That is why `main.js` is covered by the no-literal-colours invariant
 alongside `styles.css`.
 
@@ -253,9 +252,9 @@ than left translucent for the page to show through.
 
 Clicking the window in focus, or its ⤢ button, grows it into a `<dialog>` over
 a scrim: one card, sized to the window, that never scrolls. It starts laid
-over the window it came from — same centre, same width, scaled evenly rather
+over the window it came from (same centre, same width, scaled evenly rather
 than to that window's exact box, since a card squashed to another aspect ratio
-distorts every word in it on the way out — and closing reverses it, which the
+distorts every word in it on the way out), and closing reverses it, which the
 carousel being held for as long as the card is open is what makes possible. Its four
 placeholders share out whatever height the text leaves rather than being
 sized in the abstract, which is what keeps that true at any window size.
@@ -268,9 +267,9 @@ the suite's own `bg-overlay`, which is what that product uses. Each is the
 purple hue rather than picked by eye. They are set inline on the tiles in
 `index.html`, the same exception as Kommands' accent and for the same reason.
 
-Everything else in it is cloned from the tile it came from — the name and pill from
+Everything else in it is cloned from the tile it came from (the name and pill from
 the window, the detail and placeholders from that tile's `<template>`, the
-buttons from its actions — so a product is described in one place and the card
+buttons from its actions), so a product is described in one place and the card
 cannot drift from the window it opened out of. Cloned as nodes throughout,
 never through `innerHTML`: the pill carries a release name fetched from GitHub,
 and nothing fetched should reach the HTML parser.
@@ -280,7 +279,7 @@ Escape, and inerting the page behind it. Two things it does not own: the grow
 and the fade, which is why Escape is intercepted and the close is deferred;
 and the text colour, since a dialog's UA rule sets `color: CanvasText` and
 wins over anything inherited from `body`. The starting transform is flushed
-with a forced reflow rather than waited for over a frame — the first frame
+with a forced reflow rather than waited for over a frame: the first frame
 after `showModal` is an expensive one, and waiting for it left the card
 sitting on the window before it grew.
 
@@ -341,10 +340,10 @@ The comments in these files are not published and are unaffected.
 `scripts/check-copy.sh` checks the page and reports the line.
 
 Short, and about what a user gets. The sections about Kollektiv say what the
-suite is and the fixed ideas behind it — local and private, made to work
-together, a UI over a terminal, in the open — and do not name or describe
+suite is and the fixed ideas behind it (local and private, made to work
+together, a UI over a terminal, in the open) and do not name or describe
 the apps; what an app does belongs in its own tile and its own site. How the
-suite is built — the shared tokens, the checks, the conventions — is this
+suite is built (the shared tokens, the checks, the conventions) is this
 repo's README's to explain, not the page's.
 
 ## Checks
@@ -359,7 +358,7 @@ literal hex colours. CI runs the same clean-diff check.
 - **A deploy.** Nothing publishes this directory yet; there is no canonical URL
   in the page for that reason.
 - **A light theme.** The tokens carry light values, but the page has no theme
-  switcher and nothing sets `data-theme`, so the generator emits dark only —
+  switcher and nothing sets `data-theme`, so the generator emits dark only:
   same as Konnekt's site.
 - **Product copy that is not true on disk.** The Kommands tile says the web
   build is not deployed and the desktop app is in development, because its

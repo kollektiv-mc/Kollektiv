@@ -1,5 +1,5 @@
 ---
-description: Run the suite-wide health sweep across every repo in suite.repos.json — each product's health checks, the cross-repo drift checks, a review of the week's commits and one health pillar per repo — filing findings as deduplicated GitHub issues and recording the run in a standing log issue. Use ONLY when explicitly asked for a suite-wide sweep across all repos, or when fired by the weekly Routine. For one repo, use health instead; this one clones every product, installs plugins, and writes to GitHub.
+description: Run the suite-wide health sweep across every repo in suite.repos.json (each product's health checks, the cross-repo drift checks, a review of the week's commits and one health pillar per repo) filing findings as deduplicated GitHub issues and recording the run in a standing log issue. Use ONLY when explicitly asked for a suite-wide sweep across all repos, or when fired by the weekly Routine. For one repo, use health instead; this one clones every product, installs plugins, and writes to GitHub.
 ---
 
 # Suite-wide health sweep

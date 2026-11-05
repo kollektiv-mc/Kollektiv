@@ -527,6 +527,38 @@ rest on review.
 an agent opens one of them and costs nothing otherwise. Konnekt and Kommands
 both have it.
 
+### Writing for a reader
+
+The same lead, applied to everything written for a reader rather than only to
+what a user sees: UI text, docs, READMEs, issue and pull request bodies, release
+notes, and agent replies. Code comments follow the code's own conventions.
+
+- **Write what was asked for and stop.** No extra sections, subtitles, info
+  boxes, tips, notes or summaries to fill space.
+- **A title needs no subtitle that restates it.** A clear control needs no
+  helper text.
+- **Say what something does, not why the system works that way.** Explain a
+  reason only when asked or when the reader would otherwise get it wrong.
+- **No consequence tails.** Drop ", so ...", ", therefore ...", ", which means
+  ..." and "This means ..." when they restate what the sentence already implies.
+- **No intros or wrap-ups:** "In this section", "Overall", "In summary", "Note
+  that", "It's worth noting".
+- **Delete any sentence the reader would not miss.**
+
+The em dash rule keeps its own scope, § Public copy above: published copy only.
+
+**Where this came from.** sandrogekeler/AllesSandro carries it as the locked,
+always-loaded `.claude/rules/writing.md` for every personal project. It is
+copied here so the Kollektiv apps and those projects write the same way; a
+change to one is meant to be copied to the other.
+
+**What is checked.** Nothing, for the same reason as the list above: it is a
+judgement a regex cannot make.
+
+**Where an agent meets it.** A product adds these bullets to its
+`.claude/rules/copy.md`, or carries them as an always-loaded
+`.claude/rules/writing.md` when its memory budget allows.
+
 ## Release notes and pull request labelling
 
 A release's notes list changes, not pull requests. One pull request can carry

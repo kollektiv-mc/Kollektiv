@@ -143,11 +143,11 @@
               </template>
             </article>
 
-            <!-- Kommands' accent and ground are its own — ember, and a warm
-                 canvas at that accent's hue — kept out of the suite tokens on
-                 purpose, so both are that product's values restated here.
-                 PRODUCT_ACCENT and productSkin() in Kommands/src/lib/theme.ts;
-                 --detail-bg is what that function calls `overlay`, which is
+            <!-- Kommands' colour is its brand token, brand-kommands. Its
+                 ground is that product's own, a warm canvas at the colour's
+                 hue, restated here from productSkin() in
+                 Kommands/src/lib/theme.ts; --detail-bg is what that function
+                 calls `overlay`, which is
                  bg-elevated over bg-base per design/README.md. The other tiles
                  take the suite accent. -->
             <article
@@ -155,7 +155,7 @@
               id="kommands"
               data-shape="torus"
               aria-labelledby="kommands-title"
-              style="--product-rgb: 251 146 60; --detail-bg: #27201a"
+              style="--product-rgb: var(--brand-kommands-rgb); --detail-bg: #27201a"
             >
               <div class="tile-window">
                 <img
@@ -233,17 +233,16 @@
 
             <!-- Nothing is built yet, so the window is deliberately blank
                  rather than a mock-up of something that does not exist. -->
-            <!-- Kube's accent is the violet of its block in the Kollektiv mark,
-                 design/brand/README.md § Colour. Like Kommands' ember it is the
-                 product's own and kept out of the suite tokens. The ground is
-                 that hue through the same skin as Kommands' (productSkin() in
-                 Kommands/src/lib/theme.ts). -->
+            <!-- Kube's colour is its brand token, brand-kube, the violet of
+                 its block in the Kollektiv mark (design/brand/README.md §
+                 Colour). The ground is that hue through the same skin as
+                 Kommands' (productSkin() in Kommands/src/lib/theme.ts). -->
             <article
               class="tile"
               id="kube"
               data-shape="cube"
               aria-labelledby="kube-title"
-              style="--product-rgb: 165 127 254; --detail-bg: #1e1a27"
+              style="--product-rgb: var(--brand-kube-rgb); --detail-bg: #1e1a27"
             >
               <div class="tile-window tile-window-blank">
                 <div class="tile-veil">
@@ -385,7 +384,7 @@
                 >
               </div>
             </li>
-            <li class="product" style="--product-rgb: 251 146 60">
+            <li class="product" style="--product-rgb: var(--brand-kommands-rgb)">
               <h3>Kommands</h3>
               <span class="pill" data-release="kollektiv-mc/Kommands">web</span>
               <p>Web app, with a desktop build in development. Not deployed yet; run it from source.</p>
@@ -406,7 +405,7 @@
                 >
               </div>
             </li>
-            <li class="product" style="--product-rgb: 165 127 254">
+            <li class="product" style="--product-rgb: var(--brand-kube-rgb)">
               <h3>Kube</h3>
               <span class="pill" data-release="kollektiv-mc/Kube">desktop</span>
               <p>A visual builder for KubeJS. Not started yet.</p>

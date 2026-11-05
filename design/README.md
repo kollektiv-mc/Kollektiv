@@ -53,6 +53,13 @@ requirement nobody has.
 - **`color.status`** members are expected to be exposed as separable colour
   components *and* a composed value, so alpha can be varied from a single token
   rather than a second one per opacity.
+- **`color.brand`** holds each product's identity colour, the colour of its
+  block in the Kollektiv mark (`design/brand/README.md` § Colour), exposed as
+  channels like `color.status`. It is not `accent`, even where the two share a
+  value: `accent` is what a product's UI paints with and the user may change,
+  and a brand colour is fixed, because it is how a product is recognised beside
+  the others. Text in a product's colour uses `accent`, which a product darkens
+  on light grounds for contrast; a brand token is for marks, tiles and glows.
 - **`bg-overlay`** is the opaque surface *of* a floating layer — a dropdown
   panel, a tooltip, a popover — not the dimming scrim *behind* a modal. There is
   no scrim token. The name trips people who have met "overlay" in the other

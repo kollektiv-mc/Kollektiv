@@ -385,12 +385,12 @@ code {
 
 /* Everything that belongs to one product carries that product's colour, and
    everything that paints in it reads this: the glow, the progress bar, the
-   wireframe, the dot, and the primary button. The suite accent unless the
-   markup says otherwise, which Kommands and Kube do inline in index.html. */
+   wireframe, the dot, and the primary button. Konnekt's brand colour unless
+   the markup says otherwise, which Kommands and Kube do inline in index.html. */
 .tile,
 .product,
 .detail {
-  --product-rgb: var(--accent-rgb);
+  --product-rgb: var(--brand-konnekt-rgb);
 }
 
 .tile {

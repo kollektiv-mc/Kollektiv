@@ -32,6 +32,9 @@ OUT = HERE / "tokens.css"
 
 SUPPORTED_VERSION = 1
 
+# The colour groups the schema says a consumer exposes as separable channels.
+CHANNEL_GROUPS = ("status", "brand")
+
 # Generic families and system keywords are CSS-wide identifiers, not font names,
 # and must stay unquoted. Everything else is quoted.
 BARE_FAMILIES = {
@@ -119,13 +122,13 @@ def emit(src):
     lines = [BANNER, "", ":root {"]
     push = lines.append
 
-    push("  /* Colours, dark theme. Status colours are emitted as a channel triplet")
-    push("     and a composed value, so alpha varies from one token:")
+    push("  /* Colours, dark theme. Status and brand colours are emitted as a channel")
+    push("     triplet and a composed value, so alpha varies from one token:")
     push("     rgb(var(--accent-rgb) / 0.3) needs no second --accent-30 token. */")
     for group, tokens in src["color"].items():
         for name, token in tokens.items():
             dark = token["dark"]
-            if group == "status":
+            if group in CHANNEL_GROUPS:
                 push(f"  --{name}-rgb: {channels(dark['hex'])};")
                 push(f"  --{name}: rgb(var(--{name}-rgb));")
             else:

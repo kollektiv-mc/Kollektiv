@@ -1,7 +1,7 @@
 # Cross-repo conventions
 
-Rules that apply across the suite. Anything specific to one repo — its GitHub
-labels beyond the shared taxonomy, its Linear project's internal shape — stays
+Rules that apply across the suite. Anything specific to one repo (its GitHub
+labels beyond the shared taxonomy, its Linear project's internal shape) stays
 in that repo.
 
 These were hoisted out of `Konnekt/agent_docs/LINEAR.md`, which held them as
@@ -14,7 +14,7 @@ here is tracked and reviewed.
 
 Every repo in the suite tracks its work items in GitHub Issues, declared as
 `tracking: "github-issues"` in `.claude/suite.json`. There is no per-repo
-choice to make anymore — Kommands set this precedent and kollektiv matches it.
+choice to make anymore: Kommands set this precedent and kollektiv matches it.
 
 Konnekt's manifest now says this too, since PR #51 merged (`ef49aa7`). It
 previously declared `linear: { team: "KON" }` on `main`, naming a team key from
@@ -26,12 +26,12 @@ Konnekt already matched while it did not; it does now, and
 `design/suite.schema.json` still allows a repo to declare `linear: { team:
 ... }` instead, for a hypothetical repo that should be tracked in Linear
 directly rather than mirrored. Nothing in the suite uses it today. A repo
-declaring neither is misconfigured — `/suite-kit:suite-sync` reports it and
+declaring neither is misconfigured: `/suite-kit:suite-sync` reports it and
 stops rather than guessing.
 
 Linear is a **downstream mirror**, kept current by `/suite-kit:suite-sync` on
-a schedule. The full Linear structure — teams, projects, milestones, the
-label taxonomy — is documented in `docs/linear.md`.
+a schedule. The full Linear structure (teams, projects, milestones, the
+label taxonomy) is documented in `docs/linear.md`.
 
 ## Issue ↔ Linear mapping
 
@@ -45,7 +45,7 @@ Source: kollektiv-mc/<repo>#<number>
 drift apart; matching on them produces duplicates that then need untangling
 by hand.
 
-This replaced an earlier convention — `Source: <roadmap path> § <section>` —
+This replaced an earlier convention (`Source: <roadmap path> § <section>`)
 from when roadmap files were the thing being reconciled against. Roadmap
 files (`docs/roadmap.md`, `agent_docs/ROADMAP.md`) are direction and
 sequencing now, not a checklist of trackable items; GitHub issue numbers are
@@ -61,7 +61,7 @@ issues carry a stable fingerprint line in the body:
 Health-Check-Key: <repo>/<check-id>
 ```
 
-Same rule as above — **match on that line, never on titles.** The sweep re-runs every
+Same rule as above: **match on that line, never on titles.** The sweep re-runs every
 week and re-finds the same problems; the key is what makes a second run comment on an
 open issue instead of opening its twin.
 
@@ -75,7 +75,7 @@ outside, and only one of them is good news.
 ## The health sweep's run log
 
 Findings are only half of what a scheduled run knows. The other half is that it ran at
-all, what it covered, and what it could not reach — and on a clean week that half has
+all, what it covered, and what it could not reach, and on a clean week that half has
 no issue to live in.
 
 So the sweep also keeps one standing issue in **kollektiv**, labelled `health-check`,
@@ -91,7 +91,7 @@ what could not run, and links to whatever was opened or commented on. The detail
 in the issues; this is the ledger.
 
 **Why an issue and not a file in the repo.** The sweep's whole claim to being
-trustworthy is that it never commits, pushes, or leaves a branch behind — an unattended
+trustworthy is that it never commits, pushes, or leaves a branch behind: an unattended
 weekly run with nobody reviewing its diff. A log file it appends and pushes each week
 would trade that away for a format nobody reads more often. An issue comment costs the
 sweep nothing it was not already spending.
@@ -147,7 +147,7 @@ Fixes #12      Closes #9      Resolves #28
 That's the primary mechanism now: it closes the GitHub issue, and the next
 `/suite-kit:suite-sync` run carries that to Done in Linear. Linear's native
 GitHub integration and its own magic words (`Fixes KOL-9`) still work if a PR
-references a Linear ID directly, but that's a secondary path — the mirrored
+references a Linear ID directly, but that's a secondary path: the mirrored
 issue's ID is not meant to be the one branch names and PRs are built around.
 
 ## Required permissions block
@@ -172,7 +172,7 @@ it already has:
 ```
 
 `deny` and `ask` are the suite-wide floor and are not negotiable per repo. `allow` is
-per-repo: put the read-only and routinely-safe commands of that stack in it — the
+per-repo: put the read-only and routinely-safe commands of that stack in it. The
 point is to cut permission prompts for things like `pnpm typecheck` and `git status`
 without also waving through a push.
 
@@ -239,13 +239,13 @@ config, wherever that config lives:
 
 `trailingComma` and `tabWidth` match Prettier 3's own defaults and may be omitted;
 the other three do not, and an omitted `semi` means semicolons. Anything else a
-repo needs — plugins, overrides, ignore files — is per-repo and untouched.
+repo needs (plugins, overrides, ignore files) is per-repo and untouched.
 Konnekt adds `prettier-plugin-tailwindcss`; nothing here objects.
 
 These are checked by `scripts/check-participation.sh`, which compares **effective**
 values: a key left out is read as Prettier's default for it, because that is what
 Prettier will do. A repo with no Prettier config and no `package.json` is reported
-as a skip rather than a failure — that is a pre-scaffold repo, not a
+as a skip rather than a failure: that is a pre-scaffold repo, not a
 non-conforming one.
 
 Why mechanical rather than documented: before this, the settings were stated in
@@ -286,7 +286,7 @@ matching file and a new file written from nothing may not have triggered one.
 
 Two filters decide what survives a trim, in this order:
 
-1. **Cut what Claude can derive from the codebase** — directory layouts,
+1. **Cut what Claude can derive from the codebase**: directory layouts,
    dependency inventories, architecture overviews. Keep pitfalls, rationale,
    and conventions that differ from a tool's defaults. This is the split
    `/doctor`'s own trim check makes.
@@ -333,20 +333,20 @@ check refuses the stale field again at runtime.
 
 ## Public copy
 
-**Anything published carries no em dash.** Use a comma, a colon, or two
-sentences.
+**Nothing written for a reader carries an em dash.** Use a comma, a colon, or
+two sentences.
 
-Published means what a reader outside the project sees:
+That starts with what a reader outside the project sees:
 
 - the websites' words, including the title, the meta description and alt text
 - issue titles and bodies
 - pull request titles and bodies
 - commit messages
 
-Everything else is unaffected, and deliberately so. Code, code comments, and
-the documentation in these repos are notes between people working on them, not
-copy. This file uses em dashes freely and is not in breach: the rule is about
-what is published, not about how the thing that publishes it is written.
+The documentation in these repos follows the same rule: READMEs, `CLAUDE.md`,
+`docs/`, skills and agent files. Code and code comments follow the code's own
+conventions. This matches sandrogekeler/AllesSandro, whose writing rule covers
+every text written for a reader. It was published copy only until 2026-11-05.
 
 **Why the rule exists where it does.** A merged pull request title is a
 release-notes line, which the section below is entirely about. An issue title
@@ -527,6 +527,36 @@ rest on review.
 an agent opens one of them and costs nothing otherwise. Konnekt and Kommands
 both have it.
 
+### Writing for a reader
+
+The same lead, applied to everything written for a reader rather than only to
+what a user sees: UI text, docs, READMEs, issue and pull request bodies, release
+notes, and agent replies. Code comments follow the code's own conventions.
+
+- **Write what was asked for and stop.** No extra sections, subtitles, info
+  boxes, tips, notes or summaries to fill space.
+- **A title needs no subtitle that restates it.** A clear control needs no
+  helper text.
+- **Say what something does, not why the system works that way.** Explain a
+  reason only when asked or when the reader would otherwise get it wrong.
+- **No consequence tails.** Drop ", so ...", ", therefore ...", ", which means
+  ..." and "This means ..." when they restate what the sentence already implies.
+- **No intros or wrap-ups:** "In this section", "Overall", "In summary", "Note
+  that", "It's worth noting".
+- **Delete any sentence the reader would not miss.**
+
+**Where this came from.** sandrogekeler/AllesSandro carries it as the locked,
+always-loaded `.claude/rules/writing.md` for every personal project. It is
+copied here so the Kollektiv apps and those projects write the same way; a
+change to one is meant to be copied to the other.
+
+**What is checked.** Nothing, for the same reason as the list above: it is a
+judgement a regex cannot make.
+
+**Where an agent meets it.** A product adds these bullets to its
+`.claude/rules/copy.md`, or carries them as an always-loaded
+`.claude/rules/writing.md` when its memory budget allows.
+
 ## Release notes and pull request labelling
 
 A release's notes list changes, not pull requests. One pull request can carry
@@ -585,7 +615,7 @@ merges.
 Before that gate existed, 24 of the 41 pull requests in Konnekt's first release
 window were unlabelled, the generator fell back to reading the title's leading
 verb, and "Add a Full release roadmap section and a nightly snapshot build
-channel" — a website and CI change — was published to users under **Features**.
+channel" (a website and CI change) was published to users under **Features**.
 
 | Changelog line | Label, without a section | Where it lands |
 |---|---|---|
@@ -669,7 +699,7 @@ not shared.
 Two lessons from Konnekt's list are worth copying rather than rediscovering.
 `README.md` belongs on it: a one-line banner edit beside an all-website diff was
 enough to pull that pull request into the notes twice. `.github/` belongs on it
-too, or the release tooling describes itself to users as an app change — the four
+too, or the release tooling describes itself to users as an app change: the four
 pull requests that built this very generator did exactly that. And `build/` does
 *not* belong on it, because the app icon, `.desktop` file and RPM spec do ship.
 
@@ -781,12 +811,12 @@ list what it vendors.
 
 **Per-repo:**
 
-- Linear project and milestone structure — documented once, for every repo,
+- Linear project and milestone structure: documented once, for every repo,
   in kollektiv's `docs/linear.md`, since Linear projects are workspace-wide
   objects rather than something each repo declares on its own.
 - Cycle cadence. Cycle creation is a team-settings toggle not exposed via the
   Linear MCP; enable it once in **Team Settings → Cycles**.
-- Anything about the product's own build, CI, or release — including which of
+- Anything about the product's own build, CI, or release, including which of
   its paths never reach what it ships, in `.github/changelog.json`. The shared
   workflows above are the exception, and the product still owns the copy it
   commits. What a release that publishes a binary has to carry regardless of
@@ -799,7 +829,7 @@ list what it vendors.
 - **Two teams, total.** The workspace is on the free plan. A skill that would need a
   third team needs a different design, not a new team.
 - **No Releases.** Release pipelines, stages and per-release issue sets need a
-  Business or Enterprise plan — the same free-plan constraint as the two-team cap.
+  Business or Enterprise plan: the same free-plan constraint as the two-team cap.
   The tools (`save_release`, `list_release_pipelines`, …) are present in the MCP
   and the workspace has no pipelines, so this reads as "nothing set up yet" rather
   than "not entitled"; it is the latter. Releases has no timeline view in any case.
@@ -809,7 +839,7 @@ list what it vendors.
   A milestone that outlives its purpose is left in place and marked, and retiring
   it is a manual step in the Linear UI.
 
-`save_initiative` and `save_project` both exist and work — an earlier version of
+`save_initiative` and `save_project` both exist and work: an earlier version of
 this document said initiatives had to be created by hand. That was wrong by
 the time it was written down; verify a claim like this against the actual
 tool list before repeating it.
@@ -818,10 +848,10 @@ tool list before repeating it.
 
 - **No label or milestone creation/color/description management.** `issue_write`
   will silently create a missing label when you attach it to an issue, but
-  with a default gray color and no description — good enough for matching
+  with a default gray color and no description: good enough for matching
   and filtering, not for the palette in `design/labels.json`. Only `gh label
-  create/edit` (via `scripts/sync-labels.sh`, run where `gh` is authenticated
-  — not available in a Claude Code cloud session) sets those precisely.
+  create/edit` (via `scripts/sync-labels.sh`, run where `gh` is authenticated,
+not available in a Claude Code cloud session) sets those precisely.
   Milestones have no creation tool at all in this session; the suite uses
   `milestone:<name>` labels instead where a repo needs the grouping. See
   `docs/linear.md`.

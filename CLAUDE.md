@@ -4,7 +4,7 @@ The umbrella repo for a small Minecraft tool suite: **Konnekt** (Wails · Go · 
 and **Kommands** (Vite · React). This repo owns **conventions, domain knowledge, and
 agent tooling**.
 
-It does **not** own builds, CI, or releases for the products — each keeps its own. A
+It does **not** own builds, CI, or releases for the products: each keeps its own. A
 change here that requires a product to rebuild is a change in the wrong place. The one
 exception is the handful of workflows under `plugins/suite-kit/workflows/` that run
 identically on every product: authored here, vendored into each product by
@@ -46,7 +46,7 @@ that commits the copy and runs it.
 | `scripts/validate-schemas.sh` | Validates every manifest against its schema |
 | `scripts/check-participation.sh` | Checks each repo's permissions floor, the paths its manifest names, its formatting settings, and that every vendored file is excluded from that repo's own formatter and scanner (`--require-products` to fail on an uncloned one) |
 | `scripts/check-copy.sh` | Checks every repo's published copy for em dashes (`--require-products` to fail on an uncloned one) |
-| `website/` | The suite's home page — hand-written HTML/CSS, styled from `design/tokens.json` through `website/gen-tokens.py` |
+| `website/` | The suite's home page: hand-written HTML/CSS, styled from `design/tokens.json` through `website/gen-tokens.py` |
 | `docs/adopting.md` | How a repo adopts suite-kit |
 | `docs/conventions.md` | Cross-repo rules: tracking, PR magic words, permissions |
 | `docs/linear.md` | The Linear structure `/suite-kit:suite-sync` mirrors GitHub Issues into |
@@ -74,7 +74,7 @@ appearance-named token becomes a lie the first time a theme changes it.
 nearby token is worse than inlining, because it looks correct in review.
 
 **Nothing both produces and consumes the token set.** That asymmetry is what makes
-regenerating safe — do not give a product `tokens.role: "source"`.
+regenerating safe: do not give a product `tokens.role: "source"`.
 
 **Products vendor rather than reference.** Konnekt has a tag-driven release that builds
 from a standalone clone; requiring a `kollektiv` checkout beside it would break that.
@@ -87,15 +87,15 @@ copy is reviewed where it runs; `sync-workflows.sh --check` in CI is what keeps 
 **suite-kit ships no hooks, deliberately.** Konnekt already binds `graphify hook-guard`
 to `PreToolUse`; stacking more matchers is the fastest way to make both feel broken.
 
-**Nothing published carries an em dash.** The websites' words, issue and pull
-request titles and bodies, commit messages. Use a comma, a colon, or two
-sentences. Code, code comments and the documentation in these repos are not
-published and are unaffected, this file included. `scripts/check-copy.sh`
-checks the one surface that is in a file; the rest is review. See
-`docs/conventions.md` § Public copy.
+**Nothing written for a reader carries an em dash.** The websites' words,
+issue and pull request titles and bodies, commit messages, and the docs in
+these repos, this file included. Use a comma, a colon, or two sentences. Code
+and code comments follow the code's own conventions. `scripts/check-copy.sh`
+checks the websites; the rest is review. See `docs/conventions.md` § Public
+copy.
 
 **Version bumps come in pairs.** `plugins/suite-kit/.claude-plugin/plugin.json` and
-`.claude-plugin/marketplace.json` must agree — a health check fails if they diverge.
+`.claude-plugin/marketplace.json` must agree: a health check fails if they diverge.
 
 **A vendored file is never touched by a product's own tools.** Every sync script
 byte-compares its master against the product's copy, so a product formatter or
@@ -124,13 +124,13 @@ clone holds both sides.
 Run `/suite-kit:health`. It reads `.claude/suite.json` and runs every check, including
 schema validation.
 
-Where the plugin is not installed — a cloud container, an unattended agent, a bare
-clone — run the check runner directly. It reads the same manifest and runs the same
+Where the plugin is not installed (a cloud container, an unattended agent, a bare
+clone), run the check runner directly. It reads the same manifest and runs the same
 checks. **Declaring a plugin in `.claude/settings.json` does not install it**, so this
 is the normal case in those environments, not a fallback for broken ones.
 
 In **this** repo the runner is already on disk as the plugin source, so there is
-nothing to vendor — run `./plugins/suite-kit/suite-check.py`. In a **product** it is
+nothing to vendor: run `./plugins/suite-kit/suite-check.py`. In a **product** it is
 the vendored copy at `.claude/suite-check.py`, put there by `./scripts/sync-runner.sh`
 and committed in that product's own repo.
 
@@ -145,7 +145,7 @@ health check is the gap between "I ran the checks" and "the checks passed". The 
 enforces that distinction mechanically: a grep over a path that does not exist, a
 `pnpm` script with no `package.json`, a command whose dependencies were never
 installed, a `go` command whose package embeds a build nobody has built, an
-aislop run without the ruff its own CI pins — each is a skip with a reason, and
+aislop run without the ruff its own CI pins: each is a skip with a reason, and
 none of them is a pass.
 
 The `go` one reads the failure rather than pre-judging the command, and it
@@ -173,7 +173,7 @@ form of each `sync-*.sh` script yourself when you have a full workspace.
 ## Writing docs in this repo
 
 This repo's whole purpose is being the place things are true, so a claim here costs
-more than a claim elsewhere. It has been wrong about itself before — `docs/adopting.md`
+more than a claim elsewhere. It has been wrong about itself before: `docs/adopting.md`
 carries a note about a revision that recorded both products as adopted when neither
 was.
 

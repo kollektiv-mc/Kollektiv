@@ -1,12 +1,12 @@
 # Roadmap
 
 Direction and sequencing. Individual tasks live in
-[GitHub Issues](https://github.com/kollektiv-mc/Kollektiv/issues) — this file
+[GitHub Issues](https://github.com/kollektiv-mc/Kollektiv/issues): this file
 does not track work items, and there is no `TODO.md`.
 
 `/suite-kit:suite-sync` mirrors GitHub Issues across this repo, Konnekt, and
-Kommands into Linear. The Linear structure itself — teams, projects,
-milestones, labels — is documented in `docs/linear.md`, not here.
+Kommands into Linear. The Linear structure itself (teams, projects,
+milestones, labels) is documented in `docs/linear.md`, not here.
 
 ---
 
@@ -16,7 +16,7 @@ The workspace is live: team `Kollektiv` (renamed from `Kollektiv-MC`) and team
 `Apps`, both provisioned by hand in the Linear UI (teams have no create API).
 The `Kollektiv Suite` initiative groups every project across both teams.
 
-There is no `KON` or `KMD` team — the suite settled on two teams total, with
+There is no `KON` or `KMD` team: the suite settled on two teams total, with
 per-app separation handled by Linear projects (one per app, under team `Apps`)
 and a `repo:*` label rather than a third team. See `docs/linear.md`.
 
@@ -36,7 +36,7 @@ into each product the way `sync-tokens.sh` vendors the token source. This exists
 because declaring a plugin does not install one: in a cloud container
 `installed_plugins.json` is empty, so before this the manifest was read by
 nothing there. The runner also distinguishes a skip from a pass, which the
-invariant greps previously could not — a grep over a path that does not exist
+invariant greps previously could not: a grep over a path that does not exist
 reported clean.
 
 Both products now carry `.claude/suite-check.py`, and Konnekt's CI runs it as an
@@ -44,13 +44,13 @@ Both products now carry `.claude/suite-check.py`, and Konnekt's CI runs it as an
 Konnekt's backend legs run on windows-latest and in a webkit2gtk container, and
 `suite.json`'s flat command list cannot express that matrix, so CI keeps those as
 literal steps. The two sections CI had no equivalent of are the ones the runner
-now covers — before this, Konnekt's `no literal border widths` invariant was
+now covers: before this, Konnekt's `no literal border widths` invariant was
 checked only when someone invoked `/suite-kit:health` by hand.
 
 `scripts/check-participation.sh` checks what the other scripts do not: the
 `docs/conventions.md` permissions floor in each repo's committed
-`.claude/settings.json`, and that the paths each manifest names — `roadmap`,
-`tokens.sourceFile`, every `health.commands[].cwd` — still exist. It runs in this
+`.claude/settings.json`, and that the paths each manifest names (`roadmap`,
+`tokens.sourceFile`, every `health.commands[].cwd`) still exist. It runs in this
 repo's `.claude/suite.json` and in CI with `--require-products`.
 
 The cross-repo checks are one workflow, `.github/workflows/drift.yml`, on every
@@ -86,7 +86,7 @@ Still open, in rough order:
   `run_invariants` in `suite-check.py`, which #23 already needs to touch.
 - Widening Konnekt's literals invariant past borders. It declares
   `tokens.enforce: "migrating"` and names the covered paths, and the
-  `no literal border widths` entry closed the border sweep — 0 literals against
+  `no literal border widths` entry closed the border sweep: 0 literals against
   181 token call sites. Hex and arbitrary px are still open: 118 hex literals and
   183 px values across 48 files under the paths its manifest names. A single
   broad pattern would be red on arrival, so this wants either per-sweep entries
@@ -141,19 +141,19 @@ Still open on the sweep:
   `/code-review` candidates about dead code and render cost unverified.
 
 Routine cron is evaluated in UTC and does not follow DST, so both schedules need
-shifting by an hour twice a year, or moving off UTC — a schedule set for 09:00
+shifting by an hour twice a year, or moving off UTC: a schedule set for 09:00
 Berlin fires at 08:00 Berlin from late October to late March.
 
 ## Version timeline
 
 `/suite-kit:suite-sync` step 4 places completed work on a timeline by the version
-it shipped in — one Linear project milestone per git tag, dated to the tag, sorted
+it shipped in: one Linear project milestone per git tag, dated to the tag, sorted
 into Snapshot / Alpha / Beta / Release by the tag's suffix. `docs/linear.md`
 § Version timeline is the structure; the milestones for Konnekt's five tags exist
 in Linear, and Konnekt's roadmap `Alpha` milestone is marked superseded.
 
 Linear's own Releases feature would have been the obvious home and is not
-available on the free plan — see `docs/conventions.md` § Known Linear MCP gaps.
+available on the free plan: see `docs/conventions.md` § Known Linear MCP gaps.
 
 Still open:
 
@@ -163,7 +163,7 @@ Still open:
   scheduled run does this.
 - The daily Routine's inline prompt still summarises the old behaviour. It
   delegates to this skill and the skill is the specification, so runs pick up
-  step 4 regardless, but the summary is stale. It cannot be edited over MCP —
+  step 4 regardless, but the summary is stale. It cannot be edited over MCP:
   the Routine fires into a persistent session, and `update_trigger` refuses a
   prompt edit for one. Fix it in the claude.ai Routines UI, or recreate it.
 - Retiring Konnekt's `Alpha` milestone in the Linear UI. It holds nothing and is
@@ -174,8 +174,8 @@ Still open:
 
 ## Suite conventions
 
-The reusable parts of Konnekt's old `agent_docs/LINEAR.md` — the PR
-magic-word convention and, historically, the roadmap-section mapping rule —
+The reusable parts of Konnekt's old `agent_docs/LINEAR.md` (the PR
+magic-word convention and, historically, the roadmap-section mapping rule)
 were hoisted into `docs/conventions.md`, and `CLAUDE.md` was added here so
 these conventions reach an agent session automatically. The per-repo
 `linear-sync` and `health-check` commands the plugin replaced have been
@@ -184,7 +184,7 @@ deleted from both products.
 `scripts/adopt.sh` scaffolds a new repo's `.claude/suite.json`, permissions block,
 `.gitignore` lines and both vendored files in one command, instead of a careful
 read of `docs/adopting.md`. It writes a manifest that is valid but deliberately
-unfinished — `tokens`, `minecraft` and `health.invariants` describe a specific
+unfinished: `tokens`, `minecraft` and `health.invariants` describe a specific
 codebase, and a generated guess at them would look reviewed without being.
 
 ## Cross-product handoff

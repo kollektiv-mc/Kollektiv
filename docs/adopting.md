@@ -11,7 +11,7 @@ changes.
 ./scripts/adopt.sh ../NewRepo --kind vite-web
 ```
 
-does the mechanical part of every step below — the manifest, the permissions floor,
+does the mechanical part of every step below: the manifest, the permissions floor,
 the `.gitignore` line, and both vendored files. It stops where judgement starts:
 `tokens`, `minecraft` and `health.invariants` describe a particular codebase, and it
 prints which of them still need filling in rather than guessing. Read on for what
@@ -36,16 +36,16 @@ In the repo's committed `.claude/settings.json`:
 }
 ```
 
-`enabledPlugins` is an **object**, not an array — the schema rejects the array form
+`enabledPlugins` is an **object**, not an array: the schema rejects the array form
 that some documentation examples show.
 
 **`superpowers-dev` is not a typo.** The marketplace at `obra/superpowers` names
 itself `superpowers-dev` in its own manifest, and the manifest's name wins over the
-key written here — `claude plugin marketplace add obra/superpowers` reports
+key written here: `claude plugin marketplace add obra/superpowers` reports
 `Successfully added marketplace: superpowers-dev` and writes that spelling into
 settings itself. All three repos declared it as `superpowers` until 2026-09-15, so
 `claude plugin install superpowers@superpowers` failed on every machine and in every
-scheduled run with `Plugin "superpowers" not found in marketplace "superpowers"` — a
+scheduled run with `Plugin "superpowers" not found in marketplace "superpowers"`: a
 message that reads like upstream removed the plugin rather than like a wrong id.
 
 Declaring is not installing. On first run Claude Code reports the plugin as not
@@ -60,11 +60,11 @@ claude plugin install superpowers@superpowers-dev
 ```
 
 In a scheduled or cloud session nothing is installed at startup, so this is the
-normal opening move rather than a repair — `/suite-kit:health-sweep` does it as its
+normal opening move rather than a repair: `/suite-kit:health-sweep` does it as its
 step 0.
 
 Both marketplaces run third-party code with your privileges. Enabling them is a
-trust decision — make it deliberately, per repo.
+trust decision: make it deliberately, per repo.
 
 ## 2. Add the permissions block
 
@@ -90,10 +90,10 @@ inside a skill, as confusing prose.
 | `product` | Display name |
 | `kind` | Stack shape, e.g. `wails-desktop`, `vite-web` |
 | `linear.team` | Team key for a repo tracked in Linear directly, bypassing the GitHub-Issues mirror. Nothing in the suite uses this today |
-| `tracking` | `github-issues` for every repo in the suite today. Exactly one of `linear` or `tracking` is required — see [`conventions.md`](conventions.md) |
-| `roadmap` | Path to the repo's direction/sequencing doc. Not a work-item list — `/suite-kit:suite-sync` mirrors GitHub Issues into Linear, not this file |
-| `tokens.role` | Always `consumer` for a product repo — the token set is defined in kollektiv's `design/tokens.json`, not in any product |
-| `tokens.source` | The repo the token values come from — `kollektiv` |
+| `tracking` | `github-issues` for every repo in the suite today. Exactly one of `linear` or `tracking` is required: see [`conventions.md`](conventions.md) |
+| `roadmap` | Path to the repo's direction/sequencing doc. Not a work-item list: `/suite-kit:suite-sync` mirrors GitHub Issues into Linear, not this file |
+| `tokens.role` | Always `consumer` for a product repo: the token set is defined in kollektiv's `design/tokens.json`, not in any product |
+| `tokens.source` | The repo the token values come from: `kollektiv` |
 | `tokens.sourceFile` | Path to the vendored copy of that source, `tokens.source.json` |
 | `tokens.generate` | Command that regenerates this repo's token output from the vendored source |
 | `tokens.enforce` | `strict`, or `migrating` where pre-existing literals are expected |
@@ -101,9 +101,9 @@ inside a skill, as confusing prose.
 | `minecraft.targetVersion` | Version the repo emits for |
 | `minecraft.dataSource` | Where pinned registry data comes from |
 | `minecraft.traitMatrix` | Path to the version-trait document |
-| `health.commands` | Ordered `{ name, run, cwd? }` list — `cwd` is relative to the repo root and defaults to it |
+| `health.commands` | Ordered `{ name, run, cwd? }` list: `cwd` is relative to the repo root and defaults to it |
 | `health.invariants` | `{ name, grep, paths, exclude, expect, diagnosis, reference }` |
-| `health.generated` | List of `{ regenerate, cwd?, expectCleanDiff, requiresNetwork, diagnosis, reference }` — a repo can have more than one generator, and Kommands has two. `expectCleanDiff` is the list of repo-relative paths that must be unchanged after `regenerate` runs |
+| `health.generated` | List of `{ regenerate, cwd?, expectCleanDiff, requiresNetwork, diagnosis, reference }`: a repo can have more than one generator, and Kommands has two. `expectCleanDiff` is the list of repo-relative paths that must be unchanged after `regenerate` runs |
 | `health.memory` | `{ maxLines, reason }`, and **only** if the repo is over the always-loaded memory budget. The `memory` section runs on every repo regardless of what the manifest says, because every repo pays that cost; this field is the ratchet a repo in excess holds while it comes down, and `maxLines` has a schema minimum of 201 so it cannot outlive the excess. See `docs/conventions.md` § The agent memory budget |
 
 `Kommands/.claude/suite.json` is the worked example.
@@ -119,7 +119,7 @@ stated reason gets deleted the first time it is inconvenient.
 
 This copies `design/tokens.json` into the repo as `tokens.source.json`. Commit it,
 along with whatever `tokens.generate` produces from it. Both files are inputs a
-build reads, so both are committed — a product must build from a standalone clone,
+build reads, so both are committed: a product must build from a standalone clone,
 without a `kollektiv` checkout beside it.
 
 ## 5. Vendor the check runner
@@ -141,8 +141,8 @@ does, and `check-participation.sh` checks that they are there.
 
 **This is the step that makes the checks real.** Step 1 declares the plugin; it does
 not install it, and nothing in a cloud container, a scheduled routine, or a fresh
-clone will. Without the vendored runner, `.claude/suite.json` — every command, every
-invariant, every `diagnosis` written to explain why a rule exists — is read by nothing
+clone will. Without the vendored runner, `.claude/suite.json` (every command, every
+invariant, every `diagnosis` written to explain why a rule exists) is read by nothing
 in exactly the environments that have no human watching.
 
 Run it from the repo root:
@@ -153,7 +153,7 @@ Run it from the repo root:
 ```
 
 It reports each check as `pass`, `fail`, or `skip` with a reason, and exits `0`, `1`,
-or `2` (manifest unreadable). Skips do not affect the exit code — a repo that cannot
+or `2` (manifest unreadable). Skips do not affect the exit code: a repo that cannot
 run a check yet is not a repo that failed it. `--require-runnable` inverts that, which
 is what a product's CI turns on once its toolchain exists, so the checks cannot go
 quietly vacuous.
@@ -286,7 +286,7 @@ disk.
 kollektiv is itself an adopter, not just the source of the plugin. Its
 `.claude/suite.json` declares `tracking: "github-issues"` and
 `roadmap: "docs/roadmap.md"`, and its `.claude/settings.json` enables
-`suite-kit@kollektiv` from the local marketplace plus `superpowers@superpowers-dev` —
+`suite-kit@kollektiv` from the local marketplace plus `superpowers@superpowers-dev`:
 it omits `kollektiv` from `extraKnownMarketplaces` since this repo already is
 that marketplace and declaring it as a remote `github` source would register it
 twice. It has no `tokens`, `minecraft`, `health.invariants`, or
@@ -315,9 +315,9 @@ since been dropped everywhere, and step 1 above now names `superpowers` for
 everyone.
 
 **Kommands is tracked in GitHub Issues**, same as every other repo in the suite
-now — its manifest declares `tracking: "github-issues"` and carries no `linear`
+now: its manifest declares `tracking: "github-issues"` and carries no `linear`
 block. An earlier revision of this page described a switch to a Linear `KMD`
-team; that switch was never made and is no longer planned — see
+team; that switch was never made and is no longer planned: see
 [`conventions.md`](conventions.md).
 
 Its `.claude/commands/health-check.md` was **deleted** on adoption. It reimplemented
@@ -342,14 +342,14 @@ Python. It has no release workflow yet, so the generator is tested on every push
 and not yet called.
 
 `.claude/rules/*.md` stay where they are. They are path-scoped and auto-inject when
-a matching file is edited — a plugin skill does not do that, so the plugin does not
+a matching file is edited: a plugin skill does not do that, so the plugin does not
 replace them. Only `styling.md` overlaps `/suite-kit:design-tokens`, and the
 overlap is deliberate: the rule fires on edit, the skill on request.
 
 ### Konnekt
 
 `.claude/suite.json` uses `kind: "wails-desktop"`, `roadmap: "agent_docs/ROADMAP.md"`,
-and `tokens.enforce: "migrating"` — the repo is
+and `tokens.enforce: "migrating"`: the repo is
 mid-migration from an inline-styles-everywhere convention, per
 `agent_docs/HEALTH_CHECKLIST.md` Milestone 2. As of that migration's start the
 covered paths hold 176 hex literals across 33 files and 323 arbitrary-px values
@@ -367,9 +367,9 @@ would mean a repo that both produced and consumed the same set, which is exactly
 round-trip that makes regeneration unsafe.
 
 `health.generated` covers `pnpm gen:tokens` with `expectCleanDiff: true` and
-`requiresNetwork: false` — the generator reads a committed local file, so unlike
+`requiresNetwork: false`: the generator reads a committed local file, so unlike
 Kommands' mcmeta derivation it works offline. Its clean-diff check runs in CI
-(`.github/workflows/ci.yml`), not just `/suite-kit:health` — that landed in PR #22,
+(`.github/workflows/ci.yml`), not just `/suite-kit:health`: that landed in PR #22,
 merged 2026-08-04.
 
 It has one `health.invariants` entry, `no literal border widths`, from its own
@@ -382,27 +382,27 @@ suite's `base.yml`; adopting the base, listing the vendored generator in its
 `.aislopignore`, and asking the priority question in its forms are all on
 `docs/roadmap.md`.
 
-`health.commands` uses `cwd` to mix toolchains in one list — `pnpm typecheck`,
+`health.commands` uses `cwd` to mix toolchains in one list: `pnpm typecheck`,
 `pnpm lint`, `pnpm test`, `pnpm check-bundle` with `cwd: "frontend"`, and
 `go vet ./...` / `go test ./...` with no `cwd` (repo root).
 
 The settings block is merged into `.claude/settings.json` without disturbing its
-`hooks` section — Konnekt binds `graphify hook-guard` to `PreToolUse` on `Bash`,
+`hooks` section: Konnekt binds `graphify hook-guard` to `PreToolUse` on `Bash`,
 `Read`, and `Glob`; suite-kit ships no hooks specifically so it cannot collide with
-those. It declares `superpowers@superpowers-dev`, not OMC, which this repo — and the
-whole suite — no longer uses. All of this (the permissions block, the CI check, the
+those. It declares `superpowers@superpowers-dev`, not OMC, which this repo (and the
+whole suite) no longer uses. All of this (the permissions block, the CI check, the
 OMC → superpowers swap, and deleting `.claude/commands/linear-sync.md`) is on
 `main` via PR #22.
 
 `.claude/commands/linear-sync.md` duplicated the plugin skill and had already gone
-stale, targeting the `KonnektMC` workspace deleted 2026-08-04 — running it did
+stale, targeting the `KonnektMC` workspace deleted 2026-08-04: running it did
 nothing useful. `agent_docs/LINEAR.md` now points at kollektiv's
 [`linear.md`](linear.md) for the suite-wide structure rather than describing its
 own from scratch; Konnekt-specific facts (which team, which project, which
 milestones) are the only thing that stays there.
 
 Watch for friction between superpowers' agents and the graphify guards before
-enabling it repo-wide beyond what `.claude/settings.json` already declares — the
+enabling it repo-wide beyond what `.claude/settings.json` already declares: the
 guards nudge away from raw reads and greps, and an agent framework that reads and
 greps constantly is worth a session of observation regardless of which one it is.
 Tracked as [kollektiv-mc/konnekt#49](https://github.com/kollektiv-mc/Konnekt/issues/49).

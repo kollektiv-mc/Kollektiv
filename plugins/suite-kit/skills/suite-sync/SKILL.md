@@ -1,5 +1,5 @@
 ---
-description: Mirror GitHub Issues across the suite into Linear — create missing Linear issues, update status/priority/labels/project/milestone/assignee on existing ones, place completed work on the version timeline, and post a project status update. Never deletes. Use when asked to sync, reconcile, or update Linear, or on a scheduled mirror run.
+description: Mirror GitHub Issues across the suite into Linear: create missing Linear issues, update status/priority/labels/project/milestone/assignee on existing ones, place completed work on the version timeline, and post a project status update. Never deletes. Use when asked to sync, reconcile, or update Linear, or on a scheduled mirror run.
 disable-model-invocation: true
 ---
 
@@ -10,7 +10,7 @@ a downstream mirror. This skill is one prompt shared by manual runs and the sche
 routine, so the reconcile logic has exactly one definition.
 
 Read `suite.repos.json` at the workspace root for the repo list, plus this repo
-(`kollektiv`) itself — it is the workspace root and is not listed in its own manifest.
+(`kollektiv`) itself: it is the workspace root and is not listed in its own manifest.
 
 For each repo, read its `.claude/suite.json`:
 
@@ -21,7 +21,7 @@ For each repo, read its `.claude/suite.json`:
   not guess.
 
 Today every repo in the suite declares `tracking: "github-issues"`, so this should
-rarely trigger — but a repo that later opts back into direct Linear tracking is a
+rarely trigger, but a repo that later opts back into direct Linear tracking is a
 real, supported case, not an error.
 
 ---
@@ -29,7 +29,7 @@ real, supported case, not an error.
 ## 1. Gather
 
 For each in-scope repo, list open issues and issues closed since the last run (or
-all closed issues on a first run — cheap, and the match key makes re-runs safe).
+all closed issues on a first run: cheap, and the match key makes re-runs safe).
 List existing Linear issues carrying the `repo:<name>` label so the comparison set
 is bounded per repo rather than scanning the whole workspace every time.
 
@@ -41,7 +41,7 @@ Every mirrored Linear issue carries this line in its description:
 Source: kollektiv-mc/<repo>#<number>
 ```
 
-**Match on that line, and nowhere else.** Not on titles — they get edited on both
+**Match on that line, and nowhere else.** Not on titles: they get edited on both
 sides and drift apart, and matching on them produces duplicates that then need
 untangling by hand.
 
@@ -53,14 +53,14 @@ longer exists on GitHub (deleted, or the repo was renamed) is reported, not touc
 **A GitHub issue with no matching Linear issue → create one.**
 
 - Team and project: route by repo.
-  - `kollektiv` → team **Kollektiv**, project by area — `Design System` for
+  - `kollektiv` → team **Kollektiv**, project by area: `Design System` for
     `area:tokens`, `Suite Automation` for everything else in this repo.
   - `konnekt` → team **Apps**, project **Konnekt**.
   - `kommands` → team **Apps**, project **Kommands**.
 - Milestone: GitHub has no milestone-creation tool available in this session, so
-  milestone membership is carried as a label instead — `milestone:beta`,
+  milestone membership is carried as a label instead: `milestone:beta`,
   `milestone:remote-access` in Konnekt; nothing yet in Kommands (its roadmap phases
-  Now/Next/Later aren't filed as issues per-phase the way Konnekt's are — see its
+  Now/Next/Later aren't filed as issues per-phase the way Konnekt's are, see its
   `docs/roadmap.md`). Map a `milestone:<x>` label to the Linear project milestone of
   the same name if one exists on that project; otherwise leave the issue
   milestone-less rather than inventing one.
@@ -69,7 +69,7 @@ longer exists on GitHub (deleted, or the repo was renamed) is reported, not touc
   derive one from the type label rather than leaving it at None. See § Priority
   below.
 - Assignee: carry the GitHub assignee across if that person is a Linear workspace
-  member; otherwise leave unassigned. Do not default to yourself — that was a
+  member; otherwise leave unassigned. Do not default to yourself: that was a
   decision the old per-repo model made and it produced a false sense of ownership.
 - Description: the GitHub issue body, followed by a blank line and the `Source:`
   line, followed by a GitHub link attachment (`links: [{url, title}]` on
@@ -79,7 +79,7 @@ longer exists on GitHub (deleted, or the repo was renamed) is reported, not touc
 **An existing mirrored Linear issue whose GitHub counterpart changed → update it.**
 Status, priority, labels, assignee, and title/description all follow the GitHub
 side. Never move a mirrored issue's status backwards from Done/Canceled to
-something open unless the GitHub issue itself reopened — a manual status edit made
+something open unless the GitHub issue itself reopened: a manual status edit made
 directly in Linear should not be silently reverted by drift in the other direction,
 but the *next* GitHub-side change always wins, because GitHub is the source of
 truth here, not Linear.
@@ -128,7 +128,7 @@ Two rules bound the derived value:
   does not overrule a person.
 
 Rationale and the audit that prompted this is in `docs/linear.md` § Priority when
-no label says so — the short version is that the old "no label → None" rule left
+no label says so: the short version is that the old "no label → None" rule left
 88 of ~90 mirrored issues at no priority.
 
 **A Linear issue with no matching GitHub issue → report it, do not delete it.** It
@@ -142,7 +142,7 @@ obvious home under the routing above, say so and leave it.
 
 ## 4. Version timeline
 
-Completed work goes on a timeline by the version it shipped in — one Linear
+Completed work goes on a timeline by the version it shipped in: one Linear
 project milestone per tag, dated to the tag. Full structure and the reasoning
 behind it is `docs/linear.md` § Version timeline; this is the procedure.
 
@@ -159,7 +159,7 @@ git for-each-ref --sort=creatordate \
 
 `creatordate` reads the tag date for an annotated tag and the commit date for a
 lightweight one, so both kinds land on the timeline correctly. A repo with no
-tags has no version timeline — report that and move on, do not invent a version.
+tags has no version timeline: report that and move on, do not invent a version.
 Today only Konnekt is tagged; kollektiv and Kommands have no tags at all.
 
 **Per tag, ensure a milestone** on that repo's Linear project, named
@@ -173,13 +173,13 @@ Today only Konnekt is tagged; kollektiv and Kommands have no tags at all.
 | bare `vX.Y` / `vX.Y.Z` | Release |
 | anything else | report it, do not guess a channel |
 
-The bare `snapshot` tag is a **rolling pointer**, not a version — Konnekt's
+The bare `snapshot` tag is a **rolling pointer**, not a version: Konnekt's
 `.github/workflows/snapshot.yml` moves it nightly. It gets exactly one
 milestone, `Snapshot · current`, whose date is updated to wherever the tag now
 points. Never file one per night.
 
 **Attach each completed issue** to the first version tagged at or after its
-GitHub `closed_at`. Use `closed_at` from the GitHub issue — **not** the Linear
+GitHub `closed_at`. Use `closed_at` from the GitHub issue, **not** the Linear
 issue's `completedAt`, which records when a sync run noticed the closure and so
 reflects this routine's own schedule rather than when anything was fixed.
 
@@ -192,7 +192,7 @@ is the one case where this sync moves an issue off a milestone it set earlier.
 Kommands' `Now`/`Next`/`Later`, are forward-looking phases driven by the
 `milestone:<x>` label mapping in step 3. A channel with no tags keeps its roadmap
 milestone; a channel with tags is owned by the version milestones. Konnekt's
-`Alpha` is superseded today and is left in place regardless — the Linear MCP has
+`Alpha` is superseded today and is left in place regardless: the Linear MCP has
 no milestone-deletion tool, and retiring one is a manual step in the UI.
 
 ## 5. Status update
@@ -205,7 +205,7 @@ manufacturing one.
 
 ## Constraints worth knowing
 
-- `save_initiative` exists in the connected Linear MCP — despite
+- `save_initiative` exists in the connected Linear MCP: despite
   `docs/conventions.md` historically saying otherwise, initiatives do not need to be
   created by hand. `create_team` still does not exist; a repo needing a new team is
   still a manual step.
@@ -213,19 +213,19 @@ manufacturing one.
 - **Linear's Releases feature is unavailable.** Pipelines, stages and per-release
   issue sets are the obvious home for step 4 and need a Business or Enterprise
   plan; this workspace is on the free plan, the same constraint that caps it at
-  two teams. Releases has no timeline view either — it produces a changelog.
+  two teams. Releases has no timeline view either: it produces a changelog.
   Project milestones are the only dated object that renders on a Linear timeline.
 - There is no milestone-deletion tool. Milestones can be created and updated with
   `save_milestone` and nothing more, so a superseded milestone is reported and
   left alone.
 - GitHub label and milestone *creation* likewise has no MCP tool in a Claude Code
-  cloud session — only `gh label create/edit` (see `scripts/sync-labels.sh`) can set
+  cloud session: only `gh label create/edit` (see `scripts/sync-labels.sh`) can set
   a label's color and description precisely. `issue_write` will silently create a
   missing label with a default gray color when you attach it to an issue, which is
   enough for this skill's matching and filtering to work even before someone runs
   `scripts/sync-labels.sh` to fix the color.
 - PR magic words (`Fixes #12`, `Closes #9`, `Part of #28`) drive GitHub's own
-  issue-closing automation. That layer needs no maintenance — this sync exists for
+  issue-closing automation. That layer needs no maintenance: this sync exists for
   what it cannot see: issues Linear-side that need status changes propagated in,
   and new issues that need mirroring in the first place.
 
@@ -238,7 +238,7 @@ Report the timeline separately from the issue reconcile, since the two fail
 independently: version milestones created or re-dated, issues attached to a
 version, issues sitting on `Snapshot · current` because no release contains them
 yet, and any tag whose channel could not be derived. A repo with no tags is
-reported as having no version timeline — that is a fact about the repo, not a
+reported as having no version timeline: that is a fact about the repo, not a
 skipped step.
 
 Priorities are worth a line too: how many issues took an explicit `p*` label and

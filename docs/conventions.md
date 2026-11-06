@@ -557,6 +557,29 @@ judgement a regex cannot make.
 `.claude/rules/copy.md`, or carries them as an always-loaded
 `.claude/rules/writing.md` when its memory budget allows.
 
+### Typography
+
+A guideline, not a mandate: no suite font is prescribed here beyond what
+`design/tokens.json` already names. When choosing one:
+
+- **Avoid the fonts that now read as AI defaults:** Inter, Roboto, Open Sans,
+  Lato, Arial, Geist, Geist Mono, Space Grotesk, Instrument Serif and a bare
+  system stack. Keep one only where the product already uses it as its brand
+  font. A system font as a fallback after a named family is fine.
+- **Avoid the generated-page treatments:** one italic or coloured accent word in
+  a headline, tracked ALL-CAPS eyebrow labels, monospace for small labels out
+  of habit, one family for everything.
+- **Prefer OFL fonts** (Google Fonts, Fontsource) so the files can be committed
+  and self-hosted. Never commit fonts whose licence forbids redistribution (for
+  example Fontshare's ITF Free Font License); load them at runtime.
+- **Where the font is defined, say in one line why it was chosen.**
+
+**Where this came from.** sandrogekeler/AllesSandro carries it as the locked,
+always-loaded `.claude/rules/typography.md` for every personal project, and it
+is copied here so the Kollektiv apps follow the same list.
+
+**What is checked.** Nothing. It is a judgement made when a font is picked.
+
 ## Release notes and pull request labelling
 
 A release's notes list changes, not pull requests. One pull request can carry

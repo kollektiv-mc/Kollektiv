@@ -1,25 +1,29 @@
 # Kollektiv mark
 
-The Kollektiv mark is three isometric blocks stacked as one, each in one
-product's colour: Konnekt green on top, Kommands ember below left, Kube violet
-below right. Each block is drawn the way Konnekt's is, so the suite's mark and
-the products' share one construction, and the suite carries every product's
-colour while each product mark keeps only its own.
+The Kollektiv mark is a cube built from eight smaller ones, pulled apart so
+each block stands on its own: a collective of individuals that still make one
+shape. The bottom layer carries the products, Konnekt green in the centre,
+Kommands ember on the left and Kube violet on the right, under a neutral top
+layer. Each block is drawn the way Konnekt's is, so the suite's mark and the
+products' share one construction, and the suite carries every product's colour
+while each product mark keeps only its own.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="lockup-on-dark.svg">
   <img src="lockup-on-light.svg" alt="The Kollektiv mark beside the Kollektiv wordmark" width="420">
 </picture>
 
-The directions it was chosen from, and the references behind them, are in the
-study at https://claude.ai/artifact/GccCUv5yydu2buzQYMZSEE (private to the
-project).
+It replaced the first Kollektiv mark, three blocks stacked as a triangle, on
+2026-11-11. Both studies are private to the project: the cube directions at
+https://claude.ai/artifact/Vn4AFGM5FssNRRAastwxpx and the earlier ones at
+https://claude.ai/artifact/GccCUv5yydu2buzQYMZSEE.
 
 ## Files
 
-Every file is an SVG on a transparent background, except the app icons. The
-gaps between blocks, and between faces in the one-colour files, are left
-undrawn, so they are real transparency on any ground.
+Every file is an SVG on a transparent background, except the app icons. Where
+the ground shows between blocks it is left undrawn, and in the one-colour files
+the gaps between faces, and between a block and the blocks behind it, are
+masks, so all of them are real transparency on any ground.
 
 | File | Use |
 | --- | --- |
@@ -33,29 +37,33 @@ undrawn, so they are real transparency on any ground.
 
 ## Construction
 
-<img src="construction.svg" alt="The mark at ten times, with its live area, each block's hexagon and centre, and the triangle between the centres" width="360">
+<img src="construction.svg" alt="The mark at ten times, with its live area, its outline and each visible block's centre" width="360">
 
 Drawn on a 24-unit grid, like Konnekt's. The mark fills a 21-unit live area,
 1.5 units in from every edge, and is centred on its own bounds.
 
 | Part | Rule | Value in `mark-on-*.svg` |
 | --- | --- | --- |
-| Block | An isometric cube: a regular hexagon of radius *r*, split into three faces at its centre, lit from above | *r* = 5.728 |
-| Arrangement | Two blocks side by side, the third on top, centred between them: the blocks' centres form an equilateral triangle | |
-| Gap | Constant between every pair of facing edges | 1.1, the same as Konnekt's |
+| View | Isometric: an orthographic projection that foreshortens all three axes equally, the same view as Konnekt's block | |
+| Cube | 2 × 2 × 2 cells, seen from above the front corner | |
+| Block | An isometric cube centred in its cell, its edge 0.7 of the cell's | cell *r* = 6.176, block *r* = 4.324 |
+| Order | Drawn back to front, so a nearer block covers the ones behind it, and the faces of the blocks behind show in the gaps | |
 | Base | Each block's faces sit on a hexagon filled with its left face's shade, so the seams between faces anti-alias against the block's own colour, not the ground, and draw no dark line | |
-| Bounds | Set by the live area's height | 20.94 × 21 |
+| Bounds | Set by the live area's height: a hexagon of radius *r* × 1.7 | 18.19 × 21 |
+
+Seven blocks show. The eighth, at the back of the bottom layer, sits exactly
+behind the front top one and is hidden by it.
 
 ## Sizes
 
-The full mark holds down to 17 px: at 24 px the gaps are 1.1 px, and at 17 px
-still 0.8. Unlike Konnekt's there is no 24 cut, because there is no thin stroke
-to thicken.
+The full mark holds down to 17 px: the gaps between blocks are 1.6 units wide,
+so at 24 px each is still more than a pixel.
 
-At 16 px and below it is redrawn on its own 16 grid. The blocks touch, with no
-gap, because a gap there falls under a pixel; the three hues keep them apart.
-Every vertical edge sits on a whole or half pixel (x = 1, 4.5, 8, 11.5, 15), and
-the mark's outermost edges and its middle on whole ones, so it stays sharp in a tab.
+At 16 px and below it is redrawn on its own 16 grid, with each block at 0.75
+of its cell rather than 0.7, so that every vertical edge sits on a whole pixel
+(x = 1, 3, 5, 7, 9, 11, 13, 15) and the mark stays sharp in a tab. Its top and
+bottom points reach 0.08 past the 16 grid and are cut there, which no pixel
+shows.
 
 Sizes are device pixels, as in Konnekt's README: a mark laid out at 16 px on a
 2× screen takes the full drawing.
@@ -64,21 +72,24 @@ Sizes are device pixels, as in Konnekt's README: a mark laid out at 16 px on a
 
 ## Colour
 
-Each block takes three shades of its product's colour: the lightest on top,
-the darkest on the right. On light grounds every face steps one shade darker,
-as Konnekt's do.
+Each block takes three shades: the lightest on top, the darkest on the right.
+The three product blocks take their product's colour and the other five a
+neutral grey. On light grounds the products step one shade darker, as
+Konnekt's do, and the neutral turns to a dark slate so the top layer keeps
+its weight against a pale ground.
 
 | Block | On dark: top, left, right | On light: top, left, right | Where the colour comes from |
 | --- | --- | --- | --- |
 | Konnekt | `#4ade80` `#22c55e` `#16a34a` | `#22c55e` `#16a34a` `#15803d` | Tailwind's green 400 to 700, Konnekt's `accent` |
 | Kommands | `#fb923c` `#f97316` `#ea580c` | `#f97316` `#ea580c` `#c2410c` | Tailwind's orange 400 to 700, Kommands' `PRODUCT_ACCENT` |
 | Kube | `#a57ffe` `#9362f4` `#7d49da` | `#9362f4` `#7d49da` `#6429bc` | Chosen here, see below |
+| Neutral | `#eef0f6` `#b4b9c7` `#7c8293` | `#5c6272` `#3a3f4c` `#1d2029` | Chosen here: a cool grey at the hue of the suite's `bg-base` |
 
 Each product's top face is its token in `tokens.json`'s `color.brand`:
 `brand-konnekt`, `brand-kommands` and `brand-kube`, the top on dark as the
 token's dark value and the top on light as its light one. The other faces are
 the mark's construction, not identities anyone else paints with, so they stay
-in these files. A brand token is a product's identity colour, for a mark, a
+in these files, and so does the neutral, which is no product's colour. A brand token is a product's identity colour, for a mark, a
 tile or a glow, and not a text colour: text in a product's colour uses its
 `accent`, which a product darkens on light grounds for contrast.
 
@@ -115,9 +126,12 @@ the image at 1.05em; the website does.
 
 ## Do not
 
-- Reorder the blocks, or give a product a block in another's colour.
-- Add a fourth block. The arrangement is built for three; a fourth product means
-  redrawing it.
+- Move the product colours to other blocks, or give a product a block in
+  another's colour.
+- Colour a top-layer block. The neutral layer is what lets the three products
+  read as one row; a fourth product means redrawing the colouring.
+- Close the gaps or change the block size. At 0.7 of a cell the blocks read as
+  separate; nearer 1 it is one cube with seams.
 - Scale the 16 cut up, or the full mark down past 17 px.
 - Add outlines, shadows, gradients or glows, or recolour outside the table above.
 - Put the coloured mark on a mid-tone ground. Use the app icon tile, or a mono file.

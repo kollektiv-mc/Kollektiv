@@ -414,7 +414,7 @@ it, so the rest will drift the same way unless review catches it.
 
 **Code is the smallest thing that does today's job.** It is read far more often
 than it is extended, and an extension point nobody uses is paid for on every
-read. Five limits, in every repo:
+read. These limits hold in every repo:
 
 - **No abstraction with one user.** An interface, factory, wrapper or generic
   helper arrives with its second caller, not its first.
@@ -427,6 +427,16 @@ read. Five limits, in every repo:
 - **Text carries only what its reader needs.** A comment says why, never what the
   line beneath it says; an error or log line states the failure, and advice goes
   in the docs; a doc describes what is there, not how the change was made.
+- **Every caller reached.** Before changing a function, find every caller, test
+  and config it reaches. A bug is fixed once, in the shared code.
+- **A test for new logic.** New logic with a branch, loop, parser or data write
+  gets one small test.
+- **A known limit is named.** It gets a comment:
+  `shortcut: <the limit>, <when to revisit>`.
+- **No new dependency for what a few lines can do.**
+
+**Never cut for size:** input validation, data-loss handling, security,
+accessibility.
 
 **What is checked.** aislop's `code-quality/duplicate-block` catches the copied
 form of a second way. The rest is review: the health sweep reads every
@@ -544,6 +554,7 @@ notes, and agent replies. Code comments follow the code's own conventions.
 - **No intros or wrap-ups:** "In this section", "Overall", "In summary", "Note
   that", "It's worth noting".
 - **Delete any sentence the reader would not miss.**
+- **A reply after a code change ends with one line on what was not checked.**
 
 **Where this came from.** sandrogekeler/AllesSandro carries it as the locked,
 always-loaded `.claude/rules/writing.md` for every personal project. It is

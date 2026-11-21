@@ -1,21 +1,11 @@
 # Adopting suite-kit in a product repo
 
-Six things go into each product repo: a settings block, a permissions block, a
-`.claude/suite.json`, a vendored `tokens.source.json`, a vendored
-`.claude/suite-check.py`, and two `.gitignore` lines. Two more are the shared
-gates, adopted once the repo has a toolchain to gate: the aislop policy and the
-priority question its issue forms ask (step 7). Nothing else about the repo
-changes.
-
-```sh
-./scripts/adopt.sh ../NewRepo --kind vite-web
-```
-
-does the mechanical part of every step below: the manifest, the permissions floor,
-the `.gitignore` line, and both vendored files. It stops where judgement starts:
-`tokens`, `minecraft` and `health.invariants` describe a particular codebase, and it
-prints which of them still need filling in rather than guessing. Read on for what
-each field means and why.
+A product repo first adopts the
+[AllesSandro template](https://github.com/sandrogekeler/AllesSandro) (step 5),
+before anything else. It brings the check runner, the shared workflows, the release-notes
+generator, the aislop policy and the agent rules, and keeps them current
+through Renovate. The steps below add what is specific to this suite: the
+plugin, the manifest, the token source and the label taxonomy.
 
 ---
 
@@ -122,148 +112,38 @@ along with whatever `tokens.generate` produces from it. Both files are inputs a
 build reads, so both are committed: a product must build from a standalone clone,
 without a `kollektiv` checkout beside it.
 
-## 5. Vendor the check runner
+## 5. Adopt the AllesSandro template
+
+Follow AllesSandro's `docs/adopting.md`, "An existing repo", in the product's
+checkout:
 
 ```sh
-./scripts/sync-runner.sh          # from the kollektiv root
+copier copy --trust https://github.com/sandrogekeler/AllesSandro.git .
 ```
 
-This copies `plugins/suite-kit/suite-check.py` and
-`plugins/suite-kit/suite-memory.py` into the repo as `.claude/suite-check.py` and
-`.claude/suite-probe.py` and `.claude/suite-memory.py`. Commit all three.
+Answer `owner: kollektiv-mc`, the repo's own `kind` and `languages`, and
+`release_notes: true` for a product that ships releases. Keep the repo's own
+version of every seeded file Copier asks about. Then install Mend Renovate on
+the repo (the kollektiv-mc org install, "Only selected repositories").
 
-They are a pair: the runner loads the second from beside itself for the `memory`
-section. A repo carrying only the first has a section that can do nothing but
-report a skip, so `sync-runner.sh --check` calls a half-vendored pair drift
-rather than a repo that has not adopted yet. Both belong in the repo's
-`.aislopignore` and root `.prettierignore` for the reason every vendored file
-does, and `check-participation.sh` checks that they are there.
+A repo's `.claude/suite.json` is seeded, so the one this page describes stays.
+The files the template locks are not the place to edit: a local change conflicts
+on the next template update and turns the repo's `template-guard` check red.
+List them in `.aislopignore` and the root `.prettierignore`;
+`scripts/check-participation.sh` checks that.
 
-**This is the step that makes the checks real.** Step 1 declares the plugin; it does
-not install it, and nothing in a cloud container, a scheduled routine, or a fresh
-clone will. Without the vendored runner, `.claude/suite.json` (every command, every
-invariant, every `diagnosis` written to explain why a rule exists) is read by nothing
-in exactly the environments that have no human watching.
-
-Run it from the repo root:
+## 6. Write the label file
 
 ```sh
-.claude/suite-check.py              # all sections
-.claude/suite-check.py --json       # for /suite-kit:health to judge against
+./scripts/sync-labels.sh          # from the kollektiv root
 ```
 
-It reports each check as `pass`, `fail`, or `skip` with a reason, and exits `0`, `1`,
-or `2` (manifest unreadable). Skips do not affect the exit code: a repo that cannot
-run a check yet is not a repo that failed it. `--require-runnable` inverts that, which
-is what a product's CI turns on once its toolchain exists, so the checks cannot go
-quietly vacuous.
+writes `design/labels.json`'s GitHub taxonomy into the repo's
+`.github/labels.json`, replacing the template's default. The repo's `labels`
+workflow applies it to GitHub when it reaches `main`. Add the repo to
+`suite.repos.json` first; `--check` reports drift.
 
-Like `tokens.source.json`, the vendored copy is not the place to edit: the next
-`sync-runner.sh` overwrites it. `scripts/sync-runner.sh --check` reports drift, and
-the `Suite drift` workflow (`.github/workflows/drift.yml`) runs it on every push and
-nightly, with `--require-vendored`: both products carry the runner, so a product
-without it is one that lost the file, not one that has yet to adopt.
-
-The same split, not adopted is a skip and stale is a failure, holds for every other
-vendored file, and each `sync-*.sh --check` reports it the same way.
-
-## 6. Vendor the shared workflows
-
-```sh
-./scripts/sync-workflows.sh       # from the kollektiv root
-```
-
-This copies the four workflows under `plugins/suite-kit/workflows/` into the repo's
-`.github/workflows/`: `aislop.yml`, `codeql.yml`, `pr-labelled.yml` and
-`scorecard.yml`. Commit them. A workflow has to be in the repo for GitHub to run it,
-and a copy is reviewed where it runs, which a `uses:` reference to a branch of this
-repo would not be. The aislop and label gates each need a decision before they
-pass, which is step 7.
-
-Like the other vendored files, the copies are not the place to edit: the next
-`sync-workflows.sh` overwrites them, and `scripts/sync-workflows.sh --check` in the
-`Suite drift` workflow reports a copy that has drifted. A repo that has never
-carried a workflow is reported and skipped there; `--require-vendored` turns that
-into a failure once every product carries every file. If Prettier runs at the repo
-root, list the four files in `.prettierignore`: the sync byte-compares the copies,
-and a formatted copy is drift.
-
-Nothing product-specific belongs in a shared workflow. CodeQL's language matrix
-is the one thing in there that could tempt it, and it is the same four languages
-on both products by construction; a fifth changes the source here.
-
-## 7. Adopt the shared gates
-
-Two more files are vendored once the repo has code to gate. Neither is scaffolded
-by `adopt.sh`, because each needs a decision the script cannot make.
-
-**The aislop policy.** Write `.aislop/config.yml` with `extends: ./base.yml` as its
-first line (the `./` is load-bearing: aislop resolves the path relative to the config
-and silently loads nothing without it), then run `./scripts/sync-aislop.sh` from the
-kollektiv root, which copies `.aislop/base.yml` beside it. The base is the policy:
-engines, the rules turned off and why, scoring, telemetry off, and `failBelow: 100`.
-Your config carries only the size ratchet, `quality.maxFunctionLoc` and
-`quality.maxFileLoc`, each held at the tree's largest function and file today and
-lowered as they shrink, never raised; run `npx --yes aislop@0.16.0 scan` to find the
-numbers. Add an `.aislopignore` listing what is generated or vendored, the vendored
-Python above included. The job itself is `.github/workflows/aislop.yml`, one of the shared workflows step 6
-vendored, so aislop and ruff are pinned in one place for every repo and `ci.yml`
-needs nothing more. ruff matters: aislop's
-Python engines run only when a ruff binary is on PATH, and report nothing when it is
-not.
-
-A repo adopting with findings already in its tree does not get to 100 in the same
-pull request that adopts the gate; a11y and React findings are judgement calls for a
-health session, not a CI change. Such a repo overrides `ci.failBelow` in its own
-config with its current score, as a second ratchet: raised as findings close, never
-lowered, with the open findings listed in its health checklist. The base's 100 is
-where the ratchet ends.
-
-**The label gate.** Every pull request carries an `area:` label and either a
-`## Changelog` section or a `type:` label (conventions.md § Release notes and pull
-request labelling). The check is `.github/workflows/pr-labelled.yml`, another of the
-shared workflows step 6 vendored; it posts a `pr-labelled` commit status that stays
-pending until both halves are there, and triggers on `edited`, `labeled` and
-`unlabeled` as well, so adding the last label or fixing the section turns it green.
-It reads the section with `.github/scripts/changelog-section.py` fetched from the
-base branch, which the release-notes step below vendors; until it is there, the
-gate judges labels alone. Require `pr-labelled` in the branch rule; the job that posts it is
-`post-status` and always succeeds. The labels themselves come from `design/labels.json`
-via `scripts/sync-labels.sh`, which needs an authenticated `gh`; a repo that has
-never had it applied holds every pull request at pending until it does.
-
-**The priority question.** Every issue form asks it, and
-`.github/workflows/issue-priority.yml` turns the answer into a `p*` label, because a
-form's dropdown answer is otherwise body text that never becomes a label. Put the
-markers into each form where the question should sit, as an empty block:
-
-```yaml
-  # >>> suite:priority. Vendored from kollektiv by scripts/sync-priority.sh. Edit it there.
-  # <<< suite:priority
-```
-
-then run `./scripts/sync-priority.sh`, which renders the dropdown between them from
-`design/labels.json`'s `priorityForm` and copies the workflow in. Nothing is inserted
-into a form without the markers. Add the workflow to the repo's `.prettierignore` if
-Prettier runs at its root: the sync byte-compares the copies, and a formatted copy is
-drift.
-
-**The release notes.** Write `.github/changelog.json` with the repo's `nonAppPaths`,
-the prefixes a pull request can touch without changing what ships (Konnekt's and
-Kommands' are worked examples, with the reasoning for each entry beside it), then
-run `./scripts/sync-notes.sh`, which copies the generator, its Changelog-section
-parser, its tests and GitHub's fallback layout in. Add a CI job that runs
-`.github/scripts/release-notes_test.py` on every push, and list the three Python
-files in `.aislopignore` and the layout in `.prettierignore`. Add a `## Changelog`
-block to the pull request template (Konnekt's is the worked example). The release workflow, when the repo has one, calls the generator
-the way Konnekt's does and falls back to GitHub's layout if it cannot produce a
-body.
-
-`scripts/check-participation.sh` checks the ignore rule for every vendored file, in
-`.aislopignore` and a root `.prettierignore`, so a product gate cannot rewrite a
-vendored file and hand the nightly a drift it cannot fix.
-
-## 8. Ignore the runtime state
+## 7. Ignore the runtime state
 
 ```gitignore
 .claude/settings.local.json
@@ -329,17 +209,13 @@ copy in place would have been the clearest possible example of it.
 `health.commands` declares the JS toolchain (`pnpm lint`, `typecheck`, `test`,
 `format:check`, the build and bundle budget) and the Go shell's checks (`go vet` and
 `go test` over `shell/`), three `invariants` and three `generated` entries, and its
-CI runs the vendored runner with `--require-runnable` on every push, so a skip there
+CI runs `.claude/suite-check.py` with `--require-runnable` on every push, so a skip there
 is a failure. Only its web build is released today; the desktop shell waits on a release
 workflow that produces installable artefacts (Kommands #44).
 
-It carries the priority question in both forms and the vendored
-`.github/workflows/issue-priority.yml`, the aislop base with its own ratchet and,
-for now, the score it had on adoption, the release-notes generator with its
-`.github/changelog.json`, and the four shared workflows vendored into `.github/workflows/`. Its `.prettierignore`
-excludes every vendored YAML and JSON file, and its `.aislopignore` the vendored
-Python. It has no release workflow yet, so the generator is tested on every push
-and not yet called.
+It has adopted the AllesSandro template, with its own aislop ratchet and
+`.github/changelog.json`. It has no release workflow yet, so the release-notes
+generator is tested on every push and not yet called.
 
 `.claude/rules/*.md` stay where they are. They are path-scoped and auto-inject when
 a matching file is edited: a plugin skill does not do that, so the plugin does not
@@ -376,11 +252,8 @@ It has one `health.invariants` entry, `no literal border widths`, from its own
 token migration. The Minecraft-syntax greps Kommands carries do not apply to a
 server dashboard, and nothing was invented to fill that slot.
 
-It carries the release-notes generator (`.github/changelog.json` is its adoption
-marker) and gates itself with aislop, with its own `.aislop/config.yml` predating the
-suite's `base.yml`; adopting the base, listing the vendored generator in its
-`.aislopignore`, and asking the priority question in its forms are all on
-`docs/roadmap.md`.
+It has adopted the AllesSandro template, with its own aislop ratchet and
+`.github/changelog.json`.
 
 `health.commands` uses `cwd` to mix toolchains in one list: `pnpm typecheck`,
 `pnpm lint`, `pnpm test`, `pnpm check-bundle` with `cwd: "frontend"`, and

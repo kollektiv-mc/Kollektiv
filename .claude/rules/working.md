@@ -1,7 +1,7 @@
 # Working
 
-- Find what is wanted before building: the issue or request,
-  `docs/roadmap.md` and `docs/conventions.md`. Build that and nothing more.
+- Find what is wanted before building: the issue or request, the roadmap,
+  and the brief or decision log if there is one. Build that and nothing more.
 - Check it against the code and recent merges. A plan that is outdated or
   contradicts the code is a question, not an order.
 - Never describe code you have not opened. A fact about a tool, API or
@@ -22,6 +22,6 @@
 - Never weaken a test or check, or skip a hook, to get green. Report a
   wrong test instead. The same approach failing twice: rethink it.
 - Report each check that ran and its result, what was not checked and
-  every assumption made.
+  every assumption made. A check that did not run did not pass.
 - Leave the pull request so a new session can continue from it alone:
   done, left, open questions.

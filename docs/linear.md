@@ -142,8 +142,8 @@ Retiring one is a manual step in the Linear UI.
 Full definitions, colors, and descriptions live in `design/labels.json`: this
 is the summary.
 
-**GitHub side**, applied identically to all three repos by
-`scripts/sync-labels.sh`:
+**GitHub side**, written into every repo's `.github/labels.json` by
+`scripts/sync-labels.sh` and applied by each repo's `labels` workflow:
 
 - type: `type:feature`, `type:bug`, `type:chore`, `type:docs`
 - area: `area:tokens`, `area:ci`, `area:agents`, `area:ui`, `area:schema`, `area:release`

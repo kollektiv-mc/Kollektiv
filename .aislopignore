@@ -7,3 +7,10 @@ Kommands
 
 # Python bytecode, from importing suite-check.py.
 __pycache__
+
+# Locked files from the AllesSandro template: a formatter rewriting them turns
+# every template update into a conflict.
+.claude/suite-check.py
+.claude/suite-probe.py
+.claude/suite-memory.py
+.github/scripts

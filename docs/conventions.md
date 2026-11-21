@@ -115,7 +115,7 @@ still there in six months.
 ## Priority
 
 Every issue carries exactly one of `p0`-`p3`, defined in `design/labels.json` and
-applied to every repo by `scripts/sync-labels.sh`:
+written into every repo's `.github/labels.json` by `scripts/sync-labels.sh`:
 
 | Label | Means |
 | --- | --- |
@@ -125,7 +125,7 @@ applied to every repo by `scripts/sync-labels.sh`:
 | `p3` | Low priority, nice to have. |
 
 An issue form asks the reporter for their honest read and offers three answers,
-which the vendored `issue-priority.yml` workflow turns into a label when the
+which the `issue-priority.yml` workflow from the AllesSandro template turns into a label when the
 issue opens: *Blocking* is `p1`, *Significant* is `p2`, *Minor* is `p3`. `p0` is
 never offered; it is a triage judgement, and triage may move any of the other
 three. An issue opened through the API carries no form answer, so whoever files
@@ -410,191 +410,14 @@ and thirteen bodies did. The half that is read on every release lands; the half
 buried in a body drifts. Only the website half of this rule has a check behind
 it, so the rest will drift the same way unless review catches it.
 
-## Working
+## Shared rules from AllesSandro
 
-**How an agent works in every repo: where it finds what is wanted, when it
-asks, what it never does without a yes, and how it reports.** The list is
-`.claude/rules/working.md`, always loaded here. A session with nobody watching
-records its question in the pull request instead of guessing, and every
-pull request opens as a draft and is marked ready when its checks pass.
-
-Decided work lives in GitHub Issues. `docs/roadmap.md` holds direction and,
-under "Ideas", what is not decided yet. An agent files a defect it finds as an
-issue and lists an idea under "Follow-ups" in its pull request; it does not add
-to the roadmap on the side.
-
-**Where this came from.** sandrogekeler/AllesSandro carries it as the locked,
-always-loaded `.claude/rules/working.md` (AllesSandro#17). It is copied here,
-adapted to this repo's paths, so the Kollektiv apps and those projects work the
-same way.
-
-**What is checked.** Nothing. It is behaviour, read in review.
-
-**Where an agent meets it.** A product copies `.claude/rules/working.md` with
-its own paths, always loaded. It costs about 27 lines of the memory budget.
-
-## Simplicity
-
-**Code is the smallest thing that does today's job.** It is read far more often
-than it is extended, and an extension point nobody uses is paid for on every
-read. These limits hold in every repo:
-
-- **No abstraction with one user.** An interface, factory, wrapper or generic
-  helper arrives with its second caller, not its first.
-- **No option nobody sets.** A parameter, flag or config field with one value in
-  use is a constant until a second value is needed.
-- **No second way.** A change that does something the codebase already does
-  reuses that path, or replaces it in the same change.
-- **No code without a caller.** An export, file, branch or fallback that nothing
-  reaches goes in the change that orphaned it.
-- **Text carries only what its reader needs.** A comment says why, never what the
-  line beneath it says; an error or log line states the failure, and advice goes
-  in the docs; a doc describes what is there, not how the change was made.
-- **Every caller reached.** Before changing a function, find every caller, test
-  and config it reaches. A bug is fixed once, in the shared code.
-- **A test for new logic.** New logic with a branch, loop, parser or data write
-  gets one small test.
-- **A known limit is named.** It gets a comment:
-  `shortcut: <the limit>, <when to revisit>`.
-- **No new dependency for what a few lines can do.**
-
-**Never cut for size:** input validation, data-loss handling, security,
-accessibility.
-
-**What is checked.** aislop's `code-quality/duplicate-block` catches the copied
-form of a second way. The rest is review: the health sweep reads every
-week's commits against this list, and cites the limit a finding breaks.
-
-## Wording
-
-**A name is a noun phrase, a message is a sentence or two, and the reason goes
-where a reader who needs it looks: the comment, the tooltip, the docs.** Three
-limits follow, each held by a gate in the product that has the surface:
-
-- **A test function is named in at most 60 characters:** the thing under test
-  and the one condition, `TestDHSnapshotFailedCopyStillRecordsDowntime`. The
-  sentence it stands for goes in the comment above it, or in a `t.Run` subtest
-  name, which may carry spaces. Length is a reading cost only, since `_test.go`
-  files never reach a build; the limit is about the CI line that quotes the
-  name.
-- **A label that is scanned fits its surface in at most 20 characters and never
-  wraps:** a block in a palette, a tab, a menu entry, a chip. The full name goes
-  in the description the surface shows once the item is selected.
-- **A message that shares a line with controls is one line, whatever its
-  length:** at most 140 characters, one or two sentences, truncated by the
-  element with the full text in its tooltip. A status surface that grows moves
-  every control beside it, so the bar keeps its height and the text yields.
-
-**Where this came from.** Konnekt's Distant Horizons series (#570 to #581)
-landed 42 test names over 60 characters in four days against none in the
-thousand tests before it, the longest at 79, and one of them read as a
-paragraph in a CI failure. The same series named a block "Distant Horizons
-Snapshot", the one label that wrapped in the 192px palette, and put two
-sentences of RCON advice, 171 and 230 characters, beside the graph editor's
-Save button, where they wrapped to four lines and moved it. Nothing constrained
-any of it: this file said nothing about what a name is for, aislop has no
-length rule (its `docs/rules.md`, read 2026-10-14), and the shared workflows
-gate scores and labels, not words. Sentence-length names and a layout that
-shifts under its own text are what AI-assisted code leaves behind when nothing
-refuses it, and they were read as exactly that.
-
-**What is checked.** Each limit is a gate in the product with the surface,
-because the width of a palette is a fact about one product. Konnekt holds all
-three: the `test names stay readable` invariant in `.claude/suite.json` (60)
-and, in `backend/services/scheduler_wording_test.go`,
-`TestBlockLabelsFitThePalette` (20) over every registered scheduler block and
-`TestGraphWarningsStayShort` (140) over the editor's advice strings. Kommands
-holds the first, over `shell/`, with no name over the limit on the day it was
-added, and has no palette or toolbar message to hold the other two against. A
-new surface of either kind gets its test when it is built; the number is the
-convention, the test is the product's.
-
-**What is not checked, and why.** A vitest title is a sentence by design,
-`it('...')`, and Prettier's 100 columns already shape it: the longest in either
-product is 92 characters, and none is over 100. An error returned from Go or
-thrown from TypeScript is read in a log or a test failure, where a long line
-costs nothing it does not also buy. Neither gets a limit until one is found
-wrapping a surface.
-
-### Copy a user reads
-
-The list is `.claude/rules/copy.md`. It loads with markup, style, component and
-Markdown files, and `.claude/rules/working.md` sends an agent to it before
-writing user-facing text anywhere else. Docs for developers (READMEs, agent
-docs, code docs, pull requests) may explain how a part works and why.
-
-**Where this came from.** Konnekt's website overhaul (2026-10-21) was asked
-for because the site read as generated: a glowing accent word in the hero and
-coloured code-glyph eyebrows on every section. The docs templates that
-followed collected the rest in review: subtitles beside headings, an
-instruction line above a search bar, hero facts that applied to some pages and
-not others (Konnekt's docs kept Duration, Requirements, Category and Topics,
-and dropped Effect on server, Time limit, Since, Where, Applies to and Read
-next), labels phrased as verbs, and prose that wrapped mid-sentence. The
-redesign's README (Konnekt `docs/design/website/README.md`) records them for
-that site; this is the same list hoisted so every product starts from it.
-
-**What is checked.** Nothing, by decision. Whether a line explains the layout,
-or a headline is a slogan, is a judgement a regex cannot make, so these rules
-rest on review.
-
-**Where an agent meets them.** A product copies this repo's path-scoped
-`.claude/rules/copy.md` over the files its copy is written in, so it loads when
-an agent opens one of them and costs nothing otherwise. Konnekt and Kommands
-both have one.
-
-### Writing for a reader
-
-The same lead, applied to everything written for a reader rather than only to
-what a user sees: UI text, docs, READMEs, issue and pull request bodies, release
-notes, and agent replies. Code comments follow the code's own conventions.
-
-- **Write what was asked for and stop.** Delete any sentence the reader would
-  not miss: extra sections, tips, notes, intros and wrap-ups ("In summary",
-  "Note that").
-- **State the point directly.** No "not X but Y" contrasts, no objections or
-  options nobody raised, no consequence tails (", so ...", "This means ...")
-  that restate the sentence.
-- **Name the specific thing** instead of inflation words (pivotal, seamless,
-  robust, comprehensive).
-- **A reply leads with the answer or decision,** without rebuilding context the
-  reader has. What was not checked goes in the report `working.md` asks for.
-- **No em dashes.**
-
-**Where this came from.** sandrogekeler/AllesSandro carries it as the locked,
-always-loaded `.claude/rules/writing.md` for every personal project. It is
-copied here so the Kollektiv apps and those projects write the same way; a
-change to one is meant to be copied to the other.
-
-**What is checked.** Nothing, for the same reason as the list above: it is a
-judgement a regex cannot make.
-
-**Where an agent meets it.** A product adds these bullets to its
-`.claude/rules/copy.md`, or carries them as an always-loaded
-`.claude/rules/writing.md` when its memory budget allows.
-
-### Typography
-
-A guideline, not a mandate: no suite font is prescribed here beyond what
-`design/tokens.json` already names. When choosing one:
-
-- **Avoid the fonts that now read as AI defaults:** Inter, Roboto, Open Sans,
-  Lato, Arial, Geist, Geist Mono, Space Grotesk, Instrument Serif and a bare
-  system stack. Keep one only where the product already uses it as its brand
-  font. A system font as a fallback after a named family is fine.
-- **Avoid the generated-page treatments:** one italic or coloured accent word in
-  a headline, tracked ALL-CAPS eyebrow labels, monospace for small labels out
-  of habit, one family for everything.
-- **Prefer OFL fonts** (Google Fonts, Fontsource) so the files can be committed
-  and self-hosted. Never commit fonts whose licence forbids redistribution (for
-  example Fontshare's ITF Free Font License); load them at runtime.
-- **Where the font is defined, say in one line why it was chosen.**
-
-**Where this came from.** sandrogekeler/AllesSandro carries it as the locked,
-always-loaded `.claude/rules/typography.md` for every personal project, and it
-is copied here so the Kollektiv apps follow the same list.
-
-**What is checked.** Nothing. It is a judgement made when a font is picked.
+How an agent works, keeps code small and writes for a reader is the same in
+every repo here and in Sandro's other projects. The rules live in
+sandrogekeler/AllesSandro and arrive as locked files under `.claude/rules/`:
+`working.md`, `simplicity.md` and `writing.md` (always loaded), `copy.md` and
+`typography.md` (loaded for the files they name). Change them in AllesSandro;
+a local edit conflicts on the next template update.
 
 ## Release notes and pull request labelling
 
@@ -613,9 +436,9 @@ each:
 The types are `feature`, `fix` (or `bug`), `chore`, `docs` and `skip`. Each
 line is public copy, held to the same rules as a title below: imperative,
 sentence case, no trailing period, no em dash, what changed for a user rather
-than which files moved. The parser is `plugins/suite-kit/changelog-section.py`,
-vendored beside the generator; the generator and the gate both run it, so a
-line one accepts the other files the same way.
+than which files moved. The parser is `.github/scripts/changelog-section.py`,
+beside the generator; the generator and the gate both run it, so a line one
+accepts the other files the same way.
 
 The section is optional. Without one, the pull request is one change: its
 `type:` label decides where it lands and its title is the line. That is how
@@ -624,25 +447,17 @@ section, and how a single small change can stay. Either way a merged pull
 request's title is public copy, because without a section it is the only thing
 a reader sees about that change.
 
-A product that has adopted this builds its notes with
-`.github/scripts/release-notes.py`, vendored from
-`plugins/suite-kit/release-notes.py` by `scripts/sync-notes.sh` for the reason
-`sync-runner.sh` states about the check runner: a release job runs in the
-product's own container, with this repo nowhere on disk and no plugin installed,
-so the generator has to be *in* the product.
-
-**Both products carry it.** The marker is a product's own
-`.github/changelog.json`, holding the non-app path list the generator cannot run
-without; `sync-notes.sh` vendors the generator, its tests and GitHub's fallback
-layout (`.github/release.yml`) beside it, and the drift check runs with
-`--require-vendored`. Konnekt's release workflow calls the generator when it cuts
+A product builds its notes with `.github/scripts/release-notes.py`, which the
+AllesSandro template ships with its tests and GitHub's fallback layout
+(`.github/release.yml`) when the repo answers `release_notes: true`. Its own
+`.github/changelog.json` holds the non-app path list the generator cannot run
+without. Konnekt's release workflow calls the generator when it cuts
 a release; Kommands has no release workflow yet, so there the generator is
 tested on every push and waits for its first tag.
 
 **Every pull request carries a Changelog section or a `type:` label, and an
 `area:` label.** A pull request with neither cannot merge: the check is
-`plugins/suite-kit/workflows/pr-labelled.yml` here, vendored into each product's
-`.github/workflows/` by `scripts/sync-workflows.sh`. It posts a `pr-labelled`
+`.github/workflows/pr-labelled.yml` from the AllesSandro template. It posts a `pr-labelled`
 commit status that stays pending until both halves are there, rather than
 failing, so opening a pull request and labelling it a moment later sends no
 failure notification. A Changelog line it cannot read (an unknown type, no
@@ -724,7 +539,7 @@ so the ladder is in the label picker and not only in this document.
 
 ### What's shared and what is not
 
-**Shared**, in `plugins/suite-kit/release-notes.py`: the rules above. A person
+**Shared**, in `.github/scripts/release-notes.py` from the AllesSandro template: the rules above. A person
 reading Konnekt's notes and Kommands' notes should be reading the same document
 in two voices.
 
@@ -780,25 +595,27 @@ A product can hold all three above and still trip SmartScreen.
 This is a convention rather than a shared workflow, and deliberately so. Release
 workflows stay per-repo, per § What's shared vs. what stays per-repo below,
 because each names a toolchain and an artifact set only that product has.
-`sync-workflows.sh` carries job bodies that are identical everywhere; a release
-job never is. What travels between the products here is the requirement.
+The AllesSandro template carries job bodies that are identical everywhere; a
+release job never is. What travels between the products here is the requirement.
 
 ## What's shared vs. what stays per-repo
 
-**Shared**, in `design/labels.json`: the `type:*`/`area:*`/`p0`–`p3`/`blocked`
-label taxonomy, applied identically to every repo by `scripts/sync-labels.sh`.
-A repo does not invent its own type or priority labels.
+**From the AllesSandro template**, in every repo including this one: the check
+runner (`.claude/suite-*.py`), the shared workflows (aislop, CodeQL, the
+pull-request label gate, Scorecard, issue priority, labels, template guard),
+the release-notes generator with its tests, the aislop policy
+(`.aislop/base.yml`) and the agent rules in `.claude/rules/`. Each repo answers
+the template's questions once (`.copier-answers.yml`), so CodeQL scans only the
+languages that repo has. Renovate opens an update pull request in each repo when
+AllesSandro is tagged. A locked file edited locally conflicts on that update and
+the repo's `template-guard` check goes red: change it in AllesSandro instead.
 
-**Shared**, in `plugins/suite-kit/release-notes.py`: how a merged pull request
-becomes a line in the release notes, vendored by `scripts/sync-notes.sh`. See
-§ Release notes and pull request labelling above for the split between those
-rules and each product's own `.github/changelog.json`.
+**From this repo**, written into each product by a script here:
 
-**Shared**, in `plugins/suite-kit/workflows/`: the workflows that are the same
-job on every product, the aislop gate, CodeQL, the pull-request label gate and
-Scorecard, vendored by `scripts/sync-workflows.sh`. A job body lives here once,
-so the aislop and ruff versions it pins change everywhere on the next sync;
-nothing calls a workflow in this repo by reference.
+- `design/tokens.json`, as `tokens.source.json`, by `scripts/sync-tokens.sh`.
+- `design/labels.json`'s `github` taxonomy, as `.github/labels.json`, by
+  `scripts/sync-labels.sh`. Each repo's `labels` workflow applies it to GitHub.
+  A repo does not invent its own type or priority labels.
 
 Every workflow in the suite, shared or per-repo, pins each action to the full
 commit SHA of a release, with that release as a trailing comment:
@@ -809,44 +626,23 @@ repository (`git ls-remote --tags https://github.com/<owner>/<repo>`, taking the
 peeled `^{}` commit of an annotated tag), never from a fork or a search result.
 Every workflow also declares a top-level `permissions:` block, `contents: read`
 unless it needs less, and a job that needs more says so in its own block.
-Dependabot's `github-actions` updates keep the pins current in the products;
-see the Dependabot paragraph in `CLAUDE.md` for why the masters here trail
-them.
-
-**Shared**, in `.aislop/base.yml`: the aislop policy, vendored by
-`scripts/sync-aislop.sh`. Per-repo: the size ratchet in each `.aislop/config.yml`,
-held at that tree's largest function and file, and the `.aislopignore` naming
-what that tree generates or vendors.
-
-**Shared**, in `design/labels.json`'s `priorityForm`: the question every issue
-form asks and the `p*` label each answer becomes, rendered into the forms and
-into the vendored `.github/workflows/issue-priority.yml` by
-`scripts/sync-priority.sh`. Per-repo: everything else in the forms. See
-§ Priority above.
+Dependabot bumps the pins in locked workflows too; AllesSandro's
+`docs/updating.md` covers why that is fine.
 
 **A repo in the manifest has not necessarily adopted.** `suite.repos.json` is
-the list of repos the suite manages, and a repo joins it before
-`scripts/adopt.sh` has ever run against it. `.claude/suite.json` is the marker
-that says it has: `adopt.sh` writes it, and every suite-kit skill opens by
-reading it. So each `--require-products` and `--require-vendored` flag asserts
-something about **adopted** repos, and a cloned repo without that file is
-reported and skipped rather than failed. Two things around it stay failures:
-a repo that is in the manifest and not on disk, which under those flags means
-`bootstrap.sh` did not do its job, and a repo that has adopted and is missing a
-vendored file, which means it lost one.
-
-Before this, five checks read "not cloned, or not adopted" as one state and
-failed on both, so adding a repo to the manifest turned the nightly red until
-that repo had adopted everything. Kube is in the manifest on exactly that
+the list of repos the suite manages, and a repo joins it before it has adopted
+the AllesSandro template. `.claude/suite.json` is the marker that says it has.
+So each `--require-products` flag asserts something about **adopted** repos,
+and a cloned repo without that file is reported and skipped rather than failed.
+A repo that is in the manifest and not on disk still fails under that flag:
+it means `bootstrap.sh` did not do its job. Kube is in the manifest on that
 footing today.
 
-**A vendored file is never touched by a product's own tools.** Every sync script
-byte-compares its master against the product's copy, so a product formatter or
-scanner that rewrites one hands the nightly a drift only the next sync can undo.
-The masters here are held to the same aislop gate the products run, so they
-arrive clean, and `scripts/check-participation.sh` checks that each product's
+**A file a repo receives is never touched by its own tools.** A formatter or
+scanner that rewrites one hands the nightly a drift, or the next template update
+a conflict. `scripts/check-participation.sh` checks that each repo's
 `.aislopignore`, and its root `.prettierignore` where Prettier runs at the root,
-list what it vendors.
+list those files.
 
 **Per-repo:**
 
@@ -888,9 +684,9 @@ tool list before repeating it.
 - **No label or milestone creation/color/description management.** `issue_write`
   will silently create a missing label when you attach it to an issue, but
   with a default gray color and no description: good enough for matching
-  and filtering, not for the palette in `design/labels.json`. Only `gh label
-  create/edit` (via `scripts/sync-labels.sh`, run where `gh` is authenticated,
-not available in a Claude Code cloud session) sets those precisely.
+  and filtering, not for the palette in `design/labels.json`. Each repo's
+  `labels` workflow sets them from `.github/labels.json`, which
+  `scripts/sync-labels.sh` writes from `design/labels.json`.
   Milestones have no creation tool at all in this session; the suite uses
   `milestone:<name>` labels instead where a repo needs the grouping. See
   `docs/linear.md`.

@@ -24,9 +24,8 @@
 # did not run. Every repo's .claude/suite.json runs `npx --yes aislop@0.16.0 ci`,
 # so without ruff here the health check reports a gate that scored nothing as a
 # pass, which is the one result this suite refuses to produce. CI pins ruff for
-# exactly this reason (plugins/suite-kit/workflows/aislop.yml says so, and
-# records Konnekt hitting it in the mirror image); a cloud session is the other
-# place those checks run, so it gets the same pin.
+# exactly this reason (.github/workflows/aislop.yml says so); a cloud session
+# is the other place those checks run, so it gets the same pin.
 #
 # What it deliberately does not do: build the graph. `graphify update .` is an
 # AST pass over a whole tree, and graphify earns its keep on navigation

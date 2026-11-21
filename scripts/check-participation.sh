@@ -3,7 +3,7 @@
 # Check that every repo in the suite still participates in the shared machinery.
 #
 # The other scripts each check one artifact: sync-tokens.sh the token source,
-# sync-runner.sh the check runner, validate-schemas.sh the manifests. This one
+# sync-labels.sh the label file, validate-schemas.sh the manifests. This one
 # checks the things a repo has to get right for those to mean anything, and that
 # nothing else looks at:
 #
@@ -18,10 +18,10 @@
 #                 cwd is gone is reported by the runner as a skip, and a skip
 #                 nobody reads is how a check stops running without anyone
 #                 noticing.
-#   vendored      every file this repo vendors into a product is excluded from
-#                 that product's own formatter and scanner. A vendored file is
-#                 byte-compared against its master, so a product gate that
-#                 rewrites one creates drift that nothing here can fix. That
+#   vendored      every file a repo receives from a sync script here or from the
+#                 AllesSandro template is excluded from its own formatter and
+#                 scanner. A repo gate that rewrites one creates drift or a
+#                 template conflict that nothing here can fix. That
 #                 happened: Konnekt's aislop gate ran ruff format over its copy
 #                 of release-notes.py, and the nightly was red for a week.
 #                 Each product had already learned this once for one file
@@ -30,8 +30,8 @@
 #                 rule those two lines were instances of.
 #
 # Deliberately not re-checked here, because each already has an owner: manifest
-# presence and schema validity (validate-schemas.sh), runner presence and drift
-# (sync-runner.sh), token drift (sync-tokens.sh). Two scripts reporting the same
+# presence and schema validity (validate-schemas.sh), template drift (each
+# repo's template-guard and Renovate), token drift (sync-tokens.sh). Two scripts reporting the same
 # finding is how they drift apart.
 #
 #   --require-products   Treat an absent or unadopted product as a failure
@@ -92,25 +92,26 @@ STYLE_FILES_UNREADABLE = (".prettierrc.js", ".prettierrc.mjs", ".prettierrc.cjs"
                           "prettier.config.js", "prettier.config.mjs",
                           "prettier.config.cjs")
 
-# What this repo vendors into a product, and which script owns each. A product
-# gate must never rewrite one of these; the sync script that owns it byte-compares
-# the two copies. Kept here rather than read out of the scripts because each of
-# them knows only its own file, and this is the one place that needs the list.
+# The files a repo receives from elsewhere, and who writes each: a sync script
+# here, or the AllesSandro template. A repo's own gate must never rewrite one:
+# a sync script byte-compares the copies, and a template update conflicts on a
+# locked file that changed locally.
 VENDORED = {
     "tokens.source.json": "sync-tokens.sh",
-    ".claude/suite-check.py": "sync-runner.sh",
-    ".claude/suite-probe.py": "sync-runner.sh",
-    ".claude/suite-memory.py": "sync-runner.sh",
-    ".github/scripts/release-notes.py": "sync-notes.sh",
-    ".github/scripts/release-notes_test.py": "sync-notes.sh",
-    ".github/scripts/changelog-section.py": "sync-notes.sh",
-    ".github/release.yml": "sync-notes.sh",
-    ".github/workflows/issue-priority.yml": "sync-priority.sh",
-    ".aislop/base.yml": "sync-aislop.sh",
-    ".github/workflows/aislop.yml": "sync-workflows.sh",
-    ".github/workflows/codeql.yml": "sync-workflows.sh",
-    ".github/workflows/pr-labelled.yml": "sync-workflows.sh",
-    ".github/workflows/scorecard.yml": "sync-workflows.sh",
+    ".github/labels.json": "sync-labels.sh",
+    ".claude/suite-check.py": "AllesSandro",
+    ".claude/suite-probe.py": "AllesSandro",
+    ".claude/suite-memory.py": "AllesSandro",
+    ".github/scripts/release-notes.py": "AllesSandro",
+    ".github/scripts/release-notes_test.py": "AllesSandro",
+    ".github/scripts/changelog-section.py": "AllesSandro",
+    ".github/release.yml": "AllesSandro",
+    ".github/workflows/issue-priority.yml": "AllesSandro",
+    ".aislop/base.yml": "AllesSandro",
+    ".github/workflows/aislop.yml": "AllesSandro",
+    ".github/workflows/codeql.yml": "AllesSandro",
+    ".github/workflows/pr-labelled.yml": "AllesSandro",
+    ".github/workflows/scorecard.yml": "AllesSandro",
 }
 # What each product-side tool would rewrite. aislop formats and lints Python;
 # Prettier formats JSON, YAML and Markdown. A vendored file with any other
@@ -277,8 +278,8 @@ def check_vendored_ignores(label, repo_dir):
             if covered(p, lines):
                 print("= %s .aislopignore covers %s" % (label, p))
             else:
-                fail("%s .aislopignore does not cover %s, which %s vendors; aislop "
-                     "would reformat it and the next sync would report drift"
+                fail("%s .aislopignore does not cover %s, which %s writes; aislop "
+                     "would reformat it and the next sync or update would trip on it"
                      % (label, p, VENDORED[p]))
 
     # Only a root-level Prettier config reaches the vendored files, which all
@@ -293,8 +294,8 @@ def check_vendored_ignores(label, repo_dir):
             if covered(p, lines):
                 print("= %s .prettierignore covers %s" % (label, p))
             else:
-                fail("%s .prettierignore does not cover %s, which %s vendors; Prettier "
-                     "would reformat it and the next sync would report drift"
+                fail("%s .prettierignore does not cover %s, which %s writes; Prettier "
+                     "would reformat it and the next sync or update would trip on it"
                      % (label, p, VENDORED[p]))
 
 
@@ -365,7 +366,7 @@ if os.path.isfile(manifest):
         if os.path.isfile(os.path.join(d, ".claude", "suite.json")):
             check_repo(name, d)
         # Adoption, not presence, is what --require-products asserts about. A
-        # repo in the manifest that has never run scripts/adopt.sh has nothing
+        # repo in the manifest that has never adopted has nothing
         # to participate with yet, and calling that a bootstrap failure would be
         # red for a repo that has not started. Not cloned stays a failure under
         # the flag: that one really does mean bootstrap.sh did not do its job.

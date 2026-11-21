@@ -219,11 +219,10 @@ manufacturing one.
   `save_milestone` and nothing more, so a superseded milestone is reported and
   left alone.
 - GitHub label and milestone *creation* likewise has no MCP tool in a Claude Code
-  cloud session: only `gh label create/edit` (see `scripts/sync-labels.sh`) can set
-  a label's color and description precisely. `issue_write` will silently create a
-  missing label with a default gray color when you attach it to an issue, which is
-  enough for this skill's matching and filtering to work even before someone runs
-  `scripts/sync-labels.sh` to fix the color.
+  cloud session. Each repo's `labels` workflow sets label colors and descriptions
+  from `.github/labels.json`, which `scripts/sync-labels.sh` writes. `issue_write`
+  will silently create a missing label with a default gray color when you attach it
+  to an issue, which is enough for this skill's matching and filtering to work.
 - PR magic words (`Fixes #12`, `Closes #9`, `Part of #28`) drive GitHub's own
   issue-closing automation. That layer needs no maintenance: this sync exists for
   what it cannot see: issues Linear-side that need status changes propagated in,

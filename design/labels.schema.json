@@ -56,7 +56,7 @@
       "type": "object",
       "required": ["heading", "description", "options"],
       "additionalProperties": false,
-      "description": "The priority question every issue form in the suite asks, and which p* label each answer becomes. scripts/sync-priority.sh renders it into the block between the `suite:priority` markers of each product's forms and into the PRIORITY_MAP of the vendored issue-priority.yml workflow, so the dropdown a reporter sees and the label the workflow applies cannot drift apart. p0 is deliberately absent: a reporter's honest read tops out at 'blocking', and 'drop everything' is a triage decision.",
+      "description": "The priority question every issue form in the suite asks, and which p* label each answer becomes. Each repo's issue forms and the AllesSandro issue-priority workflow carry the same question and map; keep them equal by hand. p0 is deliberately absent: a reporter's honest read tops out at 'blocking', and 'drop everything' is a triage decision.",
       "properties": {
         "heading": {
           "type": "string",

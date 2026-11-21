@@ -1,18 +1,13 @@
 #!/usr/bin/env bash
 #
-# Apply the suite's GitHub label taxonomy (design/labels.json → .github array) to
-# this repo and every product in suite.repos.json.
+# Write the suite's GitHub label taxonomy (design/labels.json → github array)
+# into .github/labels.json in this repo and in every adopted product.
 #
-# Uses `gh label create` / `gh label edit`, not the GitHub MCP server: issue-write
-# tools can attach a label name to an issue and will silently create a missing one,
-# but with no color or description of its own choosing. Only `gh` (or the REST API
-# it wraps) can set those, so getting the exact palette in design/labels.json onto
-# GitHub requires `gh auth login` once, same as validate-schemas.sh requires
-# check-jsonschema.
-#
-# Idempotent and non-destructive, like sync-tokens.sh: a label that already matches
-# is left alone, and nothing here deletes a label — including ones outside this
-# taxonomy, since a repo may carry its own labels this suite doesn't govern.
+# Each repo's .github/workflows/labels.yml, from the AllesSandro template,
+# applies that file to GitHub on every push to main that changes it. So this
+# script only writes files: no `gh`, no token. Nothing deletes a label: the
+# workflow creates and updates, and a repo may carry labels this suite does not
+# govern.
 #
 #   --check   Report drift and exit non-zero without writing anything.
 
@@ -28,102 +23,75 @@ for arg in "$@"; do
 done
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-manifest="$root/suite.repos.json"
-labels_file="$root/design/labels.json"
 
-[ -f "$manifest" ] || { echo "no suite.repos.json at $root" >&2; exit 1; }
-[ -f "$labels_file" ] || { echo "no design/labels.json at $root" >&2; exit 1; }
-
-command -v gh >/dev/null 2>&1 || {
-  echo "gh (GitHub CLI) is required — https://cli.github.com, then gh auth login" >&2
-  exit 1
-}
 . "$(dirname "${BASH_SOURCE[0]}")/lib/python.sh"
 require_python
 
-"${PYTHON[@]}" -c 'import json,sys; json.load(open(sys.argv[1]))' "$labels_file" || {
-  echo "design/labels.json is not valid JSON — refusing to propagate it" >&2; exit 1
-}
+ROOT="$root" CHECK_ONLY="$check_only" "${PYTHON[@]}" <<'PY'
+import json, os, sys
 
-status=0
-changed=0
+root = os.environ["ROOT"]
+check_only = os.environ["CHECK_ONLY"] == "1"
+DEST = os.path.join(".github", "labels.json")
 
-sync_one_repo() {
-  local slug="$1"
+with open(os.path.join(root, "design", "labels.json"), encoding="utf-8") as f:
+    labels = json.load(f)["github"]
+with open(os.path.join(root, "suite.repos.json"), encoding="utf-8") as f:
+    repos = [r["name"] for r in json.load(f)["repos"]]
 
-  while IFS=$'\t' read -r name color description; do
-    [ -n "$name" ] || continue
+rendered = json.dumps({
+    "$comment": [
+        "Written by kollektiv's scripts/sync-labels.sh from design/labels.json.",
+        "Edit it there. .github/workflows/labels.yml applies this file on push to main.",
+    ],
+    "labels": [
+        {"name": l["name"], "color": l["color"], "description": l["description"]}
+        for l in labels
+    ],
+}, indent=2, ensure_ascii=False) + "\n"
 
-    existing="$(gh label list --repo "$slug" --json name,color,description \
-      --jq ".[] | select(.name == \"$name\")" 2>/dev/null || true)"
+status = 0
+changed = 0
+skipped = 0
 
-    if [ -z "$existing" ]; then
-      if [ "$check_only" -eq 1 ]; then
-        echo "! $slug missing label '$name'" >&2
-        status=1
-        changed=1
-      else
-        gh label create "$name" --repo "$slug" --color "$color" --description "$description" --force
-        echo "+ $slug created '$name'"
-        changed=1
-      fi
-      continue
-    fi
 
-    existing_color="$(echo "$existing" | python_lines -c 'import json,sys; print(json.load(sys.stdin)["color"])')"
-    existing_desc="$(echo "$existing" | python_lines -c 'import json,sys; print(json.load(sys.stdin)["description"])')"
+def sync(name, repo_dir):
+    global status, changed
+    path = os.path.join(repo_dir, DEST)
+    try:
+        with open(path, encoding="utf-8") as f:
+            current = f.read().replace("\r", "")
+    except FileNotFoundError:
+        current = None
+    if current == rendered:
+        print("= %s %s up to date" % (name, DEST))
+        return
+    changed = 1
+    if check_only:
+        print("! %s %s differs from design/labels.json" % (name, DEST), file=sys.stderr)
+        status = 1
+        return
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(rendered)
+    print("+ %s wrote %s, commit it" % (name, DEST))
 
-    if [ "$existing_color" = "$color" ] && [ "$existing_desc" = "$description" ]; then
-      echo "= $slug '$name' already up to date"
-      continue
-    fi
 
-    if [ "$check_only" -eq 1 ]; then
-      echo "! $slug '$name' has drifted (color or description)" >&2
-      status=1
-      changed=1
-    else
-      gh label edit "$name" --repo "$slug" --color "$color" --description "$description"
-      echo "+ $slug updated '$name'"
-      changed=1
-    fi
-  done < <(python_lines -c '
-import json, sys
-with open(sys.argv[1]) as f:
-    for l in json.load(f)["github"]:
-        print(l["name"], l["color"], l["description"], sep="\t")
-' "$labels_file")
-}
+sync("kollektiv", root)
+for name in repos:
+    d = os.path.join(root, name)
+    if not os.path.isdir(d):
+        print("? %s not cloned, run scripts/bootstrap.sh first" % name, file=sys.stderr)
+        status = 1
+    elif not os.path.isfile(os.path.join(d, ".copier-answers.yml")):
+        print("? %s has not adopted the AllesSandro template, skipped" % name)
+        skipped += 1
+    else:
+        sync(name, d)
 
-self_url="$(git -C "$root" remote get-url origin 2>/dev/null || true)"
-self_slug="$(echo "$self_url" | sed -E 's#^(https://github.com/|git@github.com:)##; s#\.git$##')"
-
-if [ -n "$self_slug" ]; then
-  sync_one_repo "$self_slug"
-else
-  echo "? could not determine this repo's GitHub slug from 'origin' — skipping it" >&2
-  status=1
-fi
-
-while IFS=$'\t' read -r name url; do
-  [ -n "$name" ] || continue
-  slug="$(echo "$url" | sed -E 's#^(https://github.com/|git@github.com:)##; s#\.git$##')"
-  sync_one_repo "$slug"
-done < <(python_lines -c '
-import json, sys
-with open(sys.argv[1]) as f:
-    for r in json.load(f)["repos"]:
-        print(r["name"], r["url"], sep="\t")
-' "$manifest")
-
-if [ "$check_only" -eq 1 ]; then
-  if [ "$changed" -ne 0 ]; then
-    echo "run scripts/sync-labels.sh to update" >&2
-  else
-    echo "no drift"
-  fi
-elif [ "$changed" -eq 0 ]; then
-  echo "nothing to do"
-fi
-
-exit $status
+if check_only and changed:
+    print("run scripts/sync-labels.sh, then commit in each repo", file=sys.stderr)
+elif not changed and not status:
+    print("no drift" if check_only else "nothing to do")
+sys.exit(status)
+PY

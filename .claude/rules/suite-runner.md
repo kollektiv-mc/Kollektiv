@@ -1,6 +1,6 @@
 ---
 paths:
-  - "plugins/suite-kit/suite-*.py"
+  - ".claude/suite-*.py"
   - "scripts/lib/python.sh"
 ---
 

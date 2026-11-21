@@ -269,3 +269,7 @@ Still open: observing a session of its agents against Konnekt's
 Still open: cloning Konnekt and Kommands via `scripts/bootstrap.sh` and
 confirming the sibling layout works standalone, with nothing depending on
 OMC's workspace feature.
+
+## Ideas
+
+Not decided yet. An idea that is decided becomes an issue.

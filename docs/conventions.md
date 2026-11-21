@@ -410,6 +410,29 @@ and thirteen bodies did. The half that is read on every release lands; the half
 buried in a body drifts. Only the website half of this rule has a check behind
 it, so the rest will drift the same way unless review catches it.
 
+## Working
+
+**How an agent works in every repo: where it finds what is wanted, when it
+asks, what it never does without a yes, and how it reports.** The list is
+`.claude/rules/working.md`, always loaded here. A session with nobody watching
+records its question in the pull request instead of guessing, and every
+pull request opens as a draft and is marked ready when its checks pass.
+
+Decided work lives in GitHub Issues. `docs/roadmap.md` holds direction and,
+under "Ideas", what is not decided yet. An agent files a defect it finds as an
+issue and lists an idea under "Follow-ups" in its pull request; it does not add
+to the roadmap on the side.
+
+**Where this came from.** sandrogekeler/AllesSandro carries it as the locked,
+always-loaded `.claude/rules/working.md` (AllesSandro#17). It is copied here,
+adapted to this repo's paths, so the Kollektiv apps and those projects work the
+same way.
+
+**What is checked.** Nothing. It is behaviour, read in review.
+
+**Where an agent meets it.** A product copies `.claude/rules/working.md` with
+its own paths, always loaded. It costs about 27 lines of the memory budget.
+
 ## Simplicity
 
 **Code is the smallest thing that does today's job.** It is read far more often
@@ -495,36 +518,19 @@ wrapping a surface.
 
 ### Copy a user reads
 
-The same lead applies to every word a user reads, on the websites, in the docs
-and in the apps: say what the thing is, once, and stop. A reader who needs the
-reason finds it in the body, a tooltip, or the docs.
-
-- **A label names the thing.** No code glyphs or accent colour on a label
-  (`[i] about`, `>_ features`, `() scheduler`), and no single word in a
-  headline coloured for emphasis. A section head is a number and a title.
-- **A headline says what is there, not a slogan.** "Scheduler", not
-  "Automate everything".
-- **No line that explains the layout.** No subtitle beside a heading, and no
-  sentence telling the reader what they are about to see ("Each item links to
-  where it is explained", "Pick the part of Konnekt you are working on"). A
-  control that explains itself, a search bar, stands alone.
-- **Header facts are fixed per kind of page, and few.** A fact that does not
-  apply to every page of its kind does not belong in the header. Konnekt's
-  docs keep Duration, Requirements, Category and Topics, and dropped Effect on
-  server, Time limit, Since, Where, Applies to and Read next.
-- **A fact's label is a plain noun, its value a number and unit.** Duration,
-  not Takes; Requirements, not You need; Topics, not Touches. `~20 min`, not a
-  sentence. The same fact carries the same label on every page.
-- **One sentence per line in prose.** No sentence starts on the tail of the
-  one before. A line that wraps to leave one or two words gets a shorter
-  sentence, not a wider box.
+The list is `.claude/rules/copy.md`. It loads with markup, style, component and
+Markdown files, and `.claude/rules/working.md` sends an agent to it before
+writing user-facing text anywhere else. Docs for developers (READMEs, agent
+docs, code docs, pull requests) may explain how a part works and why.
 
 **Where this came from.** Konnekt's website overhaul (2026-10-21) was asked
 for because the site read as generated: a glowing accent word in the hero and
 coloured code-glyph eyebrows on every section. The docs templates that
 followed collected the rest in review: subtitles beside headings, an
 instruction line above a search bar, hero facts that applied to some pages and
-not others, labels phrased as verbs, and prose that wrapped mid-sentence. The
+not others (Konnekt's docs kept Duration, Requirements, Category and Topics,
+and dropped Effect on server, Time limit, Since, Where, Applies to and Read
+next), labels phrased as verbs, and prose that wrapped mid-sentence. The
 redesign's README (Konnekt `docs/design/website/README.md`) records them for
 that site; this is the same list hoisted so every product starts from it.
 
@@ -532,10 +538,10 @@ that site; this is the same list hoisted so every product starts from it.
 or a headline is a slogan, is a judgement a regex cannot make, so these rules
 rest on review.
 
-**Where an agent meets them.** A product carries the list as a path-scoped
+**Where an agent meets them.** A product copies this repo's path-scoped
 `.claude/rules/copy.md` over the files its copy is written in, so it loads when
 an agent opens one of them and costs nothing otherwise. Konnekt and Kommands
-both have it.
+both have one.
 
 ### Writing for a reader
 
@@ -543,18 +549,17 @@ The same lead, applied to everything written for a reader rather than only to
 what a user sees: UI text, docs, READMEs, issue and pull request bodies, release
 notes, and agent replies. Code comments follow the code's own conventions.
 
-- **Write what was asked for and stop.** No extra sections, subtitles, info
-  boxes, tips, notes or summaries to fill space.
-- **A title needs no subtitle that restates it.** A clear control needs no
-  helper text.
-- **Say what something does, not why the system works that way.** Explain a
-  reason only when asked or when the reader would otherwise get it wrong.
-- **No consequence tails.** Drop ", so ...", ", therefore ...", ", which means
-  ..." and "This means ..." when they restate what the sentence already implies.
-- **No intros or wrap-ups:** "In this section", "Overall", "In summary", "Note
-  that", "It's worth noting".
-- **Delete any sentence the reader would not miss.**
-- **A reply after a code change ends with one line on what was not checked.**
+- **Write what was asked for and stop.** Delete any sentence the reader would
+  not miss: extra sections, tips, notes, intros and wrap-ups ("In summary",
+  "Note that").
+- **State the point directly.** No "not X but Y" contrasts, no objections or
+  options nobody raised, no consequence tails (", so ...", "This means ...")
+  that restate the sentence.
+- **Name the specific thing** instead of inflation words (pivotal, seamless,
+  robust, comprehensive).
+- **A reply leads with the answer or decision,** without rebuilding context the
+  reader has. What was not checked goes in the report `working.md` asks for.
+- **No em dashes.**
 
 **Where this came from.** sandrogekeler/AllesSandro carries it as the locked,
 always-loaded `.claude/rules/writing.md` for every personal project. It is

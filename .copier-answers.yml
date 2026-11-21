@@ -1,0 +1,17 @@
+# Changes here will be overwritten by Copier. Do not edit by hand.
+_commit: v0.9.0
+_src_path: https://github.com/sandrogekeler/AllesSandro.git
+aislop: true
+claude_action: false
+default_branch: main
+description: Workspace root and shared conventions for the Kollektiv Minecraft tool
+    suite.
+kind: other
+languages: []
+license: none
+owner: kollektiv-mc
+project_name: Kollektiv
+public: true
+release_notes: false
+repo_name: Kollektiv
+tracking: github-issues

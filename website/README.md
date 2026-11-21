@@ -349,7 +349,7 @@ repo's README's to explain, not the page's.
 ## Checks
 
 `.claude/suite.json` declares `gen-tokens.py` as a generator whose output is
-committed, so `./plugins/suite-kit/suite-check.py` fails when `tokens.css` is
+committed, so `.claude/suite-check.py` fails when `tokens.css` is
 stale or hand-edited, and an invariant greps `styles.css` for
 literal hex colours. CI runs the same clean-diff check.
 

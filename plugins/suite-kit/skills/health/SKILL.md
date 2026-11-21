@@ -27,13 +27,10 @@ one that quietly diverges.
 
 Take the first of these that exists:
 
-1. `.claude/suite-check.py`: the vendored copy. The normal path, and the only one
-   that works when the plugin is not installed.
-2. `${CLAUDE_PLUGIN_ROOT}/suite-check.py`: the copy inside this plugin.
-3. Neither: run the manifest's entries by hand as described below, and say in your
-   report that you did. Then mention that
-   `kollektiv/scripts/sync-runner.sh` vendors the runner, since a repo missing it
-   will keep hitting this.
+1. `.claude/suite-check.py`: the copy the AllesSandro template puts in every repo.
+2. None: run the manifest's entries by hand as described below, and say in your
+   report that you did. Then mention that the repo has not adopted the
+   AllesSandro template, since it will keep hitting this.
 
 ```sh
 .claude/suite-check.py --json

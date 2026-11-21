@@ -18,14 +18,6 @@
         "run": "./scripts/validate-schemas.sh"
       },
       {
-        "name": "release notes",
-        "run": "python3 plugins/suite-kit/release-notes_test.py"
-      },
-      {
-        "name": "check runner",
-        "run": "python3 plugins/suite-kit/suite-check_test.py"
-      },
-      {
         "name": "participation",
         "run": "./scripts/check-participation.sh"
       },

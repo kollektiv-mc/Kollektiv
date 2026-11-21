@@ -30,9 +30,9 @@ beside this one).
 Konnekt's `gen:tokens` clean-diff check now runs in its own CI
 (`.github/workflows/ci.yml`), not just `/suite-kit:health`.
 
-`plugins/suite-kit/suite-check.py` runs everything a repo's `.claude/suite.json`
-declares, without the plugin installed, and `scripts/sync-runner.sh` vendors it
-into each product the way `sync-tokens.sh` vendors the token source. This exists
+`.claude/suite-check.py` runs everything a repo's `.claude/suite.json`
+declares, without the plugin installed. Every repo gets it from the AllesSandro
+template. This exists
 because declaring a plugin does not install one: in a cloud container
 `installed_plugins.json` is empty, so before this the manifest was read by
 nothing there. The runner also distinguishes a skip from a pass, which the
@@ -54,36 +54,22 @@ checked only when someone invoked `/suite-kit:health` by hand.
 repo's `.claude/suite.json` and in CI with `--require-products`.
 
 The cross-repo checks are one workflow, `.github/workflows/drift.yml`, on every
-push and nightly: token, runner, aislop-policy, shared-workflow, priority and
-release-notes drift, product manifest validation and participation. The runner
-and release-notes checks run with `--require-vendored`; the aislop, workflow and
-priority checks do not, until both products carry every file on their default
-branches.
+push and nightly: token and label drift, product manifest validation,
+participation and public copy.
 
-Everything shared is a file a product vendors and this repo's gate holds clean:
-the workflows that are the same job everywhere, the aislop gate, CodeQL, the
-pull-request label gate and Scorecard, in `plugins/suite-kit/workflows/`
-(`scripts/sync-workflows.sh`); `.aislop/base.yml` (`scripts/sync-aislop.sh`); the
-issue-priority workflow and the question its forms ask, rendered from
-`design/labels.json` (`scripts/sync-priority.sh`); and the release-notes
-generator with its tests and GitHub's fallback layout (`scripts/sync-notes.sh`).
-Nothing is shared by reference: a `uses:` line pointing at this repo's `main`
-would be an unpinned dependency in every product's CI, which the products'
-Scorecard runs would themselves flag. `check-participation.sh` checks that every
-vendored file is excluded from the product's own formatter and scanner, which is
-the rule the Sep 2026 drift (Konnekt's gate reformatting its vendored generator)
-was an instance of.
+What every repo shares beyond this suite (the check runner, the shared
+workflows, the aislop policy, the release-notes generator and the agent rules)
+comes from the AllesSandro template since 2026-11-21. Each repo answers its
+questions once, Renovate opens an update pull request on every template tag,
+and each repo's `template-guard` check catches a local edit to a locked file.
+Nothing is shared by reference: a `uses:` line pointing at another repo's
+`main` would be an unpinned dependency in every product's CI.
 
 Still open, in rough order:
 
-- Turning on `--require-vendored` for `scripts/sync-workflows.sh`,
-  `scripts/sync-aislop.sh` and `scripts/sync-priority.sh` in `drift.yml`, once
-  both products carry the files on their default branches.
 - A release workflow for Kommands. It carries the generator, its
   `.github/changelog.json` and the fallback layout, and tests the generator on
   every push, but nothing there cuts a tag or calls it yet.
-- Returning this repo's `quality.maxNesting` to the base's 5. It is held at 7 by
-  `run_invariants` in `suite-check.py`, which #23 already needs to touch.
 - Widening Konnekt's literals invariant past borders. It declares
   `tokens.enforce: "migrating"` and names the covered paths, and the
   `no literal border widths` entry closed the border sweep: 0 literals against
@@ -119,8 +105,7 @@ Settled since, by reading the runs rather than predicting them:
   did 2026-09-07 before it. Two consecutive runs matching on the key line
   instead of filing twins is the proof this section was waiting for.
 - **The `health-check` label exists in all three repos**, created by the sweep
-  itself rather than by `sync-labels.sh`, which has still never been applied to
-  Kommands (see below).
+  itself.
 - **The Routine's model is settable over MCP**, contrary to an earlier note here
   that recorded `model_update_disabled` and had the sweep inheriting the account
   default. `update_trigger` takes a `model`; the sweep is pinned to
@@ -181,11 +166,8 @@ these conventions reach an agent session automatically. The per-repo
 `linear-sync` and `health-check` commands the plugin replaced have been
 deleted from both products.
 
-`scripts/adopt.sh` scaffolds a new repo's `.claude/suite.json`, permissions block,
-`.gitignore` lines and both vendored files in one command, instead of a careful
-read of `docs/adopting.md`. It writes a manifest that is valid but deliberately
-unfinished: `tokens`, `minecraft` and `health.invariants` describe a specific
-codebase, and a generated guess at them would look reviewed without being.
+A new repo adopts the AllesSandro template first, then the suite-specific steps
+in `docs/adopting.md`.
 
 ## Cross-product handoff
 
@@ -232,14 +214,6 @@ Still open here:
   are a cross-repo contract, which is this repo's to hold, but nothing is on disk to
   describe yet and a conventions entry written ahead of the code would be this repo
   being wrong about itself again.
-- Running `scripts/sync-labels.sh` against Kommands, which has never had it applied.
-  It is missing `area:release`, `area:agents`, `p0` to `p3` and `changelog:skip`,
-  and its `area:tokens` carries GitHub's default `ededed` and an empty
-  description, which is what applying a label by hand creates. (`health-check`
-  was on this list until 2026-09-15; it exists in all three repos, created by
-  the sweep itself as its skill instructs.) No Kommands
-  issue has ever carried a priority, so the suite's own rule that a repo does not
-  invent its own priority scale is currently unenforced there rather than followed.
 
 ## superpowers adoption
 

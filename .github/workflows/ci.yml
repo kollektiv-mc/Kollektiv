@@ -30,20 +30,12 @@ jobs:
       - name: Script syntax
         run: for f in scripts/*.sh scripts/lib/*.sh; do bash -n "$f" || exit 1; done
 
-      # Also covers the suite-kit version pair and the runner's syntax, which
-      # used to be checked only by .claude/suite.json and sync-runner.sh
-      # respectively. One implementation, both gates.
+      # Also covers the suite-kit version pair.
       - name: Manifests
         run: ./scripts/check-manifests.sh
 
       - name: Schema validation
         run: ./scripts/validate-schemas.sh
-
-      # The classifier every product's release notes are built by. Pure and
-      # offline, and this is the master copy — a product only ever runs the
-      # vendored one.
-      - name: Release-notes classifier
-        run: python3 plugins/suite-kit/release-notes_test.py
 
       # docs/conventions.md § Public copy. The website is the only published
       # surface that lives in a file; issue and pull request titles and commit
@@ -58,27 +50,3 @@ jobs:
       # with this repo's own checks rather than in drift.yml.
       - name: Website tokens
         run: ./website/gen-tokens.py && git diff --exit-code -- website/tokens.css
-
-  # The AI-slop gate this repo asks the products to carry, applied to itself:
-  # the master copies of the runner and the generator are scored here, so a
-  # finding against a vendored file is always a finding against this repo.
-  # The same steps as plugins/suite-kit/workflows/aislop.yml, the copy the
-  # products vendor; this repo is not a product, so it carries them inline.
-  # ruff is installed explicitly because aislop's Python engines run only when
-  # a ruff binary is on PATH, and report nothing at all when one is not.
-  aislop:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: 22
-
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
-        with:
-          python-version: '3.12'
-
-      - run: pip install ruff==0.16.7
-
-      - run: npx --yes aislop@0.16.0 ci

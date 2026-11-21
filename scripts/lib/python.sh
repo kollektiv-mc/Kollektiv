@@ -61,7 +61,7 @@ require_python() {
 #
 # Python opens stdout in text mode, so on Windows every `print` emits \r\n. That
 # CR rides into the variable and is invisible in an echo: `dir="$root/$name"`
-# became "…/Konnekt<CR>", which is not a directory that exists, so sync-runner.sh
+# became "…/Konnekt<CR>", which is not a directory that exists, so a sync script
 # reported both products as "not cloned" on a workspace where both were present.
 # The same CR landed on sync-tokens.sh's `role`, where `[ "$role" = "source" ]`
 # could then never match — harmless while every repo is a consumer, and a silent

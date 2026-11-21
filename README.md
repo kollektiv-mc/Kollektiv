@@ -43,42 +43,25 @@ it and are not tracked here.
 ```
 kollektiv/
 ├── suite.repos.json            the product manifest
-├── CLAUDE.md                   what an agent landing here needs to know
+├── AGENTS.md                   what an agent landing here needs to know
 ├── scripts/bootstrap.sh        clones missing products
 ├── scripts/sync-tokens.sh      vendors design/tokens.json into each product
 │                               (--check reports drift and writes nothing)
+├── scripts/sync-labels.sh      writes design/labels.json's GitHub side into each
+│                               repo's .github/labels.json (--check reports drift)
 ├── scripts/validate-schemas.sh validates every manifest against its schema
-├── .github/workflows/ci.yml    this repo's own checks, and the aislop gate
-├── .github/workflows/drift.yml the cross-repo drift checks, on every push and nightly
-├── plugins/suite-kit/workflows/ the workflows every product runs identically, vendored
-│                               into each product (aislop, CodeQL, pr-labelled, Scorecard)
-├── .github/workflows/issue-priority.yml
-│                               master copy of the workflow that turns a form answer
-│                               into a p* label, vendored into each product
-├── .aislop/base.yml            the suite's aislop policy, vendored into each product
-├── .claude-plugin/             marketplace manifest
-├── design/tokens.json          the shared design-token source
-├── design/tokens.schema.json   its schema
-├── design/labels.json          the shared GitHub/Linear label taxonomy
-├── design/labels.schema.json   its schema
-├── design/suite.schema.json    schema for each repo's .claude/suite.json
-├── scripts/sync-labels.sh      applies design/labels.json's GitHub side via gh
-│                               (--check reports drift and writes nothing)
-├── scripts/sync-runner.sh      vendors the runner trio into each product
-│                               (--check reports drift and writes nothing)
-├── scripts/sync-notes.sh       vendors the release-notes generator into each product
-├── scripts/sync-aislop.sh      vendors .aislop/base.yml into each product
-├── scripts/sync-priority.sh    vendors the priority workflow and the forms' question
 ├── scripts/check-participation.sh
 │                               permissions floor, manifest paths, formatting settings,
-│                               and that vendored files are excluded from product tools
+│                               and that received files are excluded from repo tools
 ├── scripts/cloud-setup.sh      the cloud environment's setup script, pasted into the
 │                               environment dialog rather than run from a checkout
-├── scripts/adopt.sh            scaffolds a repo's suite.json, settings block,
-│                               .gitignore lines and the vendored files
+├── .github/workflows/ci.yml    this repo's own checks
+├── .github/workflows/drift.yml the cross-repo drift checks, on every push and nightly
+├── .claude-plugin/             marketplace manifest
+├── design/tokens.json          the shared design-token source
+├── design/labels.json          the shared GitHub/Linear label taxonomy
+├── design/suite.schema.json    schema for each repo's .claude/suite.json
 ├── plugins/suite-kit/          the shared plugin
-├── .claude/                    this repo's own suite-kit + superpowers adoption
-├── docs/adopting.md            how a repo adopts suite-kit
 ├── docs/conventions.md         cross-repo rules: tracking, PRs, permissions
 ├── docs/linear.md              the Linear structure /suite-kit:suite-sync mirrors into
 ├── docs/roadmap.md             this repo's own roadmap: direction, not work items
@@ -86,6 +69,11 @@ kollektiv/
 ├── Konnekt/                    cloned, untracked
 └── Kommands/                   cloned, untracked
 ```
+
+The check runner, the shared workflows, the release-notes generator, the aislop
+policy and the agent rules come from the
+[AllesSandro template](https://github.com/sandrogekeler/AllesSandro), in this
+repo and in each product. Renovate keeps every repo on its latest tag.
 
 ## Getting started
 
@@ -134,11 +122,10 @@ actual grep invariants, where the repo is tracked) lives in that product's
 `.claude/suite.json`, next to the code it constrains. See
 [`docs/adopting.md`](docs/adopting.md).
 
-**The checks do not depend on the plugin.** `plugins/suite-kit/suite-check.py` runs
-everything `.claude/suite.json` declares, and `scripts/sync-runner.sh` vendors it into
-each product the same way `sync-tokens.sh` vendors the token source. Declaring a plugin
+**The checks do not depend on the plugin.** `.claude/suite-check.py`, from the
+AllesSandro template, runs everything `.claude/suite.json` declares. Declaring a plugin
 in `.claude/settings.json` does not install it, so in a cloud container or an unattended
-session the vendored runner is the only thing that reaches the checks at all.
+session that file is the only thing that reaches the checks at all.
 
 What stays in the plugin is judgement: whether a matched line is the legitimate
 exception its `diagnosis` describes, whether a Minecraft identifier is right for the

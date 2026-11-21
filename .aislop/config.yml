@@ -1,5 +1,5 @@
-# This repo's aislop config. The policy is base.yml, which is the master copy
-# the products vendor; only this repo's own numbers live here. Run locally with
+# This repo's aislop config. The policy is base.yml, from the AllesSandro
+# template; only this repo's own numbers live here. Run locally with
 # `npx --yes aislop@0.16.0 scan`; CI runs `aislop ci` through
 # .github/workflows/aislop.yml, which pins both aislop and ruff.
 #
@@ -9,9 +9,5 @@ extends: ./base.yml
 
 quality:
   # A ratchet held at today's largest file, lowered as it shrinks, never raised.
-  # maxFileLoc 612: held by plugins/suite-kit/suite-check.py (612 lines).
-  maxFileLoc: 612
-  # Over the suite's 5, held by run_invariants in the same file (depth 7). #23
-  # already touches that function; take this line back to the base when it is
-  # split.
-  maxNesting: 7
+  # maxFileLoc 564: held by website/main.js (564 lines).
+  maxFileLoc: 564

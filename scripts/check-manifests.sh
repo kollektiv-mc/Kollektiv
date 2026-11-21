@@ -63,17 +63,4 @@ else
   status=1
 fi
 
-# Checked here rather than only by sync-runner.sh, which validates it before
-# propagating: a broken runner should redden this repo's own build too, not just
-# the next vendoring run.
-if "${PYTHON[@]}" -c 'import ast,sys; ast.parse(open(sys.argv[1]).read())' \
-  "$root/plugins/suite-kit/suite-check.py" 2>/dev/null; then
-  echo "= suite-check.py is valid Python"
-else
-  echo "! suite-check.py is not valid Python" >&2
-  "${PYTHON[@]}" -c 'import ast,sys; ast.parse(open(sys.argv[1]).read())' \
-    "$root/plugins/suite-kit/suite-check.py" || true
-  status=1
-fi
-
 exit $status

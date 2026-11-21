@@ -146,7 +146,7 @@ is the summary.
 `scripts/sync-labels.sh` and applied by each repo's `labels` workflow:
 
 - type: `type:feature`, `type:bug`, `type:chore`, `type:docs`
-- area: `area:tokens`, `area:ci`, `area:agents`, `area:ui`, `area:schema`, `area:release`
+- area: `area:tokens`, `area:ci`, `area:build`, `area:agents`, `area:ui`, `area:schema`, `area:release`
 - priority: `p0`, `p1`, `p2`, `p3`
 - `blocked`
 - `health-check`, carried by everything `/suite-kit:health-sweep` files
